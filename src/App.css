@@ -1,0 +1,259 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {import React, { useState, useEffect } from 'react';
+import { NavigationState, LanguageCode } from './types';
+import { PHRASES_DB } from './data/content';
+import { LanguageScreen } from './components/LanguageScreen';
+import { CategoriesScreen } from './components/CategoriesScreen';
+import { PhrasesScreen } from './components/PhrasesScreen';
+import { EditorScreen } from './components/EditorScreen';
+import { FavoritesScreen } from './components/FavoritesScreen';
+import { SplashScreen } from './components/SplashScreen';
+import { OnboardingScreen } from './components/OnboardingScreen';
+
+const App: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
+  const [favoritePhrases, setFavoritePhrases] = useState<string[]>([]);
+  const [nav, setNav] = useState<NavigationState>({
+    currentScreen: 'language',
+    selectedLanguage: null,
+    selectedCategory: null,
+    selectedPhrase: null
+  });
+
+  // Splash Screen & Onboarding Logic
+  useEffect(() => {
+    const checkOnboarding = () => {
+        const hasSeen = localStorage.getItem('instaquote_onboarding_seen');
+        if (!hasSeen) {
+            setShowOnboarding(true);
+        }
+        setIsLoading(false);
+    };
+
+    const timer = setTimeout(checkOnboarding, 2500); 
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Load Favorites from LocalStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('instaquote_favorites');
+    if (saved) {
+      try {
+        setFavoritePhrases(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse favorites", e);
+      }
+    }
+  }, []);
+
+  // Toggle Favorite Handler
+  const handleToggleFavorite = (phrase: string) => {
+    let newFavorites;
+    if (favoritePhrases.includes(phrase)) {
+      newFavorites = favoritePhrases.filter(p => p !== phrase);
+    } else {
+      newFavorites = [...favoritePhrases, phrase];
+    }
+    setFavoritePhrases(newFavorites);
+    localStorage.setItem('instaquote_favorites', JSON.stringify(newFavorites));
+  };
+
+  const handleFinishOnboarding = () => {
+      localStorage.setItem('instaquote_onboarding_seen', 'true');
+      setShowOnboarding(false);
+  };
+
+  const handleLanguageSelect = (lang: LanguageCode) => {
+    setNav({ ...nav, selectedLanguage: lang, currentScreen: 'categories' });
+  };
+
+  const handleCategorySelect = (cat: string) => {
+    setNav({ ...nav, selectedCategory: cat, currentScreen: 'phrases' });
+  };
+
+  const handlePhraseSelect = (phrase: string) => {
+    setNav({ ...nav, selectedPhrase: phrase, currentScreen: 'editor' });
+  };
+
+  const handleGoToFavorites = () => {
+    setNav({ ...nav, currentScreen: 'favorites' });
+  };
+
+  const handleSurprise = () => {
+    if (!nav.selectedLanguage) return;
+    
+    // 1. Pick a random category
+    const cats = PHRASES_DB[nav.selectedLanguage];
+    const catKeys = Object.keys(cats);
+    if (catKeys.length === 0) return;
+
+    const randomCatKey = catKeys[Math.floor(Math.random() * catKeys.length)];
+    
+    // 2. Pick a random phrase from that category
+    const phrases = cats[randomCatKey];
+    if (!phrases || phrases.length === 0) return;
+    
+    const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+
+    // 3. Go straight to editor
+    setNav({
+        ...nav,
+        selectedCategory: randomCatKey,
+        selectedPhrase: randomPhrase,
+        currentScreen: 'editor'
+    });
+  };
+
+  const goBack = () => {
+    if (nav.currentScreen === 'editor') {
+      setNav({ ...nav, currentScreen: 'phrases', selectedPhrase: null });
+    } else if (nav.currentScreen === 'phrases') {
+      setNav({ ...nav, currentScreen: 'categories', selectedCategory: null });
+    } else if (nav.currentScreen === 'favorites') {
+      setNav({ ...nav, currentScreen: 'categories' });
+    } else if (nav.currentScreen === 'categories') {
+      setNav({ ...nav, currentScreen: 'language', selectedLanguage: null });
+    }
+  };
+
+  // Render Logic
+  if (isLoading) {
+    return (
+        <div className="h-full w-full max-w-md mx-auto bg-white shadow-2xl relative overflow-hidden">
+            <SplashScreen />
+        </div>
+    );
+  }
+
+  if (showOnboarding) {
+      return (
+        <div className="h-full w-full max-w-md mx-auto bg-white shadow-2xl relative overflow-hidden">
+            <OnboardingScreen onFinish={handleFinishOnboarding} />
+        </div>
+      );
+  }
+  
+  // Default to pt-PT if no language selected yet (though logic prevents reaching screens without it)
+  const currentLanguage = nav.selectedLanguage || 'pt-PT';
+
+  let content;
+  switch (nav.currentScreen) {
+    case 'language':
+      content = <LanguageScreen onSelectLanguage={handleLanguageSelect} />;
+      break;
+      
+    case 'categories':
+      if (!nav.selectedLanguage) break;
+      const categories = Object.keys(PHRASES_DB[nav.selectedLanguage]);
+      content = (
+        <CategoriesScreen 
+            categories={categories} 
+            onBack={goBack} 
+            onSelectCategory={handleCategorySelect}
+            onSurprise={handleSurprise}
+            isPremium={isPremiumUser}
+            onTogglePremium={() => setIsPremiumUser(!isPremiumUser)}
+            onOpenFavorites={handleGoToFavorites}
+            language={currentLanguage}
+        />
+      );
+      break;
+
+    case 'phrases':
+      if (!nav.selectedLanguage || !nav.selectedCategory) break;
+      const phrases = PHRASES_DB[nav.selectedLanguage][nav.selectedCategory];
+      content = (
+        <PhrasesScreen 
+            category={nav.selectedCategory} 
+            phrases={phrases} 
+            onBack={goBack} 
+            onSelectPhrase={handlePhraseSelect} 
+            isPremium={isPremiumUser}
+            favorites={favoritePhrases}
+            onToggleFavorite={handleToggleFavorite}
+            language={currentLanguage}
+        />
+      );
+      break;
+
+    case 'favorites':
+      content = (
+        <FavoritesScreen 
+            favorites={favoritePhrases}
+            onBack={goBack}
+            onSelectPhrase={handlePhraseSelect}
+            onToggleFavorite={handleToggleFavorite}
+            language={currentLanguage}
+        />
+      );
+      break;
+
+    case 'editor':
+      if (!nav.selectedPhrase) break;
+      content = (
+          <EditorScreen 
+            initialPhrase={nav.selectedPhrase} 
+            onBack={goBack} 
+            isPremium={isPremiumUser}
+            onUnlock={() => setIsPremiumUser(true)}
+            language={currentLanguage}
+          />
+      );
+      break;
+      
+    default:
+      content = <div>Error: Unknown screen</div>;
+  }
+
+  return (
+    <div className="h-full w-full max-w-md mx-auto bg-white shadow-2xl relative overflow-hidden">
+        {content}
+    </div>
+  );
+};
+
+export default App;
+
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}

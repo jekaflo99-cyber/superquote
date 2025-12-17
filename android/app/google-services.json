@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "376888360970",
+    "project_id": "superquote-1bf05",
+    "storage_bucket": "superquote-1bf05.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:376888360970:android:e9c6d82d4b72eb2245dff3",
+        "android_client_info": {
+          "package_name": "com.neonstudio.superquote"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGOyEi08RA5wgE-CJ-BdwmnT_hEBp-q7M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

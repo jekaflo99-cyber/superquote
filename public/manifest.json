@@ -1,0 +1,49 @@
+{
+  "name": "SuperQuote App",
+  "short_name": "SuperQuote",
+  "description": "Aplicativo de frases inspiradoras com editor de imagens",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a1a",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["productivity", "lifestyle"],
+  "screenshots": [],
+  "icons": [
+    {
+      "src": "/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Frases Aleatórias",
+      "short_name": "Aleatório",
+      "description": "Ver frases aleatórias",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "type": "image/png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Favoritos",
+      "short_name": "Favoritos",
+      "description": "Acessar frases favoritas",
+      "url": "/favorites",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "type": "image/png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}

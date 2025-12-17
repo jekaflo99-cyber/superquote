@@ -1,0 +1,35 @@
+buildscript {
+    repositories {
+        google() // <--- ISTO É O QUE FALTA PARA ELE ENCONTRAR O PLUGIN
+        mavenCentral()
+    }
+    dependencies {
+        // Mantém a versão do gradle que já tinhas (ex: 8.2.1 ou a que estiver lá)
+        classpath 'com.android.tools.build:gradle:8.2.1'
+
+        // Adiciona esta linha para o Google Services (Firebase)
+        classpath 'com.google.gms:google-services:4.4.2'
+    }
+}
+
+// Se tiveres um bloco "plugins { ... }" AQUI com o google-services, APAGA-O.
+// O "classpath" acima já faz o trabalho de importar.
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+// Se tiveres um bloco "plugins { ... }" AQUI com o google-services, APAGA-O.
+// O "classpath" acima já faz o trabalho de importar.
+
+
+
+apply from: "variables.gradle"
+
+
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
