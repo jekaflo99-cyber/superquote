@@ -64,12 +64,14 @@ vercel
 Dashboard → Settings → Environment Variables
 
 ```
-STRIPE_SECRET_KEY=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
-STRIPE_PUBLISHABLE_KEY=pk_live_51SfTlSQv2l7ubTwp8phvywCIz3jXHvxJ3rPKUJvmPaoMgWEetAiHRDIZgGughyxdfoJJK2SEEhyWqCFhVeydZ9f700UJUOd8rU
-REVENUECAT_API_KEY=sk_muPGyQJXpEQjHxkIQHUUKpQgjzHVj
-REVENUECAT_APP_ID=goog_MTmdWVjxUKLTWulVBpGxkYcZKZJ
+STRIPE_SECRET_KEY=sk_live_YOUR_KEY_HERE
+STRIPE_PUBLISHABLE_KEY=pk_live_YOUR_KEY_HERE
+REVENUECAT_API_KEY=YOUR_KEY_HERE
+REVENUECAT_APP_ID=YOUR_APP_ID
 FRONTEND_URL=https://seu-dominio.vercel.app
 ```
+
+**Nota:** NUNCA adicione as keys diretamente no código ou ficheiros. Use Vercel Environment Variables.
 
 ### 4. Configurar webhook Stripe
 - Ir em Stripe Dashboard → Developers → Webhooks
