@@ -4,7 +4,15 @@ declare global {
   }
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Em produção Vercel: usa /api (mesma domain)
+// Em desenvolvimento: usa localhost:3001
+const API_URL = import.meta.env.VITE_API_URL || (() => {
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:3001'
+  }
+  // Em produção, usa a mesma domain (/api)
+  return `${window.location.origin}/api`
+})();
 
 // Carrega Stripe dinamicamente
 const loadStripeJs = async () => {
