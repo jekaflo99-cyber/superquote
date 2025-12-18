@@ -6,13 +6,15 @@ declare global {
 
 // Em produção Vercel: usa /api (mesma domain)
 // Em desenvolvimento: usa localhost:3001
-const API_URL = import.meta.env.VITE_API_URL || (() => {
+const getApiUrl = () => {
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     return 'http://localhost:3001'
   }
-  // Em produção, usa a mesma domain (/api)
-  return `${window.location.origin}/api`
-})();
+  // Em produção, usa a mesma domain
+  return window.location.origin
+}
+
+const API_BASE = getApiUrl();
 
 // Carrega Stripe dinamicamente
 const loadStripeJs = async () => {
@@ -64,7 +66,7 @@ export class StripeService {
       }
 
       // Chamar backend para criar sessão de checkout
-      const response = await fetch(`${API_URL}/api/create-checkout-session`, {
+      const response = await fetch(`${API_BASE}/api/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +108,7 @@ export class StripeService {
   static async checkSubscriptionStatus(email: string): Promise<boolean> {
     try {
       const response = await fetch(
-        `${API_URL}/api/subscription-status?email=${encodeURIComponent(email)}`,
+        `${API_BASE}/api/subscription-status?email=${encodeURIComponent(email)}`,
         {
           method: 'GET',
           headers: {
