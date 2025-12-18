@@ -77,6 +77,13 @@ const App: React.FC = () => {
   useEffect(() => {
     const initializeRevenueCat = async () => {
       try {
+        // Only initialize RevenueCat on native platforms
+        const isNative = Capacitor.isNativePlatform();
+        if (!isNative) {
+          console.log('Web platform detected, skipping RevenueCat initialization');
+          return;
+        }
+
         await revenueCatService.initialize();
         
         // Verifica se já tem subscrição ativa
@@ -124,9 +131,12 @@ const App: React.FC = () => {
   const handleUnlockPremium = async () => {
       setIsPremiumUser(true);
       
-      // Re-verifica o status no RevenueCat para sincronizar
+      // Re-verifica o status no RevenueCat para sincronizar (apenas em plataformas nativas)
       try {
-          await revenueCatService.checkSubscriptionStatus();
+          const isNative = Capacitor.isNativePlatform();
+          if (isNative) {
+              await revenueCatService.checkSubscriptionStatus();
+          }
       } catch (error) {
           console.error('Error syncing premium status:', error);
       }
@@ -282,7 +292,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="h-full w-full max-w-md mx-auto bg-white shadow-2xl relative overflow-hidden">
+    <div className="h-full w-full max-w-md mx-auto bg-white shadow-2xl relative overflow-y-auto overflow-x-hidden">
         {content}
     </div>
   );

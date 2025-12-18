@@ -1,31 +1,47 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const axios = require('axios');
-require('dotenv').config();
 
 const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:4173',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
 
-// Para webhooks, precisa do raw body
-app.use(express.raw({ type: 'application/json' }));
+// JSON parsing para todas as rotas exceto webhook
 app.use(express.json());
 
-// Produtos/Planos Stripe
+// Produtos/Planos Stripe com Suporte a Múltiplas Moedas
 const SUBSCRIPTION_PLANS = {
+  weekly: {
+    name: 'SuperQuote Pro - Semanal',
+    prices: {
+      eur: { amount: 1.99, currency: 'eur' },
+      brl: { amount: 7.90, currency: 'brl' },
+      usd: { amount: 1.99, currency: 'usd' }
+    },
+    interval: 'week',
+  },
   monthly: {
     name: 'SuperQuote Pro - Mensal',
-    amount: 4.99,
+    prices: {
+      eur: { amount: 4.99, currency: 'eur' },
+      brl: { amount: 19.90, currency: 'brl' },
+      usd: { amount: 4.99, currency: 'usd' }
+    },
     interval: 'month',
   },
   yearly: {
     name: 'SuperQuote Pro - Anual',
-    amount: 39.99,
+    prices: {
+      eur: { amount: 29.99, currency: 'eur' },
+      brl: { amount: 99.90, currency: 'brl' },
+      usd: { amount: 29.99, currency: 'usd' }
+    },
     interval: 'year',
   },
 };
@@ -36,21 +52,27 @@ const SUBSCRIPTION_PLANS = {
  */
 app.post('/api/create-checkout-session', async (req, res) => {
   try {
-    const { planId, email, userId } = req.body;
+    const { planId, email, userId, currency = 'eur' } = req.body;
 
     // DEBUG LOG
     console.log('Request body:', req.body);
-    console.log('planId:', planId, 'email:', email);
+    console.log('planId:', planId, 'email:', email, 'currency:', currency);
+    console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+    console.log('STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY);
 
-    if (!planId || !['monthly', 'yearly'].includes(planId)) {
+    if (!planId || !['weekly', 'monthly', 'yearly'].includes(planId)) {
+      console.error('Invalid plan:', planId);
       return res.status(400).json({ error: 'Invalid plan', received: planId });
     }
 
     if (!email) {
+      console.error('No email provided');
       return res.status(400).json({ error: 'Email required', received: email });
     }
 
     const plan = SUBSCRIPTION_PLANS[planId];
+    const currencyLower = currency.toLowerCase();
+    const priceConfig = plan.prices[currencyLower] || plan.prices['eur'];
 
     // Criar ou recuperar produto Stripe
     const products = await stripe.products.list({ limit: 100 });
@@ -63,19 +85,41 @@ app.post('/api/create-checkout-session', async (req, res) => {
       });
     }
 
-    // Criar preço Stripe
-    const prices = await stripe.prices.list({ product: product.id, limit: 100 });
-    let price = prices.data[0];
+    // Criar preço Stripe para a moeda específica
+    const prices = await stripe.prices.list({ 
+      product: product.id, 
+      currency: priceConfig.currency,
+      limit: 100 
+    });
+    
+    const targetAmount = Math.round(priceConfig.amount * 100);
+    // Procura um preço que coincida exatamente com o valor que queremos
+    let price = prices.data.find(p => p.unit_amount === targetAmount && p.active);
 
     if (!price) {
+      console.log(`Creating new price for ${planId} in ${priceConfig.currency}: ${priceConfig.amount}`);
+      
+      // Desativa preços antigos diferentes deste valor
+      const oldPrices = prices.data.filter(p => p.unit_amount !== targetAmount && p.active);
+      for (const oldPrice of oldPrices) {
+        try {
+          await stripe.prices.update(oldPrice.id, { active: false });
+          console.log(`Disabled old price: ${oldPrice.id}`);
+        } catch (e) {
+          console.error('Error disabling old price:', e);
+        }
+      }
+
+      // Cria o novo preço com o valor correto
       price = await stripe.prices.create({
         product: product.id,
-        unit_amount: Math.round(plan.amount * 100),
-        currency: 'eur',
+        unit_amount: targetAmount,
+        currency: priceConfig.currency,
         recurring: {
           interval: plan.interval,
         },
       });
+      console.log(`Created new price: ${price.id} for ${priceConfig.amount} ${priceConfig.currency}`);
     }
 
     // Criar sessão de checkout

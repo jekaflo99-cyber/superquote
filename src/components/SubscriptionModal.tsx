@@ -36,31 +36,98 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     const [isLoadingStripe, setIsLoadingStripe] = useState(false);
     const [stripeError, setStripeError] = useState<string | null>(null);
     const [userEmail, setUserEmail] = useState<string>('');
+    const [currency, setCurrency] = useState<'eur' | 'brl' | 'usd'>('eur');
+
+    // Preços por moeda - Tabela Mágica de Preços
+    const CURRENCY_PRICES = {
+        eur: {
+            yearly: { price: '29,99€', perMonth: '2,50€' },
+            monthly: { price: '4,99€' },
+            weekly: { price: '1,99€' }
+        },
+        brl: {
+            yearly: { price: 'R$ 99,90', perMonth: 'R$ 8,32' },
+            monthly: { price: 'R$ 19,90' },
+            weekly: { price: 'R$ 7,90' }
+        },
+        usd: {
+            yearly: { price: '$29.99', perMonth: '$2.50' },
+            monthly: { price: '$4.99' },
+            weekly: { price: '$1.99' }
+        }
+    };
 
     // Preços fallback (caso o RevenueCat não carregue)
-    const fallbackPricing = {
-        yearly: { price: '29,99€', trialDays: 7 as number | undefined, perMonth: '2,50€' as string | undefined },
-        monthly: { price: '4,99€', trialDays: undefined as number | undefined, perMonth: undefined as string | undefined },
-        weekly: { price: '1,99€', trialDays: undefined as number | undefined, perMonth: undefined as string | undefined }
-    };
+    const fallbackPricing = CURRENCY_PRICES[currency];
 
     useEffect(() => {
         if (isOpen) {
             detectPlatform();
         }
-    }, [isOpen]);
+    }, [isOpen, language]);
 
-    const detectPlatform = () => {
-        // Se não é plataforma nativa, é web (PWA)
-        const isNative = Capacitor.isNativePlatform();
-        setIsNativeApp(isNative);
+    const detectPlatform = async () => {
+        try {
+            // Se não é plataforma nativa, é web (PWA)
+            const isNative = await Capacitor.isNativePlatform();
+            setIsNativeApp(isNative);
+            
+            // Recuperar email do localStorage
+            const savedEmail = localStorage.getItem('userEmail') || '';
+            setUserEmail(savedEmail);
+
+            // Detetar moeda do utilizador (passando a língua selecionada na app)
+            const detectedCurrency = detectCurrency(language);
+            setCurrency(detectedCurrency);
+            
+            // Apenas tenta carregar ofertas do RevenueCat se for nativo
+            if (isNative) {
+                loadOfferings();
+            }
+        } catch (error) {
+            console.error('Error detecting platform:', error);
+            // Se der erro, assume que é web
+            setIsNativeApp(false);
+        }
+    };
+
+    /**
+     * Deteta a moeda baseado na localização do utilizador ou língua da app
+     */
+    const detectCurrency = (appLanguage?: LanguageCode): 'eur' | 'brl' | 'usd' => {
+        // 1. Prioridade para a língua selecionada na App
+        if (appLanguage === 'pt-BR') {
+            console.log('Moeda: BRL (App Language: pt-BR)');
+            return 'brl';
+        }
+        if (appLanguage === 'pt-PT' || appLanguage === 'es') {
+            console.log('Moeda: EUR (App Language)');
+            return 'eur';
+        }
+        if (appLanguage === 'en') {
+            console.log('Moeda: USD (App Language: en)');
+            return 'usd';
+        }
+
+        // 2. Fallback para o navegador
+        if (typeof navigator === 'undefined') return 'eur';
         
-        // Recuperar email do localStorage
-        const savedEmail = localStorage.getItem('userEmail') || '';
-        setUserEmail(savedEmail);
-        
-        if (isNative) {
-            loadOfferings();
+        try {
+            const locale = (navigator.language || 'en-US').toLowerCase();
+            console.log('Detected browser locale:', locale);
+            
+            if (locale.includes('pt-br') || locale.includes('pt_br') || locale.includes('br')) {
+                return 'brl';
+            }
+            if (locale.startsWith('pt') || locale.startsWith('es')) {
+                return 'eur';
+            }
+            if (locale.startsWith('en')) {
+                return 'usd';
+            }
+            return 'eur';
+        } catch (e) {
+            return 'eur';
         }
     };
 
@@ -85,7 +152,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         try {
             // Guardar email para futuro
             localStorage.setItem('userEmail', userEmail);
-            await StripeService.startCheckout(selectedPlan === 'yearly' ? 'yearly' : 'monthly', userEmail);
+            await StripeService.startCheckout(selectedPlan, userEmail, currency);
         } catch (error) {
             setStripeError(error instanceof Error ? error.message : 'Erro ao iniciar pagamento');
             setIsLoadingStripe(false);

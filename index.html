@@ -9,7 +9,7 @@
     <link rel="manifest" href="/manifest.json" />
     
     <!-- Configuração essencial para funcionar bem no celular (App Mobile) -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#1a1a1a" />
@@ -19,14 +19,36 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="SuperQuote" />
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Amatic+SC:wght@400;700&family=Anton&family=Bebas+Neue&family=Bungee+Spice&family=Caveat:wght@400;700&family=Cinzel:wght@400;700&family=Dancing+Script:wght@400;700&family=DM+Sans:wght@400;700&family=Fredoka:wght@400;600&family=Great+Vibes&family=Indie+Flower&family=Inter:wght@400;600;800;900&family=Jost:wght@700;800&family=Kaushan+Script&family=Lato:wght@400;700;900&family=Lobster&family=Luckiest+Guy&family=Manrope:wght@800&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@400;700;900&family=Mulish:wght@800&family=Nunito:wght@400;700;800&family=Open+Sans:wght@400;600;800&family=Outfit:wght@700&family=Oswald:wght@400;500;700&family=Pacifico&family=Playfair+Display:ital,wght@0,600;0,900;1,600&family=Playwrite+NO&family=Plus+Jakarta+Sans:wght@700&family=Poppins:wght@800&family=PT+Sans&family=Raleway:wght@400;700;900&family=Righteous&family=Roboto:wght@400;500;700;900&family=Roboto+Mono:wght@500&family=Sacramento&family=Saira:wght@700&family=Satisfy&family=Science+Gothic&family=Source+Sans+3:wght@400;600&family=Ubuntu:wght@400;700&family=Urbanist:wght@700;900&family=WindSong:wght@400;500&display=swap" rel="stylesheet">
-    <body class="bg-dark-carbon text-text-primary h-screen w-screen overflow-hidden">
-    <div id="root" class="h-full w-full"></div>
-  </body>
     <title>SuperQuote App</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        overflow: hidden;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+      }
+      
+      #root {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
   </head>
-  <body>
+  <body class="bg-dark-carbon text-text-primary">
     <!-- O React vai ser injetado dentro desta div -->
     <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
     
     <!-- Este script liga o HTML ao seu código React -->
     <!-- IMPORTANTE: Confirme se o arquivo dentro de 'src' se chama index.tsx mesmo -->

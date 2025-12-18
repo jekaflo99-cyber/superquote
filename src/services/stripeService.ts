@@ -31,6 +31,41 @@ const loadStripeJs = async () => {
   });
 };
 
+/**
+ * Deteta a moeda baseado na localização do utilizador
+ */
+const detectCurrency = (): 'eur' | 'brl' | 'usd' => {
+  if (typeof navigator === 'undefined') return 'eur';
+  
+  try {
+    const locale = navigator.language || 'en-US';
+    // Se locale é pt-BR ou começa com 'pt' e não é PT, é Brasil
+    if (locale.includes('pt-BR') || locale.startsWith('pt_BR')) {
+      return 'brl';
+    }
+    // Se locale é pt-PT ou começa com 'pt' (sem BR), é Portugal/Europa
+    if (locale.startsWith('pt')) {
+      return 'eur';
+    }
+    // Se locale contém BR é Brasil
+    if (locale.includes('BR')) {
+      return 'brl';
+    }
+    // Se locale é ES é Espanha (EUR)
+    if (locale.startsWith('es')) {
+      return 'eur';
+    }
+    // Se locale é en-US ou começa com en_ é USD
+    if (locale.startsWith('en-US') || locale.startsWith('en_US')) {
+      return 'usd';
+    }
+    // Padrão: EUR
+    return 'eur';
+  } catch {
+    return 'eur';
+  }
+};
+
 export interface SubscriptionPlan {
   id: 'monthly' | 'yearly';
   name: string;
@@ -41,6 +76,12 @@ export interface SubscriptionPlan {
 
 export const PLANS: SubscriptionPlan[] = [
   {
+    id: 'weekly',
+    name: 'Semanal',
+    price: 1.99,
+    billingPeriod: '/semana',
+  },
+  {
     id: 'monthly',
     name: 'Mensal',
     price: 4.99,
@@ -49,9 +90,9 @@ export const PLANS: SubscriptionPlan[] = [
   {
     id: 'yearly',
     name: 'Anual',
-    price: 39.99,
+    price: 29.99,
     billingPeriod: '/ano',
-    savings: 'Poupa 33%',
+    savings: 'Poupa 50%',
   },
 ];
 
@@ -59,11 +100,14 @@ export class StripeService {
   /**
    * Inicia o checkout Stripe
    */
-  static async startCheckout(planId: 'monthly' | 'yearly', email: string, userId?: string) {
+  static async startCheckout(planId: 'weekly' | 'monthly' | 'yearly', email: string, currencyOverride?: 'eur' | 'brl' | 'usd', userId?: string) {
     try {
       if (!email) {
         throw new Error('Email is required');
       }
+
+      // Detetar moeda do utilizador (usa override se fornecido, senão deteta)
+      const currency = currencyOverride || detectCurrency();
 
       // Chamar backend para criar sessão de checkout
       const response = await fetch(`${API_BASE}/api/create-checkout-session`, {
@@ -74,6 +118,7 @@ export class StripeService {
         body: JSON.stringify({
           planId,
           email,
+          currency,
           userId: userId || 'guest',
         }),
       });
@@ -85,10 +130,13 @@ export class StripeService {
       const { sessionId } = await response.json();
 
       // Carregar Stripe
-      const stripe = await loadStripeJs();
-      if (!stripe) {
+      const Stripe = await loadStripeJs();
+      if (!Stripe) {
         throw new Error('Stripe failed to load');
       }
+
+      // Inicializar Stripe com a chave pública
+      const stripe = Stripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
       // Redirecionar para checkout usando sessionId
       const result = await stripe.redirectToCheckout({ sessionId });
