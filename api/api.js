@@ -38,12 +38,16 @@ app.post('/api/create-checkout-session', async (req, res) => {
   try {
     const { planId, email, userId } = req.body;
 
+    // DEBUG LOG
+    console.log('Request body:', req.body);
+    console.log('planId:', planId, 'email:', email);
+
     if (!planId || !['monthly', 'yearly'].includes(planId)) {
-      return res.status(400).json({ error: 'Invalid plan' });
+      return res.status(400).json({ error: 'Invalid plan', received: planId });
     }
 
     if (!email) {
-      return res.status(400).json({ error: 'Email required' });
+      return res.status(400).json({ error: 'Email required', received: email });
     }
 
     const plan = SUBSCRIPTION_PLANS[planId];
