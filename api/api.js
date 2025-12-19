@@ -46,11 +46,7 @@ const SUBSCRIPTION_PLANS = {
   },
 };
 
-/**
- * POST /api/create-checkout-session
- * Cria uma sessão de checkout Stripe
- */
-app.post('/api/create-checkout-session', async (req, res) => {
+const handleCreateCheckoutSession = async (req, res) => {
   try {
     const { planId, email, userId, currency = 'eur' } = req.body;
 
@@ -153,7 +149,14 @@ app.post('/api/create-checkout-session', async (req, res) => {
     console.error('Error creating checkout session:', error);
     res.status(500).json({ error: error.message });
   }
-});
+};
+
+/**
+ * POST /api/create-checkout-session
+ * Cria uma sessão de checkout Stripe
+ */
+app.post('/api/create-checkout-session', handleCreateCheckoutSession);
+app.post('/create-checkout-session', handleCreateCheckoutSession);
 
 /**
  * POST /api/webhook
