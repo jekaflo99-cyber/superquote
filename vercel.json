@@ -8,6 +8,12 @@
     "REVENUECAT_APP_ID": "@revenuecat_app_id",
     "FRONTEND_URL": "@frontend_url"
   },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/api.js"
+    }
+  ],
   "functions": {
     "api/**/*.js": {
       "runtime": "nodejs18.x"

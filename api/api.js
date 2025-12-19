@@ -8,7 +8,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: true, // Allow any origin
   credentials: true
 }));
 
@@ -61,12 +61,12 @@ app.post('/api/create-checkout-session', async (req, res) => {
     console.log('STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY);
 
     if (!planId || !['weekly', 'monthly', 'yearly'].includes(planId)) {
-      console.error('Invalid plan:', planId);
-      return res.status(400).json({ error: 'Invalid plan', received: planId });
+      console.error('Invalid plan:', planId, 'Body:', JSON.stringify(req.body));
+      return res.status(400).json({ error: 'Invalid plan', received: planId, body: req.body });
     }
 
     if (!email) {
-      console.error('No email provided');
+      console.error('No email provided', 'Body:', JSON.stringify(req.body));
       return res.status(400).json({ error: 'Email required', received: email });
     }
 
@@ -308,8 +308,13 @@ app.get('/api/health', (req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`✅ Stripe integration ready`);
-  console.log(`✅ RevenueCat sync enabled`);
-});
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`✅ Stripe integration ready`);
+    console.log(`✅ RevenueCat sync enabled`);
+  });
+}
+
+module.exports = app;
