@@ -54,6 +54,16 @@ const SUBSCRIPTION_PLANS = {
 };
 
 const handleCreateCheckoutSession = async (req, res) => {
+  // Force JSON parsing if body is string (Vercel fix)
+  if (typeof req.body === 'string') {
+    try {
+      req.body = JSON.parse(req.body);
+    } catch (e) {
+      console.error('Failed to parse request body:', e);
+      return res.status(400).json({ error: 'Invalid JSON body' });
+    }
+  }
+
   try {
     if (!stripe) {
       console.error('Stripe not initialized - missing STRIPE_SECRET_KEY');
