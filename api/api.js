@@ -1,8 +1,15 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const axios = require('axios');
+
+// Initialize Stripe safely
+let stripe;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+} else {
+  console.warn('⚠️ STRIPE_SECRET_KEY is missing in environment variables');
+}
 
 const app = express();
 
@@ -48,6 +55,11 @@ const SUBSCRIPTION_PLANS = {
 
 const handleCreateCheckoutSession = async (req, res) => {
   try {
+    if (!stripe) {
+      console.error('Stripe not initialized - missing STRIPE_SECRET_KEY');
+      return res.status(500).json({ error: 'Server configuration error: Stripe key missing' });
+    }
+
     const { planId, email, userId, currency = 'eur' } = req.body;
 
     // DEBUG LOG
