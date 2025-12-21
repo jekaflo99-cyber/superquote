@@ -529,16 +529,17 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
     
   });
   const [previewRatio, setPreviewRatio] = useState(1);
-  const [activeTool, setActiveTool] = useState<string>('styles');
-  const [templateCategory, setTemplateCategory] = useState<string>('All');
+  const [activeTool, setActiveTool] = useState<string>('templates'); // Default to templates tab
+  const [templateCategory, setTemplateCategory] = useState<string>('Natal'); // Default to Natal category
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(true);
   const [isEditingText, setIsEditingText] = useState(false);
   const [customImage, setCustomImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
   const [showRewardedModal, setShowRewardedModal] = useState(false);
   const [rewardedModalType, setRewardedModalType] = useState<'template' | 'preset'>('template');
   const [rewardedTargetId, setRewardedTargetId] = useState<string>('');
@@ -638,11 +639,24 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         return allTemplates.find(t => t.id === config.templateId) || allTemplates[0];
   };
 
-  const categories = ['All', ...Array.from(new Set(allTemplates.map(t => t.category)))];
+  const categories = ['All', ...Array.from(new Set(allTemplates.map(t => t.category))).sort((a, b) => {
+    if (a === 'Natal') return -1;
+    if (b === 'Natal') return 1;
+    return 0;
+  })];
   const filteredTemplates = templateCategory === 'All' 
     ? allTemplates 
     : allTemplates.filter(t => t.category === templateCategory);
 
+  // Scroll to active category
+  useEffect(() => {
+    if (showTemplateModal && categoryScrollRef.current) {
+        const activeBtn = categoryScrollRef.current.querySelector(`[data-category="${templateCategory}"]`);
+        if (activeBtn) {
+            activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    }
+  }, [showTemplateModal, templateCategory]);
     
 
   useEffect(() => {
@@ -765,8 +779,10 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
   };
 
   const handleDownload = async () => {
-      // Mostra interstitial antes de abrir o menu
-      await admobService.showInterstitialOnExport();
+      // Mostra interstitial antes de abrir o menu (apenas se não for premium)
+      if (!isPremium) {
+          await admobService.showInterstitialOnExport();
+      }
       // Depois mostra o menu de exportação
       setShowExportMenu(true);
   };
@@ -777,7 +793,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
       setShowPremiumModal(false);
   };
 
-  const handlePurchase = async (plan: 'yearly' | 'monthly' | 'weekly') => {
+  const handlePurchase = async (plan: 'yearly' | 'monthly' | 'weekly' | 'holidayPass') => {
       try {
           console.log('Purchasing plan:', plan);
           
@@ -1697,10 +1713,11 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
 
                 <div className="flex-1 overflow-hidden flex flex-col">
                     <div className="p-4 border-b border-dark-steel bg-dark-carbon/50 backdrop-blur-sm">
-                        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-3">
+                        <div ref={categoryScrollRef} className="flex gap-3 overflow-x-auto no-scrollbar pb-3">
                             {categories.map(cat => (
                                 <button
                                     key={cat}
+                                    data-category={cat}
                                     onClick={() => setTemplateCategory(cat)}
                                     className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${templateCategory === cat ? 'bg-neon-pulse text-dark-carbon' : 'bg-dark-steel text-text-dim hover:text-neon-pulse'}`}
                                 >
@@ -1748,6 +1765,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
           setConfig({ ...config, templateId: template.id });
           setPreviewFitMode('cover'); // Reset para cover
           setShowTemplateModal(false);
+          setActiveTool('styles'); // Switch to styles tab automatically
           return;
       }
 
@@ -1761,6 +1779,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
     setConfig({ ...config, templateId: template.id }); // aplica template
     setPreviewFitMode('cover'); // Reset para cover
     setShowTemplateModal(false);
+    setActiveTool('styles'); // Switch to styles tab automatically
   }}
   className={`relative w-full h-40 sm:h-44 md:h-48 rounded-xl overflow-hidden border-2 transition-all group ${
           config.templateId === template.id

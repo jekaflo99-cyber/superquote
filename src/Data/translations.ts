@@ -52,6 +52,12 @@ export const UI_TRANSLATIONS = {
     unlockSuccess: "Desbloqueado até à Meia-Noite!",
     unlockFailed: "Anúncio não completado",
     dailyLimitReached: "Limite diário atingido. Volta amanhã ou subscreve Premium!",
+    // Campaign
+    campaignTitle: "Acesso Total Festas",
+    campaignSubtitle: "Todas as imagens e todos os modelos de texto até 3 de Janeiro",
+    campaignButton: "Desbloquear por {price}",
+    campaignNote: "Pagamento único, sem renovação automática",
+    otherPlans: "Ver outros planos",
     // Subscription Plans
     bestValue: "MAIS VANTAJOSO",
     yearlyPlan: "Plano Anual",
@@ -137,6 +143,12 @@ export const UI_TRANSLATIONS = {
     unlockSuccess: "Desbloqueado até à Meia-Noite!",
     unlockFailed: "Anúncio não completado",
     dailyLimitReached: "Limite diário atingido. Volta amanhã ou subscreva Premium!",
+    // Campaign
+    campaignTitle: "Acesso Total Festas",
+    campaignSubtitle: "Todas as imagens e todos os modelos de texto até 3 de Janeiro",
+    campaignButton: "Desbloquear por {price}",
+    campaignNote: "Pagamento único, sem renovação automática",
+    otherPlans: "Ver outros planos",
     // Subscription Plans
     bestValue: "MAIS VANTAJOSO",
     yearlyPlan: "Plano Anual",
@@ -222,6 +234,12 @@ export const UI_TRANSLATIONS = {
     unlockSuccess: "Unlocked until Midnight!",
     unlockFailed: "Ad not completed",
     dailyLimitReached: "Daily limit reached. Come back tomorrow or subscribe to Premium!",
+    // Campaign
+    campaignTitle: "Holiday All Access",
+    campaignSubtitle: "All images and text templates until January 3rd",
+    campaignButton: "Unlock for {price}",
+    campaignNote: "One-time payment, no automatic renewal",
+    otherPlans: "See other plans",
     // Subscription Plans
     bestValue: "BEST VALUE",
     yearlyPlan: "Yearly Plan",
@@ -307,6 +325,12 @@ export const UI_TRANSLATIONS = {
     unlockSuccess: "¡Desbloqueado hasta la Medianoche!",
     unlockFailed: "Anuncio no completado",
     dailyLimitReached: "Límite diario alcanzado. ¡Vuelve mañana o suscríbete a Premium!",
+    // Campaign
+    campaignTitle: "Acceso Total Fiestas",
+    campaignSubtitle: "Todas las imágenes y modelos de texto hasta el 3 de enero",
+    campaignButton: "Desbloquear por {price}",
+    campaignNote: "Pago único, sin renovación automática",
+    otherPlans: "Ver otros planes",
     // Subscription Plans
     bestValue: "MEJOR VALOR",
     yearlyPlan: "Plan Anual",

@@ -128,7 +128,7 @@ RevenueCat retorna subscrição ✅
 
 ### `.env.local` (Frontend - Local)
 ```
-VITE_API_URL=http://localhost:3001
+VITE_API_URL=http://localhost:3000
 VITE_STRIPE_PUBLIC_KEY=pk_live_...
 ```
 

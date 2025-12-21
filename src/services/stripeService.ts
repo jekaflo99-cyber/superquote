@@ -7,10 +7,15 @@ declare global {
 // Em produção Vercel: usa /api (mesma domain)
 // Em desenvolvimento: usa localhost:3001
 const getApiUrl = () => {
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'http://localhost:3001'
+  // Se houver uma variável de ambiente definida (ex: Render, Netlify), usa-a
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
   }
-  // Em produção, usa a mesma domain
+
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:3000'
+  }
+  // Fallback: usa a mesma domain (para Vercel/Rewrites)
   return window.location.origin
 }
 
@@ -67,7 +72,7 @@ const detectCurrency = (): 'eur' | 'brl' | 'usd' => {
 };
 
 export interface SubscriptionPlan {
-  id: 'monthly' | 'yearly';
+  id: 'weekly' | 'monthly' | 'yearly';
   name: string;
   price: number;
   billingPeriod: string;

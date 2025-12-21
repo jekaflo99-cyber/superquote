@@ -28,3 +28,6 @@ api/.env.local
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
+.env*.local

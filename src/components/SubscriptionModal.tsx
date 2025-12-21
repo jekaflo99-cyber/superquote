@@ -9,7 +9,7 @@ import StripeService from '../services/stripeService';
 interface SubscriptionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onPurchase: (plan: 'yearly' | 'monthly' | 'weekly') => void;
+    onPurchase: (plan: 'yearly' | 'monthly' | 'weekly' | 'holidayPass') => void;
     onRestore?: () => void;
     language: LanguageCode;
 }
@@ -22,15 +22,17 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     language 
 }) => {
     const t = UI_TRANSLATIONS[language];
-    const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly' | 'weekly'>('yearly');
+    const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly' | 'weekly' | 'holidayPass'>('yearly');
     const [plans, setPlans] = useState<{
         yearly: SubscriptionPlan | null;
         monthly: SubscriptionPlan | null;
         weekly: SubscriptionPlan | null;
+        holidayPass: SubscriptionPlan | null;
     }>({
         yearly: null,
         monthly: null,
-        weekly: null
+        weekly: null,
+        holidayPass: null
     });
     const [isNativeApp, setIsNativeApp] = useState(true);
     const [isLoadingStripe, setIsLoadingStripe] = useState(false);
@@ -59,6 +61,20 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
 
     // Preços fallback (caso o RevenueCat não carregue)
     const fallbackPricing = CURRENCY_PRICES[currency];
+
+    // Campanha de Natal: Ativa até 3 de Janeiro de 2026 (ajuste o ano conforme necessário)
+    const CAMPAIGN_END_DATE = new Date('2026-01-04T00:00:00'); 
+    const isCampaignActive = new Date() < CAMPAIGN_END_DATE;
+
+    const [isShowingCampaign, setIsShowingCampaign] = useState(isCampaignActive);
+
+    useEffect(() => {
+        if (isShowingCampaign) {
+            setSelectedPlan('holidayPass');
+        } else {
+            setSelectedPlan('yearly');
+        }
+    }, [isShowingCampaign]);
 
     useEffect(() => {
         if (isOpen) {
@@ -159,7 +175,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         }
     };
 
-    const getPricing = (planType: 'yearly' | 'monthly' | 'weekly') => {
+    const getPricing = (planType: 'yearly' | 'monthly' | 'weekly' | 'holidayPass') => {
         const plan = plans[planType];
         if (plan) {
             return {
@@ -168,12 +184,16 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 perMonth: plan.pricePerMonth
             };
         }
+        if (planType === 'holidayPass') {
+            return fallbackPricing['weekly'];
+        }
         return fallbackPricing[planType];
     };
 
     const yearlyPrice = getPricing('yearly');
     const monthlyPrice = getPricing('monthly');
     const weeklyPrice = getPricing('weekly');
+    const holidayPassPrice = getPricing('holidayPass');
 
     if (!isOpen) return null;
 
@@ -202,6 +222,33 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 </div>
 
                 {/* Plans */}
+                {isShowingCampaign ? (
+                    <div className="mb-6">
+                        <div className="w-full p-6 rounded-xl border-2 border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.3)] text-center relative overflow-hidden">
+                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-neon-pulse to-transparent opacity-20 rounded-full blur-xl"></div>
+                            
+                            <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">{t.campaignTitle}</h3>
+                            <p className="text-sm text-white/90 mb-4 font-medium leading-relaxed">
+                                {t.campaignSubtitle}
+                            </p>
+                            
+                            <div className="bg-dark-carbon/50 rounded-lg p-3 mb-2 inline-block">
+                                <span className="text-neon-pulse font-black text-3xl">{holidayPassPrice.price}</span>
+                            </div>
+                            
+                            <p className="text-xs text-text-dim mt-2">
+                                {t.campaignNote}
+                            </p>
+                        </div>
+                        
+                        <button 
+                            onClick={() => setIsShowingCampaign(false)}
+                            className="w-full mt-4 py-3 text-sm font-bold text-text-secondary hover:text-white border border-dark-steel hover:border-white/50 rounded-lg transition-all uppercase tracking-wide"
+                        >
+                            {t.otherPlans}
+                        </button>
+                    </div>
+                ) : (
                 <div className="space-y-3 mb-6">
                     {/* Plano Anual - DESTACADO */}
                     <button
@@ -308,6 +355,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                         </div>
                     </button>
                 </div>
+                )}
 
                 {/* Email Input - PWA Only */}
                 {!isNativeApp && (
@@ -330,7 +378,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                         onClick={() => onPurchase(selectedPlan)}
                         className="w-full bg-neon-pulse hover:bg-neon-mint text-dark-carbon font-black text-xl py-4 rounded-xl shadow-[0_0_25px_rgba(0,255,114,0.4)] transition-all hover:scale-[1.02] active:scale-95 uppercase tracking-wide mb-6"
                     >
-                        {t.continueButton}
+                        {isShowingCampaign ? t.campaignButton.replace('{price}', weeklyPrice.price) : t.continueButton}
                     </button>
                 ) : (
                     // PWA - Stripe
@@ -340,7 +388,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                             disabled={isLoadingStripe}
                             className="w-full bg-neon-pulse hover:bg-neon-mint disabled:bg-gray-600 text-dark-carbon font-black text-xl py-4 rounded-xl shadow-[0_0_25px_rgba(0,255,114,0.4)] transition-all hover:scale-[1.02] active:scale-95 uppercase tracking-wide mb-6"
                         >
-                            {isLoadingStripe ? 'A processar...' : t.continueButton}
+                            {isLoadingStripe ? 'A processar...' : (isShowingCampaign ? t.campaignButton.replace('{price}', weeklyPrice.price) : t.continueButton)}
                         </button>
                         {stripeError && (
                             <div className="bg-red-500 bg-opacity-20 border border-red-500 rounded p-3 mb-4 text-red-300 text-sm">

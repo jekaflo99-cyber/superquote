@@ -1,6 +1,9 @@
 import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
 import type { PurchasesOfferings, PurchasesPackage } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
+import { remoteConfig } from './firebase';
+// @ts-ignore
+import { getValue } from 'firebase/remote-config';
 
 export interface SubscriptionPlan {
     identifier: string;
@@ -53,6 +56,25 @@ class RevenueCatService {
             const entitlements = customerInfo.customerInfo.entitlements;
             const proEntitlement = entitlements.active['SuperQuote Pro'];
             
+            // Lógica da Campanha de Natal com Remote Config
+            const activeSubscriptions = customerInfo.customerInfo.activeSubscriptions;
+            const CAMPAIGN_PRODUCT_ID = 'prode72d24dd2d'; // ID do produto na loja (Store Product ID)
+
+            if (activeSubscriptions.includes(CAMPAIGN_PRODUCT_ID)) {
+                // Verifica no Firebase Remote Config se a campanha ainda está ativa
+                // A variável 'is_holiday_campaign_active' deve ser criada no Firebase Console
+                const isCampaignActive = getValue(remoteConfig, 'is_holiday_campaign_active').asBoolean();
+                
+                if (!isCampaignActive) {
+                    console.log('Holiday Campaign expired (Remote Config says FALSE)');
+                    // Continua para verificar se existe outra subscrição válida
+                } else {
+                    console.log('Holiday Campaign Active & User has Pass');
+                    this.isPremium = true;
+                    return true;
+                }
+            }
+            
             this.isPremium = proEntitlement !== undefined;
 
             console.log('Premium status:', this.isPremium);
@@ -69,6 +91,7 @@ class RevenueCatService {
         yearly: SubscriptionPlan | null;
         monthly: SubscriptionPlan | null;
         weekly: SubscriptionPlan | null;
+        holidayPass: SubscriptionPlan | null;
     }> {
         try {
             if (!this.isInitialized) {
@@ -81,7 +104,7 @@ class RevenueCatService {
             const currentOffering = offerings.current;
             if (!currentOffering) {
                 console.log('No offerings available');
-                return { yearly: null, monthly: null, weekly: null };
+                return { yearly: null, monthly: null, weekly: null, holidayPass: null };
             }
 
             // Mapeia os packages pelos identifiers configurados no RevenueCat
@@ -95,6 +118,9 @@ class RevenueCatService {
             );
             const weekly = packages.find((pkg: PurchasesPackage) => 
                 pkg.identifier === 'weekly' || pkg.packageType === 'WEEKLY'
+            );
+            const holidayPass = packages.find((pkg: PurchasesPackage) => 
+                pkg.identifier === 'holiday_pass_2025'
             );
 
             return {
@@ -114,11 +140,16 @@ class RevenueCatService {
                     identifier: weekly.identifier,
                     title: weekly.product.title,
                     price: weekly.product.priceString
+                } : null,
+                holidayPass: holidayPass ? {
+                    identifier: holidayPass.identifier,
+                    title: holidayPass.product.title,
+                    price: holidayPass.product.priceString
                 } : null
             };
         } catch (error) {
             console.error('Error getting offerings:', error);
-            return { yearly: null, monthly: null, weekly: null };
+            return { yearly: null, monthly: null, weekly: null, holidayPass: null };
         }
     }
 
@@ -127,7 +158,7 @@ class RevenueCatService {
         return monthlyPrice.toFixed(2) + '€';
     }
 
-    async purchasePackage(planType: 'yearly' | 'monthly' | 'weekly'): Promise<boolean> {
+    async purchasePackage(planType: 'yearly' | 'monthly' | 'weekly' | 'holidayPass'): Promise<boolean> {
         try {
             if (!this.isInitialized) {
                 await this.initialize();
@@ -152,6 +183,10 @@ class RevenueCatService {
             } else if (planType === 'weekly') {
                 selectedPackage = packages.find((pkg: PurchasesPackage) => 
                     pkg.identifier === 'weekly' || pkg.packageType === 'WEEKLY'
+                );
+            } else if (planType === 'holidayPass') {
+                selectedPackage = packages.find((pkg: PurchasesPackage) => 
+                    pkg.identifier === 'holiday_pass_2025'
                 );
             }
 

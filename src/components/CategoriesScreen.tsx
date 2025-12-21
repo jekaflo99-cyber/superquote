@@ -122,19 +122,52 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
     }
   };
 
-  // Mostra banner quando entra na tela
+  // Mostra banner quando entra na tela (apenas se não for premium)
   useEffect(() => {
-    admobService.showBanner();
+    if (!isPremium) {
+        admobService.showBanner();
+    }
     
     // Remove banner quando sai da tela
     return () => {
       admobService.removeBanner();
     };
-  }, []);
+  }, [isPremium]);
 
   const suggestions = useMemo(() => {
-    const shuffled = [...categories].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 3);
+    // Always show Christmas/Natal, New Year variants, and Reflection as suggestions
+    // Support multiple languages: pt-PT, pt-BR, en, es, etc.
+    
+    // Find the three priority categories from the list, matching by keywords
+    const found = {
+      christmas: null as string | null,
+      newYear: null as string | null,
+      reflection: null as string | null,
+    };
+
+    categories.forEach(cat => {
+      const lower = cat.toLowerCase();
+      
+      // Match Christmas/Natal variants
+      if (!found.christmas && (lower.includes('natal') || lower.includes('christmas') || lower.includes('navidad'))) {
+        found.christmas = cat;
+      }
+      
+      // Match New Year variants (Ano Novo, Passagem de Ano, New Year, Año Nuevo)
+      if (!found.newYear && (lower.includes('ano novo') || lower.includes('passagem de ano') || 
+                            lower.includes('new year') || lower.includes('año nuevo'))) {
+        found.newYear = cat;
+      }
+      
+      // Match Reflection variants
+      if (!found.reflection && (lower.includes('reflexão') || lower.includes('reflection') ||
+                               lower.includes('reflexion'))) {
+        found.reflection = cat;
+      }
+    });
+
+    // Return the three priority categories in order, filtering out nulls
+    return [found.christmas, found.newYear, found.reflection].filter(cat => cat !== null) as string[];
   }, [categories]);
 
   const filteredCategories = categories.filter(c => 
