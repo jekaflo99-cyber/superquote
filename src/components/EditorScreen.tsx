@@ -8,9 +8,11 @@ import { useAutoTemplates } from '../Data/templates';
 import { admobService } from '../services/admobService';
 import { dailyUnlockService } from '../services/dailyUnlockService';
 import { revenueCatService } from '../services/revenueCatService';
+import StripeService from '../services/stripeService';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Media } from '@capacitor-community/media';
+import { Capacitor } from '@capacitor/core';
 import { RewardedAdModal } from './RewardedAdModal';
 import { SubscriptionModal } from './SubscriptionModal';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
@@ -816,10 +818,29 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
       }
   };
 
-  const handleRestorePurchases = async () => {
+  const handleRestorePurchases = async (email?: string) => {
       try {
           console.log('Restoring purchases...');
           
+          if (!Capacitor.isNativePlatform()) {
+             // Web Restore Logic
+             if (!email || !email.includes('@')) {
+                 alert('Por favor insira um email válido para restaurar.');
+                 return;
+             }
+             
+             const isPremium = await StripeService.checkSubscriptionStatus(email);
+             if (isPremium) {
+                 setShowSubscriptionModal(false);
+                 onUnlock();
+                 localStorage.setItem('userEmail', email); // Save for future
+                 alert('Acesso Premium restaurado com sucesso!');
+             } else {
+                 alert('Nenhuma subscrição ativa encontrada para este email.');
+             }
+             return;
+          }
+
           const hasActivePurchase = await revenueCatService.restorePurchases();
           
           if (hasActivePurchase) {

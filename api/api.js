@@ -210,6 +210,11 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
       await handleSubscriptionCanceled(subscription);
     }
 
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      await handleCheckoutSessionCompleted(session);
+    }
+
     res.json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error);
@@ -234,27 +239,43 @@ async function handleSubscriptionCreated(subscription) {
 
     console.log(`Syncing subscription for ${email} to RevenueCat`);
 
-    // Sincronizar com RevenueCat
+    // 1. Grant Entitlement (Promotional)
+    // Docs: https://www.revenuecat.com/docs/api-v1#tag/entitlements/operation/grant-entitlement
     await axios.post(
-      `https://api.revenuecat.com/v1/apps/${process.env.REVENUECAT_APP_ID}/subscribers`,
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/SuperQuote%20Pro/promotional`,
       {
-        app_user_id: email,
-        entitlements: {
-          'SuperQuote Pro': {
-            expires_date: new Date(subscription.current_period_end * 1000).toISOString(),
-          },
-        },
-        attributes: {
-          stripe_id: subscription.id,
-          plan_id: planId,
-        },
+        expiration_time_ms: subscription.current_period_end * 1000,
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.REVENUECAT_API_KEY}`,
+          'Content-Type': 'application/json',
+          'X-Platform': 'stripe' // Optional metadata
         },
       }
     );
+
+    // 2. Update Attributes (Optional but good for tracking)
+    try {
+      await axios.post(
+        `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/attributes`,
+        {
+          attributes: {
+            $email: { value: email },
+            stripe_subscription_id: { value: subscription.id },
+            plan_id: { value: planId }
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.REVENUECAT_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+        }
+      );
+    } catch (attrError) {
+      console.warn('Failed to update attributes in RevenueCat (non-fatal):', attrError.message);
+    }
 
     console.log(`✅ Subscription synced to RevenueCat for ${email}`);
   } catch (error) {
@@ -274,11 +295,15 @@ async function handleSubscriptionCanceled(subscription) {
 
     console.log(`Canceling subscription for ${email} in RevenueCat`);
 
-    await axios.delete(
-      `https://api.revenuecat.com/v1/apps/${process.env.REVENUECAT_APP_ID}/subscribers/${email}/entitlements/SuperQuote%20Pro`,
+    // Revoke Entitlement
+    // Docs: https://www.revenuecat.com/docs/api-v1#tag/entitlements/operation/revoke-entitlement
+    await axios.post(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/SuperQuote%20Pro/revoke_promotional`,
+      {},
       {
         headers: {
           Authorization: `Bearer ${process.env.REVENUECAT_API_KEY}`,
+          'Content-Type': 'application/json'
         },
       }
     );
@@ -286,6 +311,76 @@ async function handleSubscriptionCanceled(subscription) {
     console.log(`✅ Subscription canceled in RevenueCat for ${email}`);
   } catch (error) {
     console.error('Error canceling in RevenueCat:', error.response?.data || error.message);
+  }
+}
+
+async function handleCheckoutSessionCompleted(session) {
+  try {
+    const email = session.metadata?.email || session.customer_details?.email;
+    const userId = session.metadata?.userId;
+    const planId = session.metadata?.planId;
+
+    if (!email) {
+      console.log('No email in session metadata');
+      return;
+    }
+
+    console.log(`Checkout completed for ${email}. Syncing to RevenueCat...`);
+
+    let expirationTimeMs;
+    
+    if (session.subscription) {
+      try {
+        const subscription = await stripe.subscriptions.retrieve(session.subscription);
+        expirationTimeMs = subscription.current_period_end * 1000;
+      } catch (e) {
+        console.error("Error fetching subscription", e);
+        return; 
+      }
+    } else {
+      // One-time payment (e.g. Holiday Pass) - Default to 1 year access
+      expirationTimeMs = Date.now() + (365 * 24 * 60 * 60 * 1000);
+    }
+
+    // Grant Entitlement (Promotional)
+    await axios.post(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/SuperQuote%20Pro/promotional`,
+      {
+        expiration_time_ms: expirationTimeMs,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REVENUECAT_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+      }
+    );
+
+    // Update Attributes (Optional)
+    try {
+      await axios.post(
+        `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/attributes`,
+        {
+          attributes: {
+            $email: { value: email },
+            stripe_session_id: { value: session.id },
+            plan_id: { value: planId }
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.REVENUECAT_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+        }
+      );
+    } catch (attrError) {
+      console.warn('Failed to update attributes (non-fatal):', attrError.message);
+    }
+
+    console.log(`✅ Checkout synced to RevenueCat for ${email}`);
+  } catch (error) {
+    console.error('Error handling checkout session:', error.response?.data || error.message);
   }
 }
 
@@ -302,11 +397,13 @@ app.get('/api/subscription-status', async (req, res) => {
     }
 
     // Buscar no RevenueCat
+    // Docs: https://www.revenuecat.com/docs/api-v1#tag/customers/operation/get-customer
     const response = await axios.get(
-      `https://api.revenuecat.com/v1/apps/${process.env.REVENUECAT_APP_ID}/subscribers/${email}`,
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.REVENUECAT_API_KEY}`,
+          'Content-Type': 'application/json'
         },
       }
     );

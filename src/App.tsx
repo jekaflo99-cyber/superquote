@@ -12,6 +12,7 @@ import { AdMob } from '@capacitor-community/admob';
 import { Capacitor } from '@capacitor/core';
 import { admobService } from './services/admobService';
 import { revenueCatService } from './services/revenueCatService';
+import StripeService from './services/stripeService';
 import './index.css';
 
 const App: React.FC = () => {
@@ -72,6 +73,25 @@ const App: React.FC = () => {
     };
 
     initializeAdMob();
+  }, []);
+
+  // Check Web Premium Status
+  useEffect(() => {
+    const checkWebPremium = async () => {
+      if (!Capacitor.isNativePlatform()) {
+        const email = localStorage.getItem('userEmail');
+        if (email) {
+          console.log('Checking Web Premium status for:', email);
+          const isPremium = await StripeService.checkSubscriptionStatus(email);
+          if (isPremium) {
+            console.log('Web Premium confirmed');
+            setIsPremiumUser(true);
+          }
+        }
+      }
+    };
+    
+    checkWebPremium();
   }, []);
 
   // Initialize RevenueCat

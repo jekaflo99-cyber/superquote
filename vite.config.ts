@@ -23,7 +23,7 @@ export default defineConfig({
         orientation: 'portrait-primary',
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'], // Removed png, jpg from precache to avoid downloading all templates at start
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
@@ -48,6 +48,23 @@ export default defineConfig({
               },
             },
           },
+          {
+            // Cache local images (templates, etc.) - CacheFirst for speed
+            urlPattern: ({ url }) => url.pathname.startsWith('/assets/') && /\.(png|jpg|jpeg|webp)$/i.test(url.pathname),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'local-image-cache',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 dias
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
+      },
         ],
       },
       devOptions: {

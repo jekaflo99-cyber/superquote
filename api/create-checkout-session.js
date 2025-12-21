@@ -136,7 +136,7 @@ module.exports = async (req, res) => {
     console.log(`Using Price ID: ${price.id}`);
 
     // 3. Create Checkout Session
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig = {
       payment_method_types: ['card'],
       line_items: [
         {
@@ -150,9 +150,23 @@ module.exports = async (req, res) => {
       customer_email: email,
       metadata: {
         userId: userId || 'guest',
-        planId: planId
+        planId: planId,
+        email: email
       }
-    });
+    };
+
+    // Ensure metadata is propagated to the subscription object
+    if (plan.interval) {
+      sessionConfig.subscription_data = {
+        metadata: {
+          userId: userId || 'guest',
+          planId: planId,
+          email: email
+        }
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     // Return session ID (support both id and sessionId formats)
     res.status(200).json({ id: session.id, sessionId: session.id });

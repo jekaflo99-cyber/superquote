@@ -10,7 +10,7 @@ interface SubscriptionModalProps {
     isOpen: boolean;
     onClose: () => void;
     onPurchase: (plan: 'yearly' | 'monthly' | 'weekly' | 'holidayPass') => void;
-    onRestore?: () => void;
+    onRestore?: (email?: string) => void;
     language: LanguageCode;
 }
 
@@ -369,6 +369,9 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                             placeholder="seu@email.com"
                             className="w-full bg-dark-steel/50 border border-dark-steel rounded-lg px-4 py-3 text-white placeholder-text-dim focus:outline-none focus:border-neon-pulse transition"
                         />
+                        <p className="text-xs text-text-dim mt-2">
+                            Use este email para recuperar o acesso em outros dispositivos.
+                        </p>
                     </div>
                 )}
 
@@ -409,7 +412,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 {/* Footer Links */}
                 <div className="flex flex-col items-center gap-3 pt-4 border-t border-dark-steel/50">
                     <button 
-                        onClick={onRestore}
+                        onClick={() => onRestore && onRestore(userEmail)}
                         className="text-sm text-text-secondary hover:text-neon-pulse transition-colors font-medium"
                     >
                         {t.restorePurchases}
