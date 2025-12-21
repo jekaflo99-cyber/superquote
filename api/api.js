@@ -422,7 +422,8 @@ async function handleCheckoutSessionCompleted(session) {
     await axios.post(
       `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/entl3444d27ecc/promotional`,
       {
-        expiration_time_ms: Math.round(finalExpiration), // Math.round remove casas decimais
+        duration: 'weekly', // <--- OBRIGATÓRIO (mesmo que seja ignorado pela data abaixo)
+        expiration_time_ms: Math.round(finalExpiration),
       },
       {
         headers: {
