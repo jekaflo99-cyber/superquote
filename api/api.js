@@ -451,6 +451,37 @@ async function handleCheckoutSessionCompleted(session) {
 }
 
 /**
+ * GET /api/verify-session
+ * Recupera o email de uma sessão de checkout
+ */
+app.get('/api/verify-session', async (req, res) => {
+  const { session_id } = req.query;
+
+  if (!session_id) {
+    return res.status(400).json({ error: 'Missing session_id' });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const email = session.customer_details?.email || session.customer_email;
+
+    return res.json({ 
+      email: email,
+      status: session.payment_status 
+    });
+
+  } catch (error) {
+    console.error('Error retrieving session:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * GET /api/subscription-status
  * Verifica status da subscrição
  */
@@ -475,13 +506,28 @@ app.get('/api/subscription-status', async (req, res) => {
     );
 
     const entitlements = response.data?.subscriber?.entitlements || {};
-    const isPremium = 'SuperQuote Pro' in entitlements;
+    const entitlement = entitlements['SuperQuote Pro'];
+    let isPremium = false;
+
+    if (entitlement) {
+        // Check expiration if present (lifetime doesn't have expiration)
+        if (entitlement.expires_date) {
+            isPremium = new Date(entitlement.expires_date) > new Date();
+        } else {
+            // No expiration date usually means lifetime or active subscription
+            isPremium = true;
+        }
+    }
 
     res.json({
       isPremium,
       entitlements,
     });
   } catch (error) {
+    // 404 means user not found in RevenueCat -> Not Premium
+    if (error.response && error.response.status === 404) {
+       return res.json({ isPremium: false, entitlements: {} });
+    }
     console.error('Error checking subscription:', error.response?.data || error.message);
     res.json({ isPremium: false, entitlements: {} });
   }

@@ -94,6 +94,43 @@ const App: React.FC = () => {
     checkWebPremium();
   }, []);
 
+  // Handle Stripe Success Return
+  useEffect(() => {
+    const handleStripeReturn = async () => {
+      if (Capacitor.isNativePlatform()) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+
+      if (sessionId) {
+        console.log('Found Stripe session_id:', sessionId);
+        try {
+          const response = await fetch(`/api/verify-session?session_id=${sessionId}`);
+          const data = await response.json();
+
+          if (data.email) {
+            console.log('Verified purchase for:', data.email);
+            localStorage.setItem('userEmail', data.email);
+            
+            // Force check premium immediately
+            const isPremium = await StripeService.checkSubscriptionStatus(data.email);
+            if (isPremium) {
+              setIsPremiumUser(true);
+              alert('Compra confirmada! O Premium foi ativado.');
+            }
+            
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (error) {
+          console.error('Error verifying session:', error);
+        }
+      }
+    };
+
+    handleStripeReturn();
+  }, []);
+
   // Initialize RevenueCat
   useEffect(() => {
     const initializeRevenueCat = async () => {
