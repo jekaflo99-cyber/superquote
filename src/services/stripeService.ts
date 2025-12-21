@@ -105,7 +105,7 @@ export class StripeService {
   /**
    * Inicia o checkout Stripe
    */
-  static async startCheckout(planId: 'weekly' | 'monthly' | 'yearly', email: string, currencyOverride?: 'eur' | 'brl' | 'usd', userId?: string) {
+  static async startCheckout(planId: 'weekly' | 'monthly' | 'yearly' | 'holidayPass', email: string, currencyOverride?: 'eur' | 'brl' | 'usd', userId?: string) {
     try {
       if (!email) {
         throw new Error('Email is required');

@@ -9,6 +9,7 @@ import { FavoritesScreen } from './components/FavoritesScreen';
 import { SplashScreen } from './components/SplashScreen';
 import { OnboardingScreen } from './components/OnboardingScreen';
 import { AdMob } from '@capacitor-community/admob';
+import { Capacitor } from '@capacitor/core';
 import { admobService } from './services/admobService';
 import { revenueCatService } from './services/revenueCatService';
 import './index.css';

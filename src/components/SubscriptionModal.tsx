@@ -175,7 +175,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         }
     };
 
-    const getPricing = (planType: 'yearly' | 'monthly' | 'weekly' | 'holidayPass') => {
+    const getPricing = (planType: 'yearly' | 'monthly' | 'weekly' | 'holidayPass'): { price: string; trialDays?: number; perMonth?: string } => {
         const plan = plans[planType];
         if (plan) {
             return {
@@ -187,6 +187,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         if (planType === 'holidayPass') {
             return fallbackPricing['weekly'];
         }
+        // @ts-ignore
         return fallbackPricing[planType];
     };
 
