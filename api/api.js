@@ -292,7 +292,7 @@ async function handleSubscriptionCreated(subscription) {
     // 1. Grant Entitlement (Promotional)
     // Docs: https://www.revenuecat.com/docs/api-v1#tag/entitlements/operation/grant-entitlement
     await axios.post(
-      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/SuperQuote%20Pro/promotional`,
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/entl3444d27ecc/promotional`,
       {
         expiration_time_ms: subscription.current_period_end * 1000,
       },
@@ -348,7 +348,7 @@ async function handleSubscriptionCanceled(subscription) {
     // Revoke Entitlement
     // Docs: https://www.revenuecat.com/docs/api-v1#tag/entitlements/operation/revoke-entitlement
     await axios.post(
-      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/SuperQuote%20Pro/revoke_promotional`,
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/entl3444d27ecc/revoke_promotional`,
       {},
       {
         headers: {
@@ -411,7 +411,7 @@ async function handleCheckoutSessionCompleted(session) {
 
     // Grant Entitlement (Promotional)
     await axios.post(
-      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/SuperQuote%20Pro/promotional`,
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/entl3444d27ecc/promotional`,
       {
         expiration_time_ms: expirationTimeMs,
       },
