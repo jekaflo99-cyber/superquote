@@ -19,170 +19,10 @@ app.use(cors({
   credentials: true
 }));
 
-// JSON parsing para todas as rotas exceto webhook
-app.use(express.json());
-
-// Produtos/Planos Stripe com Suporte a Múltiplas Moedas
-const SUBSCRIPTION_PLANS = {
-  weekly: {
-    name: 'SuperQuote Pro - Semanal',
-    prices: {
-      eur: { amount: 1.99, currency: 'eur' },
-      brl: { amount: 7.90, currency: 'brl' },
-      usd: { amount: 1.99, currency: 'usd' }
-    },
-    interval: 'week',
-  },
-  monthly: {
-    name: 'SuperQuote Pro - Mensal',
-    prices: {
-      eur: { amount: 4.99, currency: 'eur' },
-      brl: { amount: 19.90, currency: 'brl' },
-      usd: { amount: 4.99, currency: 'usd' }
-    },
-    interval: 'month',
-  },
-  yearly: {
-    name: 'SuperQuote Pro - Anual',
-    prices: {
-      eur: { amount: 29.99, currency: 'eur' },
-      brl: { amount: 99.90, currency: 'brl' },
-      usd: { amount: 29.99, currency: 'usd' }
-    },
-    interval: 'year',
-  },
-};
-
-const handleCreateCheckoutSession = async (req, res) => {
-  // Force JSON parsing if body is string (Vercel fix)
-  if (typeof req.body === 'string') {
-    try {
-      req.body = JSON.parse(req.body);
-    } catch (e) {
-      console.error('Failed to parse request body:', e);
-      return res.status(400).json({ error: 'Invalid JSON body' });
-    }
-  }
-
-  try {
-    if (!stripe) {
-      console.error('Stripe not initialized - missing STRIPE_SECRET_KEY');
-      return res.status(500).json({ error: 'Server configuration error: Stripe key missing' });
-    }
-
-    const { planId, email, userId, currency = 'eur' } = req.body;
-
-    // DEBUG LOG
-    console.log('Request body:', req.body);
-    console.log('planId:', planId, 'email:', email, 'currency:', currency);
-    console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
-    console.log('STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY);
-
-    if (!planId || !['weekly', 'monthly', 'yearly'].includes(planId)) {
-      console.error('Invalid plan:', planId, 'Body:', JSON.stringify(req.body));
-      return res.status(400).json({ error: 'Invalid plan', received: planId, body: req.body });
-    }
-
-    if (!email) {
-      console.error('No email provided', 'Body:', JSON.stringify(req.body));
-      return res.status(400).json({ error: 'Email required', received: email });
-    }
-
-    const plan = SUBSCRIPTION_PLANS[planId];
-    const currencyLower = currency.toLowerCase();
-    const priceConfig = plan.prices[currencyLower] || plan.prices['eur'];
-
-    // Criar ou recuperar produto Stripe
-    const products = await stripe.products.list({ limit: 100 });
-    let product = products.data.find(p => p.metadata.planId === planId);
-
-    if (!product) {
-      product = await stripe.products.create({
-        name: plan.name,
-        metadata: { planId },
-      });
-    }
-
-    // Criar preço Stripe para a moeda específica
-    const prices = await stripe.prices.list({ 
-      product: product.id, 
-      currency: priceConfig.currency,
-      limit: 100 
-    });
-    
-    const targetAmount = Math.round(priceConfig.amount * 100);
-    // Procura um preço que coincida exatamente com o valor que queremos
-    let price = prices.data.find(p => p.unit_amount === targetAmount && p.active);
-
-    if (!price) {
-      console.log(`Creating new price for ${planId} in ${priceConfig.currency}: ${priceConfig.amount}`);
-      
-      // Desativa preços antigos diferentes deste valor
-      const oldPrices = prices.data.filter(p => p.unit_amount !== targetAmount && p.active);
-      for (const oldPrice of oldPrices) {
-        try {
-          await stripe.prices.update(oldPrice.id, { active: false });
-          console.log(`Disabled old price: ${oldPrice.id}`);
-        } catch (e) {
-          console.error('Error disabling old price:', e);
-        }
-      }
-
-      // Cria o novo preço com o valor correto
-      price = await stripe.prices.create({
-        product: product.id,
-        unit_amount: targetAmount,
-        currency: priceConfig.currency,
-        recurring: {
-          interval: plan.interval,
-        },
-      });
-      console.log(`Created new price: ${price.id} for ${priceConfig.amount} ${priceConfig.currency}`);
-    }
-
-    // Criar sessão de checkout
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'subscription',
-      line_items: [
-        {
-          price: price.id,
-          quantity: 1,
-        },
-      ],
-      success_url: `${process.env.FRONTEND_URL}?session_id={CHECKOUT_SESSION_ID}&success=true`,
-      cancel_url: `${process.env.FRONTEND_URL}?canceled=true`,
-      customer_email: email,
-      metadata: {
-        userId: userId || 'guest',
-        planId: planId,
-      },
-      subscription_data: {
-        metadata: {
-          userId: userId || 'guest',
-          email: email,
-          planId: planId,
-        },
-      },
-    });
-
-    res.json({ sessionId: session.id });
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
- * POST /api/create-checkout-session
- * Cria uma sessão de checkout Stripe
- */
-app.post('/api/create-checkout-session', handleCreateCheckoutSession);
-app.post('/create-checkout-session', handleCreateCheckoutSession);
-
 /**
  * POST /api/webhook
  * Webhook do Stripe para confirmar pagamentos
+ * IMPORTANTE: Deve vir ANTES de express.json() para receber o raw body
  */
 app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
@@ -221,6 +61,196 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
     res.status(400).send(`Webhook Error: ${error.message}`);
   }
 });
+
+// JSON parsing para todas as rotas exceto webhook
+app.use(express.json());
+
+// Produtos/Planos Stripe com Suporte a Múltiplas Moedas
+const SUBSCRIPTION_PLANS = {
+  weekly: {
+    name: 'SuperQuote Pro - Semanal',
+    prices: {
+      eur: { amount: 1.99, currency: 'eur' },
+      brl: { amount: 7.90, currency: 'brl' },
+      usd: { amount: 1.99, currency: 'usd' }
+    },
+    interval: 'week',
+  },
+  monthly: {
+    name: 'SuperQuote Pro - Mensal',
+    prices: {
+      eur: { amount: 4.99, currency: 'eur' },
+      brl: { amount: 19.90, currency: 'brl' },
+      usd: { amount: 4.99, currency: 'usd' }
+    },
+    interval: 'month',
+  },
+  yearly: {
+    name: 'SuperQuote Pro - Anual',
+    prices: {
+      eur: { amount: 29.99, currency: 'eur' },
+      brl: { amount: 99.90, currency: 'brl' },
+      usd: { amount: 29.99, currency: 'usd' }
+    },
+    interval: 'year',
+  },
+  holidayPass: {
+    name: 'Acesso Total Festas',
+    prices: {
+      eur: { amount: 1.99, currency: 'eur' },
+      brl: { amount: 7.50, currency: 'brl' },
+      usd: { amount: 1.99, currency: 'usd' }
+    },
+    // Sem intervalo = Pagamento Único
+  },
+};
+
+const handleCreateCheckoutSession = async (req, res) => {
+  // Force JSON parsing if body is string (Vercel fix)
+  if (typeof req.body === 'string') {
+    try {
+      req.body = JSON.parse(req.body);
+    } catch (e) {
+      console.error('Failed to parse request body:', e);
+      return res.status(400).json({ error: 'Invalid JSON body' });
+    }
+  }
+
+  try {
+    if (!stripe) {
+      console.error('Stripe not initialized - missing STRIPE_SECRET_KEY');
+      return res.status(500).json({ error: 'Server configuration error: Stripe key missing' });
+    }
+
+    const { planId, email, userId, currency = 'eur' } = req.body;
+
+    // DEBUG LOG
+    console.log('Request body:', req.body);
+    console.log('planId:', planId, 'email:', email, 'currency:', currency);
+
+    if (!planId || !SUBSCRIPTION_PLANS[planId]) {
+      console.error('Invalid plan:', planId);
+      return res.status(400).json({ error: 'Invalid plan', received: planId });
+    }
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email required' });
+    }
+
+    const plan = SUBSCRIPTION_PLANS[planId];
+    const currencyLower = currency.toLowerCase();
+    const priceConfig = plan.prices[currencyLower] || plan.prices['eur'];
+    const isSubscription = !!plan.interval; // Se tem intervalo, é assinatura
+
+    // Criar ou recuperar produto Stripe
+    const products = await stripe.products.list({ limit: 100 });
+    let product = products.data.find(p => p.metadata.planId === planId);
+
+    if (!product) {
+      product = await stripe.products.create({
+        name: plan.name,
+        metadata: { planId },
+      });
+    }
+
+    // Criar preço Stripe para a moeda específica
+    const prices = await stripe.prices.list({ 
+      product: product.id, 
+      currency: priceConfig.currency,
+      limit: 100 
+    });
+    
+    const targetAmount = Math.round(priceConfig.amount * 100);
+    // Procura um preço que coincida exatamente com o valor que queremos
+    let price = prices.data.find(p => p.unit_amount === targetAmount && p.active);
+
+    if (!price) {
+      console.log(`Creating new price for ${planId} in ${priceConfig.currency}: ${priceConfig.amount}`);
+      
+      // Desativa preços antigos diferentes deste valor
+      const oldPrices = prices.data.filter(p => p.unit_amount !== targetAmount && p.active);
+      for (const oldPrice of oldPrices) {
+        try {
+          await stripe.prices.update(oldPrice.id, { active: false });
+        } catch (e) {
+          console.error('Error disabling old price:', e);
+        }
+      }
+
+      // Configuração do preço
+      const priceData = {
+        product: product.id,
+        unit_amount: targetAmount,
+        currency: priceConfig.currency,
+      };
+
+      // Só adiciona recurring se for assinatura
+      if (isSubscription) {
+        priceData.recurring = { interval: plan.interval };
+      }
+
+      price = await stripe.prices.create(priceData);
+      console.log(`Created new price: ${price.id}`);
+    }
+
+    // Configurar Sessão
+    const sessionConfig = {
+      payment_method_types: ['card'],
+      mode: isSubscription ? 'subscription' : 'payment', // Dinâmico
+      line_items: [
+        {
+          price: price.id,
+          quantity: 1,
+        },
+      ],
+      success_url: `${process.env.FRONTEND_URL}?session_id={CHECKOUT_SESSION_ID}&success=true`,
+      cancel_url: `${process.env.FRONTEND_URL}?canceled=true`,
+      customer_email: email,
+      metadata: {
+        userId: userId || 'guest',
+        planId: planId,
+        email: email // Redundância importante
+      },
+    };
+
+    // subscription_data só pode ser enviado se mode='subscription'
+    if (isSubscription) {
+      sessionConfig.subscription_data = {
+        metadata: {
+          userId: userId || 'guest',
+          email: email,
+          planId: planId,
+        },
+      };
+    } else {
+      // Para pagamento único, usamos payment_intent_data para persistir metadata
+      sessionConfig.payment_intent_data = {
+        metadata: {
+          userId: userId || 'guest',
+          email: email,
+          planId: planId,
+        },
+      };
+    }
+
+    // Criar sessão de checkout
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    res.json({ sessionId: session.id });
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/**
+ * POST /api/create-checkout-session
+ * Cria uma sessão de checkout Stripe
+ */
+app.post('/api/create-checkout-session', handleCreateCheckoutSession);
+app.post('/create-checkout-session', handleCreateCheckoutSession);
+
+
 
 /**
  * POST /api/sync-to-revenuecat
@@ -338,8 +368,25 @@ async function handleCheckoutSessionCompleted(session) {
         return; 
       }
     } else {
-      // One-time payment (e.g. Holiday Pass) - Default to 1 year access
-      expirationTimeMs = Date.now() + (365 * 24 * 60 * 60 * 1000);
+      // Lógica para pagamentos únicos (sem assinatura)
+      if (planId === 'holidayPass') {
+        // Campanha de Natal: Válido até 3 de Janeiro do próximo ano (ou deste, se estivermos em Janeiro)
+        const now = new Date();
+        let targetYear = now.getFullYear();
+        
+        // Se não estamos em Janeiro, o próximo dia 3 de Jan é no ano seguinte
+        if (now.getMonth() !== 0) {
+          targetYear += 1;
+        }
+        
+        // Define expiração para 3 de Janeiro às 23:59:59
+        const expirationDate = new Date(targetYear, 0, 3, 23, 59, 59);
+        expirationTimeMs = expirationDate.getTime();
+        console.log(`Holiday Pass purchased. Expires on: ${expirationDate.toISOString()}`);
+      } else {
+        // Outros pagamentos únicos: Padrão de 1 ano
+        expirationTimeMs = Date.now() + (365 * 24 * 60 * 60 * 1000);
+      }
     }
 
     // Grant Entitlement (Promotional)
