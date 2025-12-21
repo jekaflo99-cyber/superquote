@@ -370,68 +370,57 @@ async function handleCheckoutSessionCompleted(session) {
     const userId = session.metadata?.userId;
     const planId = session.metadata?.planId;
 
-    if (!email) {
-      console.log('No email in session metadata');
-      return;
-    }
-
-    console.log(`Checkout completed for ${email}. Syncing to RevenueCat...`);
-
-    let expirationTimeMs;
-    
-    if (session.subscription) {
+    // Bypass: Dá acesso mensal (30 dias) para holidayPass, sem lógica de datas
+    if (planId === 'holidayPass') {
+      console.log(`Sending Promo Grant (Monthly). Email: ${email}`);
+      await axios.post(
+        `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/entl3444d27ecc/promotional`,
+        {
+          duration: 'monthly', // Dá 30 dias de acesso. Simples e infalível.
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.REVENUECAT_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+        }
+      );
+    } else if (session.subscription) {
       try {
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
-        expirationTimeMs = subscription.current_period_end * 1000;
+        const expirationTimeMs = subscription.current_period_end * 1000;
+        await axios.post(
+          `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/entl3444d27ecc/promotional`,
+          {
+            expiration_time_ms: expirationTimeMs,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.REVENUECAT_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+          }
+        );
       } catch (e) {
         console.error("Error fetching subscription", e);
-        return; 
+        return;
       }
     } else {
-      // Lógica para pagamentos únicos (sem assinatura)
-      if (planId === 'holidayPass') {
-        // Campanha de Natal: Válido até 3 de Janeiro do próximo ano (ou deste, se estivermos em Janeiro)
-        const now = new Date();
-        let targetYear = now.getFullYear();
-        
-        // Se não estamos em Janeiro, o próximo dia 3 de Jan é no ano seguinte
-        if (now.getMonth() !== 0) {
-          targetYear += 1;
-        }
-        
-        // Define expiração para 3 de Janeiro às 23:59:59
-        const expirationDate = new Date(targetYear, 0, 3, 23, 59, 59);
-        expirationTimeMs = expirationDate.getTime();
-        console.log(`Holiday Pass purchased. Expires on: ${expirationDate.toISOString()}`);
-      } else {
-        // Outros pagamentos únicos: Padrão de 1 ano
-        expirationTimeMs = Date.now() + (365 * 24 * 60 * 60 * 1000);
-      }
-    }
-
-    // SOLUÇÃO DE SEGURANÇA: Garante que é um número inteiro válido
-    let finalExpiration = expirationTimeMs;
-    // Se por algum motivo for inválido, define 1 ano como fallback
-    if (!finalExpiration || isNaN(finalExpiration)) {
-        console.warn('⚠️ Expiration date was invalid. Defaulting to 1 year.');
-        finalExpiration = Date.now() + (365 * 24 * 60 * 60 * 1000);
-    }
-    // Debug: ver o que está a ser enviado
-    console.log(`Sending Promo Grant. Email: ${email}, Expiration: ${Math.round(finalExpiration)}`);
-    // Grant Entitlement (Promotional)
-    await axios.post(
-      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/entl3444d27ecc/promotional`,
-      {
-        duration: 'weekly', // <--- OBRIGATÓRIO (mesmo que seja ignorado pela data abaixo)
-        expiration_time_ms: Math.round(finalExpiration),
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.REVENUECAT_API_KEY}`,
-          'Content-Type': 'application/json'
+      // Outros pagamentos únicos: Padrão de 1 ano
+      const expirationTimeMs = Date.now() + (365 * 24 * 60 * 60 * 1000);
+      await axios.post(
+        `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/entl3444d27ecc/promotional`,
+        {
+          expiration_time_ms: expirationTimeMs,
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.REVENUECAT_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+        }
+      );
+    }
 
     // Update Attributes (Optional)
     try {

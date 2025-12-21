@@ -230,7 +230,17 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                             
                             <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">{t.campaignTitle}</h3>
                             <p className="text-sm text-white/90 mb-4 font-medium leading-relaxed">
-                                {t.campaignSubtitle}
+                                {/* Neon pulse highlight for 'durante 1 mês' and translations */}
+                                {(() => {
+                                    // Regex for all supported languages
+                                    const highlightRegex = /(durante 1 mês|for 1 month|durante 1 mes|por 1 mes|por 1 mês|pour 1 mois|für 1 Monat)/i;
+                                    const subtitle = t.campaignSubtitle;
+                                    const match = subtitle.match(highlightRegex);
+                                    if (!match) return subtitle;
+                                    const [highlight] = match;
+                                    const parts = subtitle.split(highlightRegex);
+                                    return <>{parts[0]}<span className="text-neon-pulse animate-pulse font-black drop-shadow-[0_0_8px_rgba(0,255,114,0.8)]">{highlight}</span>{parts[2]}</>;
+                                })()}
                             </p>
                             
                             <div className="bg-dark-carbon/50 rounded-lg p-3 mb-2 inline-block">

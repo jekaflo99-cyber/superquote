@@ -54,7 +54,7 @@ export const UI_TRANSLATIONS = {
     dailyLimitReached: "Limite diário atingido. Volta amanhã ou subscreve Premium!",
     // Campaign
     campaignTitle: "Acesso Total Festas",
-    campaignSubtitle: "Todas as imagens e todos os modelos de texto até 3 de Janeiro",
+    campaignSubtitle: "Todas as imagens e todos os modelos de texto durante 1 mês",
     campaignButton: "Desbloquear por {price}",
     campaignNote: "Pagamento único, sem renovação automática",
     otherPlans: "Ver outros planos",
@@ -145,7 +145,7 @@ export const UI_TRANSLATIONS = {
     dailyLimitReached: "Limite diário atingido. Volta amanhã ou subscreva Premium!",
     // Campaign
     campaignTitle: "Acesso Total Festas",
-    campaignSubtitle: "Todas as imagens e todos os modelos de texto até 3 de Janeiro",
+    campaignSubtitle: "Todas as imagens e todos os modelos de texto durante 1 mês",
     campaignButton: "Desbloquear por {price}",
     campaignNote: "Pagamento único, sem renovação automática",
     otherPlans: "Ver outros planos",
@@ -236,7 +236,7 @@ export const UI_TRANSLATIONS = {
     dailyLimitReached: "Daily limit reached. Come back tomorrow or subscribe to Premium!",
     // Campaign
     campaignTitle: "Holiday All Access",
-    campaignSubtitle: "All images and text templates until January 3rd",
+    campaignSubtitle: "All images and text templates for 1 month",
     campaignButton: "Unlock for {price}",
     campaignNote: "One-time payment, no automatic renewal",
     otherPlans: "See other plans",
@@ -327,7 +327,7 @@ export const UI_TRANSLATIONS = {
     dailyLimitReached: "Límite diario alcanzado. ¡Vuelve mañana o suscríbete a Premium!",
     // Campaign
     campaignTitle: "Acceso Total Fiestas",
-    campaignSubtitle: "Todas las imágenes y modelos de texto hasta el 3 de enero",
+    campaignSubtitle: "Todas las imágenes y todas las plantillas de texto por 1 mes",
     campaignButton: "Desbloquear por {price}",
     campaignNote: "Pago único, sin renovación automática",
     otherPlans: "Ver otros planes",
