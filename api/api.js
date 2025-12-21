@@ -19,21 +19,42 @@ app.use(cors({
   credentials: true
 }));
 
+// JSON Parsing com preservação do Raw Body para o Stripe (Método Mais Seguro)
+app.use(express.json({
+  verify: (req, res, buf) => {
+    if (req.originalUrl.startsWith('/api/webhook')) {
+      req.rawBody = buf.toString();
+    }
+  }
+}));
+
 /**
  * POST /api/webhook
  * Webhook do Stripe para confirmar pagamentos
- * IMPORTANTE: Deve vir ANTES de express.json() para receber o raw body
  */
-app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/api/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
+  
+  // Log para debug na Vercel
+  console.log(`Webhook received. Signature present: ${!!sig}`);
+
+  let event;
 
   try {
-    const event = stripe.webhooks.constructEvent(
-      req.body,
+    // Usa o rawBody salvo pelo middleware acima
+    event = stripe.webhooks.constructEvent(
+      req.rawBody,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+    console.log(`Webhook verified. Event type: ${event.type}`);
+  } catch (err) {
+    console.error(`Webhook Signature Verification Failed: ${err.message}`);
+    console.error('Check if STRIPE_WEBHOOK_SECRET in Vercel matches the Stripe Dashboard.');
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 
+  try {
     // Processar eventos
     if (event.type === 'customer.subscription.created') {
       const subscription = event.data.object;
@@ -57,13 +78,11 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
 
     res.json({ received: true });
   } catch (error) {
-    console.error('Webhook error:', error);
-    res.status(400).send(`Webhook Error: ${error.message}`);
+    console.error('Error processing webhook event:', error);
+    // Retornamos 200 para o Stripe não ficar tentando de novo se for erro de lógica nossa
+    res.json({ received: true, error: error.message }); 
   }
 });
-
-// JSON parsing para todas as rotas exceto webhook
-app.use(express.json());
 
 // Produtos/Planos Stripe com Suporte a Múltiplas Moedas
 const SUBSCRIPTION_PLANS = {
