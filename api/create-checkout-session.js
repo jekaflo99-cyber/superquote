@@ -73,7 +73,7 @@ module.exports = async (req, res) => {
         success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/cancel`,
         customer_email: email,
-        metadata: { userId, planId }
+        metadata: { userId: email, planId, email }
       });
       return res.status(200).json({ id: session.id, sessionId: session.id });
     }
@@ -149,7 +149,7 @@ module.exports = async (req, res) => {
       cancel_url: `${req.headers.origin}/cancel`,
       customer_email: email,
       metadata: {
-        userId: userId || 'guest',
+        userId: email,
         planId: planId,
         email: email
       }
@@ -159,7 +159,7 @@ module.exports = async (req, res) => {
     if (plan.interval) {
       sessionConfig.subscription_data = {
         metadata: {
-          userId: userId || 'guest',
+          userId: email,
           planId: planId,
           email: email
         }
