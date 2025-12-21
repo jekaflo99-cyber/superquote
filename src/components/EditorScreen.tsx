@@ -797,6 +797,15 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
       try {
           console.log('Purchasing plan:', plan);
           
+          // 🎁 Holiday Pass é GRÁTIS na versão nativa (apenas ativa localmente)
+          if (plan === 'holidayPass') {
+              console.log('Holiday Pass ativado (Grátis)!');
+              setShowSubscriptionModal(false);
+              onUnlock();
+              alert(t.unlockSuccess.replace('Meia-Noite', 'Sempre'));
+              return;
+          }
+
           const success = await revenueCatService.purchasePackage(plan);
           
           if (success) {
