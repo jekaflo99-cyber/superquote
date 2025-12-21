@@ -409,11 +409,20 @@ async function handleCheckoutSessionCompleted(session) {
       }
     }
 
+    // SOLUÇÃO DE SEGURANÇA: Garante que é um número inteiro válido
+    let finalExpiration = expirationTimeMs;
+    // Se por algum motivo for inválido, define 1 ano como fallback
+    if (!finalExpiration || isNaN(finalExpiration)) {
+        console.warn('⚠️ Expiration date was invalid. Defaulting to 1 year.');
+        finalExpiration = Date.now() + (365 * 24 * 60 * 60 * 1000);
+    }
+    // Debug: ver o que está a ser enviado
+    console.log(`Sending Promo Grant. Email: ${email}, Expiration: ${Math.round(finalExpiration)}`);
     // Grant Entitlement (Promotional)
     await axios.post(
       `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/entitlements/entl3444d27ecc/promotional`,
       {
-        expiration_time_ms: expirationTimeMs,
+        expiration_time_ms: Math.round(finalExpiration), // Math.round remove casas decimais
       },
       {
         headers: {
