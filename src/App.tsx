@@ -143,13 +143,6 @@ const App: React.FC = () => {
       }
   };
 
-  const handleActivateSecretPremium = () => {
-      // Ativa premium permanentemente via localStorage
-      localStorage.setItem('superquote_secret_premium', 'true');
-      setIsPremiumUser(true);
-      console.log('🔓 Secret Premium Mode Activated!');
-  };
-
   const handleLanguageSelect = (lang: LanguageCode) => {
     setNav({ ...nav, selectedLanguage: lang, currentScreen: 'categories' });
   };
@@ -241,7 +234,6 @@ const App: React.FC = () => {
             onOpenFavorites={handleGoToFavorites}
             language={currentLanguage}
             isPremium={isPremiumUser}
-            onActivateSecretPremium={handleActivateSecretPremium}
         />
       );
       break;

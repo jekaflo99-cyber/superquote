@@ -72,7 +72,7 @@ const detectCurrency = (): 'eur' | 'brl' | 'usd' => {
 };
 
 export interface SubscriptionPlan {
-  id: 'weekly' | 'monthly' | 'yearly';
+  id: 'weekly' | 'monthly' | 'yearly' | 'holidayPass';
   name: string;
   price: number;
   billingPeriod: string;
@@ -98,6 +98,12 @@ export const PLANS: SubscriptionPlan[] = [
     price: 29.99,
     billingPeriod: '/ano',
     savings: 'Poupa 50%',
+  },
+  {
+    id: 'holidayPass',
+    name: 'Acesso Total Festas',
+    price: 1.99,
+    billingPeriod: '/único',
   },
 ];
 

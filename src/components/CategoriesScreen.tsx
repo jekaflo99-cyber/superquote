@@ -13,7 +13,6 @@ interface Props {
   onOpenFavorites: () => void;
   language: LanguageCode;
   isPremium: boolean;
-  onActivateSecretPremium: () => void;
 }
 
 // Helper function to map category keywords to emojis
@@ -106,21 +105,9 @@ const getCategoryColor = (category: string, index: number): string => {
     return colors[index % colors.length];
 };
 
-export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelectCategory, onSurprise, onOpenFavorites, language, isPremium, onActivateSecretPremium }) => {
+export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelectCategory, onSurprise, onOpenFavorites, language, isPremium }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [secretClickCount, setSecretClickCount] = useState(0);
   const t = UI_TRANSLATIONS[language];
-
-  const handleSecretClick = () => {
-    const newCount = secretClickCount + 1;
-    setSecretClickCount(newCount);
-    
-    if (newCount === 10) {
-      onActivateSecretPremium();
-      setSecretClickCount(0);
-      alert('🎉 Premium Mode Activated Forever!');
-    }
-  };
 
   // Mostra banner quando entra na tela (apenas se não for premium)
   useEffect(() => {
@@ -223,16 +210,6 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
                     className="p-2 text-text-secondary hover:text-red-500 hover:bg-dark-graphite rounded-full transition-colors flex items-center gap-1"
                 >
                     <Heart className="w-6 h-6 fill-current text-red-500" />
-                </button>
-                <button 
-                    onClick={handleSecretClick}
-                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-md transition-all cursor-pointer flex items-center gap-1 ${
-                        isPremium 
-                        ? 'bg-neon-pulse text-dark-carbon border-neon-pulse shadow-[0_0_15px_rgba(0,255,114,0.4)]' 
-                        : 'bg-dark-graphite text-text-secondary border-dark-steel hover:border-neon-pulse/50'
-                    }`}
-                >
-                   {isPremium ? '✨ Pro' : 'Offline'}
                 </button>
             </div>
          </div>

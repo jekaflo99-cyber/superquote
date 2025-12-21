@@ -157,13 +157,6 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     };
 
     const handleStripeCheckout = async () => {
-        // 🎁 Holiday Pass é GRÁTIS - Não vai para Stripe!
-        if (selectedPlan === 'holidayPass') {
-            console.log('Holiday Pass ativado (Grátis)!');
-            onPurchase('holidayPass');
-            return;
-        }
-
         if (!userEmail || !userEmail.includes('@')) {
             setStripeError('Por favor insira um email válido');
             return;
@@ -175,7 +168,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         try {
             // Guardar email para futuro
             localStorage.setItem('userEmail', userEmail);
-            await StripeService.startCheckout(selectedPlan as 'yearly' | 'monthly' | 'weekly', userEmail, currency);
+            await StripeService.startCheckout(selectedPlan, userEmail, currency);
         } catch (error) {
             setStripeError(error instanceof Error ? error.message : 'Erro ao iniciar pagamento');
             setIsLoadingStripe(false);

@@ -32,6 +32,15 @@ const SUBSCRIPTION_PLANS = {
     },
     interval: 'year',
   },
+  holidayPass: {
+    name: 'Acesso Total Festas',
+    prices: {
+      eur: { amount: 1.99, currency: 'eur' },
+      brl: { amount: 7.50, currency: 'brl' },
+      usd: { amount: 1.99, currency: 'usd' }
+    },
+    // No interval means one-time payment
+  },
 };
 
 module.exports = async (req, res) => {
@@ -109,14 +118,19 @@ module.exports = async (req, res) => {
         await stripe.prices.update(oldPrice.id, { active: false });
       }
 
-      price = await stripe.prices.create({
+      const priceData = {
         product: product.id,
         unit_amount: targetAmount,
         currency: priceConfig.currency,
-        recurring: {
+      };
+
+      if (plan.interval) {
+        priceData.recurring = {
           interval: plan.interval,
-        },
-      });
+        };
+      }
+
+      price = await stripe.prices.create(priceData);
     }
 
     console.log(`Using Price ID: ${price.id}`);
@@ -130,7 +144,7 @@ module.exports = async (req, res) => {
           quantity: 1,
         },
       ],
-      mode: 'subscription',
+      mode: plan.interval ? 'subscription' : 'payment',
       success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.origin}/cancel`,
       customer_email: email,
