@@ -225,10 +225,11 @@ const handleCreateCheckoutSession = async (req, res) => {
       success_url: `${process.env.FRONTEND_URL}?session_id={CHECKOUT_SESSION_ID}&success=true`,
       cancel_url: `${process.env.FRONTEND_URL}?canceled=true`,
       customer_email: email,
+      client_reference_id: email, // Chave única do cliente
       metadata: {
-        userId: userId || 'guest',
+        userId: email, // Usando email como ID único (adeus guest!)
         planId: planId,
-        email: email // Redundância importante
+        email: email
       },
     };
 
@@ -236,7 +237,7 @@ const handleCreateCheckoutSession = async (req, res) => {
     if (isSubscription) {
       sessionConfig.subscription_data = {
         metadata: {
-          userId: userId || 'guest',
+          userId: email, // Email é o ID único
           email: email,
           planId: planId,
         },
@@ -245,7 +246,7 @@ const handleCreateCheckoutSession = async (req, res) => {
       // Para pagamento único, usamos payment_intent_data para persistir metadata
       sessionConfig.payment_intent_data = {
         metadata: {
-          userId: userId || 'guest',
+          userId: email, // Email é o ID único
           email: email,
           planId: planId,
         },
