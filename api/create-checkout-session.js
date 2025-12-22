@@ -1,4 +1,4 @@
-require('dotenv').config({ path: 'C:/instaquote/api/.env' });
+require('dotenv').config({ path: 'C:/SuperQuote/api/.env' });
 const Stripe = require('stripe');
 
 // Initialize Stripe

@@ -924,7 +924,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                           if (albumId) {
                               console.log('Tentativa 1: Guardar no álbum existente...');
                               await tentarGuardar(albumId);
-                              console.log('Imagem guardada no álbum InstaQuote!');
+                              console.log('Imagem guardada no álbum SuperQuote!');
                               setShowSaveSuccess(true);
                               setTimeout(() => setShowSaveSuccess(false), 3000);
                           } else {
@@ -944,7 +944,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                               if (novoAlbum) {
                                   console.log('Tentativa 2: Guardar no álbum recém-criado/corrigido...', novoAlbum.identifier);
                                   await tentarGuardar(novoAlbum.identifier);
-                                  console.log('Imagem guardada no álbum InstaQuote!');
+                                  console.log('Imagem guardada no álbum SuperQuote!');
                                   setShowSaveSuccess(true);
                                   setTimeout(() => setShowSaveSuccess(false), 3000);
                               } else {
@@ -969,7 +969,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement('a');
                       a.href = url;
-                      a.download = `instaquote_${format}_${exportQuality}.jpg`;
+                      a.download = `SuperQuote_${format}_${exportQuality}.jpg`;
                       a.click();
                       URL.revokeObjectURL(url);
                   }
@@ -1014,7 +1014,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
               
               try {
                   // Salvar ficheiro usando Capacitor Filesystem
-                  const fileName = `instaquote_${selectedShareFormat}_${Date.now()}.jpg`;
+                  const fileName = `SuperQuote_${selectedShareFormat}_${Date.now()}.jpg`;
                   const savedFile = await Filesystem.writeFile({
                       path: fileName,
                       data: base64Image,
@@ -1034,7 +1034,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                   const url = URL.createObjectURL(exportBlob);
                   const a = document.createElement('a');
                   a.href = url;
-                  a.download = `instaquote_${selectedShareFormat}_${exportQuality}.jpg`;
+                  a.download = `SuperQuote_${selectedShareFormat}_${exportQuality}.jpg`;
                   a.click();
                   URL.revokeObjectURL(url);
               }
@@ -1259,7 +1259,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                 {!isPremium && (
                     <div className="absolute bottom-3 right-3 pointer-events-none z-20 opacity-30">
                         <span className="text-white font-black text-xs tracking-wider shadow-black drop-shadow-md" style={{ fontFamily: 'Inter, sans-serif' }}>
-                            InstaQuote
+                            SuperQuote
                         </span>
                     </div>
                 )}

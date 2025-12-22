@@ -26,7 +26,7 @@ export const LanguageScreen: React.FC<Props> = ({ onSelectLanguage }) => {
             <img src={languageIcon} alt="language" className="w-full h-full object-cover animate-pulse" />
         </div>
         <h1 className="text-4xl font-black tracking-tight text-white">
-          Insta<span className="text-neon-pulse">Quote</span>
+          Super<span className="text-neon-pulse">Quote</span>
         </h1>
         <p className="text-text-secondary mt-3 text-lg font-medium">Select your language</p>
       </div>

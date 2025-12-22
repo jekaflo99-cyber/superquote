@@ -385,6 +385,42 @@ async function handleCheckoutSessionCompleted(session) {
           },
         }
       );
+
+      // 2. Enriquecer o perfil do cliente no RevenueCat
+      try {
+        await axios.post(
+          `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(email)}/attributes`,
+          {
+            attributes: {
+              // Guarda o email no campo oficial de email do RC para poderes pesquisar
+              '$email': { 
+                value: email,
+                updated_at_ms: Date.now()
+              },
+              // Guarda o nome (se vier do Stripe session)
+              '$displayName': {
+                value: session.customer_details?.name || 'Cliente Natal',
+                updated_at_ms: Date.now()
+              },
+              // Uma etiqueta tua para saberes de onde vieram
+              'campaign': {
+                value: 'holiday_pass_2025',
+                updated_at_ms: Date.now()
+              }
+            }
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.REVENUECAT_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+          }
+        );
+        console.log(`📝 Dados do cliente atualizados no RevenueCat!`);
+      } catch (attrError) {
+        console.error('⚠️ Aviso: Não foi possível atualizar atributos:', attrError.message);
+        // Não faças throw aqui, o importante (o acesso) já foi dado.
+      }
     } else if (session.subscription) {
       try {
         const subscription = await stripe.subscriptions.retrieve(session.subscription);

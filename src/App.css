@@ -45,7 +45,7 @@ const App: React.FC = () => {
   // Splash Screen & Onboarding Logic
   useEffect(() => {
     const checkOnboarding = () => {
-        const hasSeen = localStorage.getItem('instaquote_onboarding_seen');
+        const hasSeen = localStorage.getItem('SuperQuote_onboarding_seen');
         if (!hasSeen) {
             setShowOnboarding(true);
         }
@@ -59,7 +59,7 @@ const App: React.FC = () => {
 
   // Load Favorites from LocalStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('instaquote_favorites');
+    const saved = localStorage.getItem('SuperQuote_favorites');
     if (saved) {
       try {
         setFavoritePhrases(JSON.parse(saved));
@@ -78,11 +78,11 @@ const App: React.FC = () => {
       newFavorites = [...favoritePhrases, phrase];
     }
     setFavoritePhrases(newFavorites);
-    localStorage.setItem('instaquote_favorites', JSON.stringify(newFavorites));
+    localStorage.setItem('SuperQuote_favorites', JSON.stringify(newFavorites));
   };
 
   const handleFinishOnboarding = () => {
-      localStorage.setItem('instaquote_onboarding_seen', 'true');
+      localStorage.setItem('SuperQuote_onboarding_seen', 'true');
       setShowOnboarding(false);
   };
 
