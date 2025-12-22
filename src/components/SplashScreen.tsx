@@ -16,7 +16,7 @@ export const SplashScreen: React.FC = () => {
 </div>
 
             <h1 className="text-4xl font-black text-white tracking-tight mb-2">
-                Insta<span className="text-neon-pulse">Quote</span>
+                Super<span className="text-neon-pulse">Quote</span>
             </h1>
             <p className="text-text-secondary font-medium text-lg tracking-wide">Create. Inspire. Share.</p>
         </div>
