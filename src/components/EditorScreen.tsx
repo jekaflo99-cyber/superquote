@@ -1008,35 +1008,59 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             reader.readAsDataURL(exportBlob);
 
             reader.onloadend = async () => {
-                const base64Data = reader.result as string;
-                // Remove o prefixo "data:image/png;base64,"
-                const base64Image = base64Data.split(',')[1];
+                if (!Capacitor.isNativePlatform()) {
+                    // Lógica para Web/PWA
+                    try {
+                        const file = new File([exportBlob], `SuperQuote_${Date.now()}.png`, { type: exportBlob.type });
+                        const shareData = {
+                            files: [file],
+                            title: 'SuperQuote',
+                            text: 'Criado com SuperQuote'
+                        };
 
-                try {
-                    // Salvar ficheiro usando Capacitor Filesystem
-                    const fileName = `SuperQuote_${selectedShareFormat}_${Date.now()}.jpg`;
-                    const savedFile = await Filesystem.writeFile({
-                        path: fileName,
-                        data: base64Image,
-                        directory: Directory.Cache
-                    });
+                        if (navigator.canShare && navigator.canShare(shareData)) {
+                            await navigator.share(shareData);
+                        } else {
+                            // Fallback para download se Web Share API não suportar ficheiros
+                            throw new Error('Web Share API não suporta partilha de ficheiros neste browser.');
+                        }
+                    } catch (webShareError) {
+                        console.warn('Web Share falhou, fallback para download:', webShareError);
+                        // Fallback: Download
+                        const url = URL.createObjectURL(exportBlob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `SuperQuote_${Date.now()}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }
+                } else {
+                    // Lógica para Native (Android/iOS)
+                    const base64Data = reader.result as string;
+                    // Remove o prefixo "data:image/png;base64,"
+                    const base64Image = base64Data.split(',')[1];
 
-                    // Partilhar usando Capacitor Share
-                    await Share.share({
-                        title: 'SuperQuote',
-                        text: 'Criado com SuperQuote',
-                        files: [savedFile.uri],
-                        dialogTitle: 'Partilhar'
-                    });
-                } catch (shareError) {
-                    console.error('Erro ao partilhar:', shareError);
-                    // Fallback: download direto
-                    const url = URL.createObjectURL(exportBlob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `SuperQuote_${selectedShareFormat}_${exportQuality}.jpg`;
-                    a.click();
-                    URL.revokeObjectURL(url);
+                    try {
+                        // Salvar ficheiro usando Capacitor Filesystem
+                        const fileName = `SuperQuote_${selectedShareFormat}_${Date.now()}.jpg`;
+                        const savedFile = await Filesystem.writeFile({
+                            path: fileName,
+                            data: base64Image,
+                            directory: Directory.Cache
+                        });
+
+                        // Partilhar usando Capacitor Share
+                        await Share.share({
+                            title: 'SuperQuote',
+                            text: 'Criado com SuperQuote',
+                            files: [savedFile.uri],
+                            dialogTitle: 'Partilhar'
+                        });
+                    } catch (shareError) {
+                        console.error('Erro ao partilhar:', shareError);
+                    }
                 }
             };
         } catch (error) {
