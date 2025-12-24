@@ -33,6 +33,7 @@ const getCategoryEmoji = (category: string): string => {
   if (normalized.includes('frases de sabedoria')) return '🦉';
   if (normalized.includes('lições de vida')) return '🎓';
   if (normalized.includes('boas festas')) return '🎄';
+  if (normalized.includes('2026')) return '🎆';
   if (normalized.includes('ano novo') || normalized.includes('new year')) return '🎆';
   if (normalized.includes('motivação fitness') || normalized.includes('treino')) return '💪';
   if (normalized.includes('ansiedade') || normalized.includes('calma')) return '🧘';
@@ -66,43 +67,44 @@ const getCategoryEmoji = (category: string): string => {
   if (normalized.includes('reflexão')) return '🤔';
   if (normalized.includes('calendário')) return '📅';
   if (normalized.includes('término') || normalized.includes('ex')) return '💔';
-  if (normalized.includes('felicitações') ||normalized.includes('ex')) return '🤝';
-  if (normalized.includes('motivação') ||normalized.includes('ex')) return '🔥';
+  if (normalized.includes('felicitações') || normalized.includes('ex')) return '🤝';
+  if (normalized.includes('motivação') || normalized.includes('ex')) return '🔥';
 
-  return '✨'; 
+  return '✨';
 };
 
 const getCategoryColor = (category: string, index: number): string => {
-    const normalized = category.toLowerCase();
-    if (normalized.includes('amor') || normalized.includes('love') || normalized.includes('namorado') || normalized.includes('valentín')) return 'bg-pink-600';
-    if (normalized.includes('natal') || normalized.includes('christmas')) return 'bg-red-700';
-    if (normalized.includes('ano novo') || normalized.includes('new year')) return 'bg-amber-600';
-    if (normalized.includes('fitness') || normalized.includes('treino') || normalized.includes('motivação')) return 'bg-emerald-600';
-    if (normalized.includes('trabalho') || normalized.includes('work')) return 'bg-blue-700';
-    if (normalized.includes('estudo') || normalized.includes('study')) return 'bg-orange-600';
-    if (normalized.includes('fé') || normalized.includes('god') || normalized.includes('deus')) return 'bg-cyan-600';
-    if (normalized.includes('humor') || normalized.includes('funny')) return 'bg-yellow-600';
-    if (normalized.includes('família') || normalized.includes('family')) return 'bg-purple-600';
-    if (normalized.includes('amizade') || normalized.includes('friend')) return 'bg-green-600';
-    if (normalized.includes('reflexão') || normalized.includes('sabedoria')) return 'bg-teal-700';
-    if (normalized.includes('bom dia') || normalized.includes('morning')) return 'bg-orange-500';
-    if (normalized.includes('boa noite') || normalized.includes('night')) return 'bg-indigo-800';
-    if (normalized.includes('saudade') || normalized.includes('luto') || normalized.includes('condolências')) return 'bg-slate-700';
-    if (normalized.includes('mãe') || normalized.includes('mother')) return 'bg-rose-500';
-    if (normalized.includes('pai') || normalized.includes('father')) return 'bg-sky-700';
-    if (normalized.includes('status') || normalized.includes('foto')) return 'bg-fuchsia-700';
+  const normalized = category.toLowerCase();
+  if (normalized.includes('amor') || normalized.includes('love') || normalized.includes('namorado') || normalized.includes('valentín')) return 'bg-pink-600';
+  if (normalized.includes('natal') || normalized.includes('christmas')) return 'bg-red-700';
+  if (normalized.includes('2026')) return 'bg-amber-600';
+  if (normalized.includes('ano novo') || normalized.includes('new year')) return 'bg-amber-600';
+  if (normalized.includes('fitness') || normalized.includes('treino') || normalized.includes('motivação')) return 'bg-emerald-600';
+  if (normalized.includes('trabalho') || normalized.includes('work')) return 'bg-blue-700';
+  if (normalized.includes('estudo') || normalized.includes('study')) return 'bg-orange-600';
+  if (normalized.includes('fé') || normalized.includes('god') || normalized.includes('deus')) return 'bg-cyan-600';
+  if (normalized.includes('humor') || normalized.includes('funny')) return 'bg-yellow-600';
+  if (normalized.includes('família') || normalized.includes('family')) return 'bg-purple-600';
+  if (normalized.includes('amizade') || normalized.includes('friend')) return 'bg-green-600';
+  if (normalized.includes('reflexão') || normalized.includes('sabedoria')) return 'bg-teal-700';
+  if (normalized.includes('bom dia') || normalized.includes('morning')) return 'bg-orange-500';
+  if (normalized.includes('boa noite') || normalized.includes('night')) return 'bg-indigo-800';
+  if (normalized.includes('saudade') || normalized.includes('luto') || normalized.includes('condolências')) return 'bg-slate-700';
+  if (normalized.includes('mãe') || normalized.includes('mother')) return 'bg-rose-500';
+  if (normalized.includes('pai') || normalized.includes('father')) return 'bg-sky-700';
+  if (normalized.includes('status') || normalized.includes('foto')) return 'bg-fuchsia-700';
 
-    const colors = [
-        'bg-purple-600',
-        'bg-blue-600',
-        'bg-red-600',
-        'bg-green-600',
-        'bg-pink-600',
-        'bg-indigo-600',
-        'bg-orange-600',
-        'bg-teal-600',
-    ];
-    return colors[index % colors.length];
+  const colors = [
+    'bg-purple-600',
+    'bg-blue-600',
+    'bg-red-600',
+    'bg-green-600',
+    'bg-pink-600',
+    'bg-indigo-600',
+    'bg-orange-600',
+    'bg-teal-600',
+  ];
+  return colors[index % colors.length];
 };
 
 export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelectCategory, onSurprise, onOpenFavorites, language, isPremium }) => {
@@ -112,9 +114,9 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
   // Mostra banner quando entra na tela (apenas se não for premium)
   useEffect(() => {
     if (!isPremium) {
-        admobService.showBanner();
+      admobService.showBanner();
     }
-    
+
     // Remove banner quando sai da tela
     return () => {
       admobService.removeBanner();
@@ -124,47 +126,53 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
   const suggestions = useMemo(() => {
     // Always show Christmas/Natal, New Year variants, and Reflection as suggestions
     // Support multiple languages: pt-PT, pt-BR, en, es, etc.
-    
-    // Find the three priority categories from the list, matching by keywords
+
+    // Find the priority categories from the list, matching by keywords
     const found = {
       christmas: null as string | null,
+      cat2026: null as string | null,
       newYear: null as string | null,
       reflection: null as string | null,
     };
 
     categories.forEach(cat => {
       const lower = cat.toLowerCase();
-      
+
       // Match Christmas/Natal variants
       if (!found.christmas && (lower.includes('natal') || lower.includes('christmas') || lower.includes('navidad'))) {
         found.christmas = cat;
       }
-      
+
+      // Match 2026
+      if (!found.cat2026 && lower.includes('2026')) {
+        found.cat2026 = cat;
+      }
+
       // Match New Year variants (Ano Novo, Passagem de Ano, New Year, Año Nuevo)
-      if (!found.newYear && (lower.includes('ano novo') || lower.includes('passagem de ano') || 
-                            lower.includes('new year') || lower.includes('año nuevo'))) {
+      if (!found.newYear && (lower.includes('ano novo') || lower.includes('passagem de ano') ||
+        lower.includes('new year') || lower.includes('año nuevo'))) {
         found.newYear = cat;
       }
-      
+
       // Match Reflection variants
       if (!found.reflection && (lower.includes('reflexão') || lower.includes('reflection') ||
-                               lower.includes('reflexion'))) {
+        lower.includes('reflexion'))) {
         found.reflection = cat;
       }
     });
 
-    // Return the three priority categories in order, filtering out nulls
-    return [found.christmas, found.newYear, found.reflection].filter(cat => cat !== null) as string[];
+    // Return the priority categories in order: Natal, 2026, Ano Novo, Reflexão
+    return [found.christmas, found.cat2026, found.newYear, found.reflection].filter(cat => cat !== null) as string[];
   }, [categories]);
 
-  const filteredCategories = categories.filter(c => 
+  const filteredCategories = categories.filter(c =>
     c.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const isSearching = searchTerm.length > 0;
-  
-  const bottomCategories = isSearching 
-    ? filteredCategories 
+
+  const bottomCategories = isSearching
+    ? filteredCategories
     : categories.filter(c => !suggestions.includes(c));
 
   // Function to render text with neon highlight between asterisks
@@ -185,7 +193,7 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
 
   return (
     <div className="flex flex-col h-full bg-dark-carbon relative overflow-hidden">
-      
+
       {/* AdMob Banner Space - Reserved at top */}
       <div id="admob-banner-container" className="w-full h-[50px] bg-dark-graphite/30 flex items-center justify-center border-b border-dark-steel/30">
         <span className="text-xs text-text-dim opacity-50">Advertisement</span>
@@ -197,133 +205,133 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
 
       {/* Header & Search - Increased top padding for StatusBar effect */}
       <div className="bg-dark-carbon/80 backdrop-blur-md px-5 pt-12 pb-4 sticky top-0 z-20 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] rounded-b-3xl border-b border-dark-steel/50">
-         <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-                <button onClick={onBack} className="p-2 -ml-2 text-text-secondary hover:text-white hover:bg-dark-graphite rounded-full transition-colors">
-                    <ArrowLeft className="w-6 h-6" />
-                </button>
-            </div>
-            
-            <div className="flex gap-2">
-                <button 
-                    onClick={onOpenFavorites}
-                    className="p-2 text-text-secondary hover:text-red-500 hover:bg-dark-graphite rounded-full transition-colors flex items-center gap-1"
-                >
-                    <Heart className="w-6 h-6 fill-current text-red-500" />
-                </button>
-            </div>
-         </div>
-         
-         <h1 className="text-2xl font-bold text-white mb-6 leading-tight">
-            {renderHighlightedText(t.searchPlaceholder)}
-         </h1>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <button onClick={onBack} className="p-2 -ml-2 text-text-secondary hover:text-white hover:bg-dark-graphite rounded-full transition-colors">
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+          </div>
 
-         <div className="relative group">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-[#00FF41AA] w-5 h-5 transition-colors pointer-events-none" />
-            <input 
-                type="text"
-                placeholder=""
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ 
-                    textShadow: '0 0 5px #00FF41' 
-                }}
-                className="w-full bg-transparent border-2 border-[#00FF41] rounded-xl pl-4 pr-11 py-4 text-white placeholder-[#00FF41AA] focus:outline-none focus:shadow-[0_0_15px_rgba(0,255,65,0.4)] transition-all font-medium"
-            />
-         </div>
+          <div className="flex gap-2">
+            <button
+              onClick={onOpenFavorites}
+              className="p-2 text-text-secondary hover:text-red-500 hover:bg-dark-graphite rounded-full transition-colors flex items-center gap-1"
+            >
+              <Heart className="w-6 h-6 fill-current text-red-500" />
+            </button>
+          </div>
+        </div>
+
+        <h1 className="text-2xl font-bold text-white mb-6 leading-tight">
+          {renderHighlightedText(t.searchPlaceholder)}
+        </h1>
+
+        <div className="relative group">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-[#00FF41AA] w-5 h-5 transition-colors pointer-events-none" />
+          <input
+            type="text"
+            placeholder=""
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              textShadow: '0 0 5px #00FF41'
+            }}
+            className="w-full bg-transparent border-2 border-[#00FF41] rounded-xl pl-4 pr-11 py-4 text-white placeholder-[#00FF41AA] focus:outline-none focus:shadow-[0_0_15px_rgba(0,255,65,0.4)] transition-all font-medium"
+          />
+        </div>
       </div>
 
       <main className="flex-1 overflow-y-auto p-5 pb-32 no-scrollbar z-10">
-        
-        {!isSearching && (
-            <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4 px-1">
-                    <Sparkles className="w-5 h-5 text-neon-pulse fill-neon-pulse animate-pulse" />
-                    <h2 className="font-bold text-text-primary text-lg tracking-tight">{t.suggestions}</h2>
-                </div>
-                <div className="flex gap-4 overflow-x-auto pb-4 pt-2 -mx-5 px-5 snap-x snap-mandatory no-scrollbar">
-                    {suggestions.map((cat, i) => {
-                         const emoji = getCategoryEmoji(cat);
-                         const bgClass = getCategoryColor(cat, i + 10);
 
-                         return (
-                            <button
-                                key={cat}
-                                onClick={() => onSelectCategory(cat)}
-                                style={{ animationDelay: `${i * 100}ms` }}
-                                className={`flex-shrink-0 w-56 h-32 rounded-lg p-4 text-left ${bgClass} shadow-lg relative overflow-hidden group transition-all hover:scale-[1.02] active:scale-95 snap-center hover:ring-2 hover:ring-neon-mint opacity-0 animate-fade-up`}
-                            >
-                                {/* Glow Pulse Effect on Hover/Active */}
-                                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
-                                
-                                <span className="font-bold text-lg text-white block max-w-[85%] leading-tight drop-shadow-sm relative z-10 text-left line-clamp-3">
-                                    {cat}
-                                </span>
-                                
-                                <div className="absolute -bottom-3 -right-3 w-20 h-20 flex items-center justify-center transform rotate-[25deg] group-hover:rotate-[15deg] group-hover:scale-110 transition-transform duration-300 z-0 opacity-90">
-                                     <span className="text-6xl drop-shadow-md filter saturate-150">{emoji}</span>
-                                </div>
-                            </button>
-                        );
-                    })}
-                </div>
+        {!isSearching && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4 px-1">
+              <Sparkles className="w-5 h-5 text-neon-pulse fill-neon-pulse animate-pulse" />
+              <h2 className="font-bold text-text-primary text-lg tracking-tight">{t.suggestions}</h2>
             </div>
+            <div className="flex gap-4 overflow-x-auto pb-4 pt-2 -mx-5 px-5 snap-x snap-mandatory no-scrollbar">
+              {suggestions.map((cat, i) => {
+                const emoji = getCategoryEmoji(cat);
+                const bgClass = getCategoryColor(cat, i + 10);
+
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => onSelectCategory(cat)}
+                    style={{ animationDelay: `${i * 100}ms` }}
+                    className={`flex-shrink-0 w-56 h-32 rounded-lg p-4 text-left ${bgClass} shadow-lg relative overflow-hidden group transition-all hover:scale-[1.02] active:scale-95 snap-center hover:ring-2 hover:ring-neon-mint opacity-0 animate-fade-up`}
+                  >
+                    {/* Glow Pulse Effect on Hover/Active */}
+                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
+
+                    <span className="font-bold text-lg text-white block max-w-[85%] leading-tight drop-shadow-sm relative z-10 text-left line-clamp-3">
+                      {cat}
+                    </span>
+
+                    <div className="absolute -bottom-3 -right-3 w-20 h-20 flex items-center justify-center transform rotate-[25deg] group-hover:rotate-[15deg] group-hover:scale-110 transition-transform duration-300 z-0 opacity-90">
+                      <span className="text-6xl drop-shadow-md filter saturate-150">{emoji}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         <div className="mb-4 px-1">
-            <h2 className="font-bold text-text-primary text-lg tracking-tight flex items-center gap-2">
-                <Tag className="w-5 h-5 text-text-dim" />
-                {isSearching ? t.results : t.explore}
-            </h2>
+          <h2 className="font-bold text-text-primary text-lg tracking-tight flex items-center gap-2">
+            <Tag className="w-5 h-5 text-text-dim" />
+            {isSearching ? t.results : t.explore}
+          </h2>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-            {bottomCategories.map((cat, index) => {
-                 const emoji = getCategoryEmoji(cat);
-                 const bgStyle = getCategoryColor(cat, index);
-                 
-                 return (
-                    <button
-                        key={cat}
-                        onClick={() => onSelectCategory(cat)}
-                        style={{ animationDelay: `${index * 50}ms` }}
-                        className={`${bgStyle} rounded-lg p-4 min-h-[7rem] relative overflow-hidden shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/20 transition-all duration-300 group hover:ring-2 hover:ring-neon-mint hover:scale-[1.02] active:scale-95 opacity-0 animate-fade-up`}
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <span className="font-bold text-lg text-white block max-w-[85%] leading-tight drop-shadow-sm relative z-10 text-left line-clamp-3">
-                            {cat}
-                        </span>
-                        
-                        <div className="absolute -bottom-3 -right-3 w-20 h-20 flex items-center justify-center transform rotate-[25deg] group-hover:rotate-[15deg] group-hover:scale-110 transition-transform duration-300 z-0 opacity-90">
-                             <span className="text-6xl drop-shadow-md filter saturate-150">{emoji}</span>
-                        </div>
-                    </button>
-                 );
-            })}
-            
-            {bottomCategories.length === 0 && (
-                <div className="col-span-2 py-12 flex flex-col items-center text-center text-text-dim">
-                    <div className="bg-dark-graphite p-4 rounded-full mb-4 ring-1 ring-dark-steel">
-                        <Search className="w-8 h-8 opacity-40 text-text-dim" />
-                    </div>
-                    <p className="text-lg font-medium text-text-secondary">{t.noResults}</p>
-                    <p className="text-sm opacity-50">{t.tryAnother} "{searchTerm}"</p>
+          {bottomCategories.map((cat, index) => {
+            const emoji = getCategoryEmoji(cat);
+            const bgStyle = getCategoryColor(cat, index);
+
+            return (
+              <button
+                key={cat}
+                onClick={() => onSelectCategory(cat)}
+                style={{ animationDelay: `${index * 50}ms` }}
+                className={`${bgStyle} rounded-lg p-4 min-h-[7rem] relative overflow-hidden shadow-lg hover:shadow-xl hover:shadow-[#00FF41]/20 transition-all duration-300 group hover:ring-2 hover:ring-neon-mint hover:scale-[1.02] active:scale-95 opacity-0 animate-fade-up`}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <span className="font-bold text-lg text-white block max-w-[85%] leading-tight drop-shadow-sm relative z-10 text-left line-clamp-3">
+                  {cat}
+                </span>
+
+                <div className="absolute -bottom-3 -right-3 w-20 h-20 flex items-center justify-center transform rotate-[25deg] group-hover:rotate-[15deg] group-hover:scale-110 transition-transform duration-300 z-0 opacity-90">
+                  <span className="text-6xl drop-shadow-md filter saturate-150">{emoji}</span>
                 </div>
-            )}
+              </button>
+            );
+          })}
+
+          {bottomCategories.length === 0 && (
+            <div className="col-span-2 py-12 flex flex-col items-center text-center text-text-dim">
+              <div className="bg-dark-graphite p-4 rounded-full mb-4 ring-1 ring-dark-steel">
+                <Search className="w-8 h-8 opacity-40 text-text-dim" />
+              </div>
+              <p className="text-lg font-medium text-text-secondary">{t.noResults}</p>
+              <p className="text-sm opacity-50">{t.tryAnother} "{searchTerm}"</p>
+            </div>
+          )}
         </div>
 
       </main>
 
       <div className="absolute bottom-8 left-0 right-0 px-6 flex justify-center z-30 pointer-events-none">
-         <button 
-            onClick={onSurprise}
-            className="pointer-events-auto flex items-center gap-3 bg-neon-pulse text-dark-carbon pl-6 pr-8 py-3.5 rounded-full shadow-[0_0_25px_rgba(0,255,114,0.4)] hover:bg-neon-mint hover:scale-105 active:scale-95 transition-all font-bold text-lg tracking-wide border border-neon-mint"
-         >
-            <Dices className="w-6 h-6 animate-spin-slow" />
-            <span>{t.surpriseMe}</span>
-         </button>
+        <button
+          onClick={onSurprise}
+          className="pointer-events-auto flex items-center gap-3 bg-neon-pulse text-dark-carbon pl-6 pr-8 py-3.5 rounded-full shadow-[0_0_25px_rgba(0,255,114,0.4)] hover:bg-neon-mint hover:scale-105 active:scale-95 transition-all font-bold text-lg tracking-wide border border-neon-mint"
+        >
+          <Dices className="w-6 h-6 animate-spin-slow" />
+          <span>{t.surpriseMe}</span>
+        </button>
       </div>
-      
+
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-dark-carbon via-dark-carbon/80 to-transparent pointer-events-none z-20" />
     </div>
   );
