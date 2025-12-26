@@ -3,6 +3,69 @@ import { type PhraseData } from '../types';
 
 export const PHRASES_DB: PhraseData = {
   "pt-PT": {
+    "2026": [
+      "Em 2026, a regra é simples: se não me traz paz, não entra na minha vida. Este ano a prioridade sou eu, a minha saúde mental e quem me quer bem de verdade.",
+      "2026 não vai ser apenas 'mais um ano'. Vai ser o ano em que deixo de adiar os meus sonhos e começo, finalmente, a viver a vida que mereço.",
+      "Vou entrar em 2026 com a bagagem leve. Deixo para trás as mágoas, os 'quase' e quem não soube ficar. O futuro exige espaço para o que é novo.",
+      "Nota mental para 2026: Menos expectativas nos outros, mais investimento em mim. O segredo é não esperar que o ano mude, mas sim mudar a forma como olho para o ano.",
+      "Este ano aprendi a ser forte, mas em 2026 quero aprender a ser feliz. Que venha a leveza, os sorrisos fáceis e os dias sem pressa.",
+      "2026 vai ter de mudar muita coisa, a começar por esta mania de querer agradar a toda a gente. O meu 'sim' este ano vai ser sagrado.",
+      "Que 2026 me traga a coragem que faltou em 2025. Coragem para dizer não, coragem para ir embora e coragem para recomeçar do zero.",
+      "Em 2026, fecho a porta a tudo o que foi morno. Quero viver intensamente, amar sem medidas e sorrir até doer a cara. A vida é demasiado curta para ser vivida pela metade.",
+      "Aprendi que não posso controlar tudo, e essa é a minha missão para 2026: deixar fluir. O que tiver de ser meu, encontrará o caminho até mim. O resto é paisagem.",
+      "Este ano vou fazer uma limpeza geral: na casa, na agenda e no coração. Quem não acrescenta, não faz falta. 2026 será o ano da leveza absoluta.",
+      "Que em 2026 eu tenha a sabedoria de perdoar o passado, mas a lucidez de não o repetir. Errar é crescer, mas insistir no erro é perder tempo.",
+      "Vou parar de procurar a felicidade nas grandes conquistas e começar a vê-la nos detalhes. Um café quente, um abraço apertado, um pôr do sol. 2026 será feito de pequenos milagres.",
+      "Não vou prometer que 2026 será perfeito, porque a vida não é linear. Mas prometo que não vou desistir de mim, mesmo nos dias em que tudo parecer difícil.",
+      "Desapegar não é desistir, é aceitar que certos ciclos terminaram. Em 2026, abro os braços para o novo, sem o peso da culpa do que ficou para trás.",
+      "A minha maior resolução para 2026? Ser autêntico. Não vou mudar a minha essência para caber no mundo de ninguém. Quem gostar, fica. Quem não gostar, segue.",
+      "Que 2026 me traga pessoas que saibam ser casa, colo e abrigo. Estou cansado de tempestades e gente que só sabe ser chuva passageira.",
+      "Em 2026, vou celebrar cada pequena vitória. Levantei-me da cama? Ótimo. Tentei de novo? Excelente. O sucesso constrói-se passo a passo.",
+      "Em 2026, a regra é simples: o que me tira a paz, fica do lado de fora. Este ano eu escolho presença, saúde mental e pessoas que somam sem eu ter de me encolher.",
+      "2026 vai ser o ano em que eu paro de me explicar e começo a me respeitar. Quem entende, fica; quem não entende, segue caminho.",
+      "Vou entrar em 2026 com menos culpa e mais clareza: não devo lealdade a hábitos que me fazem mal nem a relações que me deixam vazio.",
+      "2026 não chega para me salvar; chega para eu me escolher. A mudança não é o calendário — sou eu a fazer diferente todos os dias.",
+      "Em 2026, eu troco urgência por direção. Não quero fazer muito; quero fazer o que faz sentido.",
+      "2026 vai ter de mudar muita coisa, incluindo a minha tolerância ao mínimo. Eu mereço consistência, respeito e verdade.",
+      "Este é o ano em que eu deixo de confundir amor com esforço sozinho. Em 2026, ou é recíproco, ou não é para mim.",
+      "Em 2026, eu não vou correr atrás de quem não caminha comigo. Vou investir onde há cuidado, presença e vontade real.",
+      "2026 vai ser assim: limites claros, coração leve e cabeça no lugar. Menos drama, mais paz.",
+      "Vou fazer de 2026 um recomeço sem barulho: menos promessas publicadas e mais mudanças praticadas.",
+      "Em 2026, eu não vou negociar com a minha saúde — nem física, nem emocional. O que me adoece, eu largo.",
+      "2026 vai ser o ano em que eu paro de esperar coragem e começo com medo mesmo. A vida não espera a perfeição.",
+      "Em 2026, eu escolho relações que me tragam descanso, não confusão. Leveza também é amor.",
+      "2026 vai ser o ano em que eu aprendo a dizer 'não' sem justificar e 'sim' sem me abandonar.",
+      "Que 2026 me traga disciplina para o que eu sonho e serenidade para o que eu não controlo. O resto, eu resolvo com calma.",
+      "Em 2026, fecho a porta a tudo o que foi morno. Quero viver intensamente, amar sem medidas e sorrir até doer a cara. A vida é demasiado curta para ser vivida pela metade.",
+      "Aprendi que não posso controlar tudo, e essa é a minha missão para 2026: deixar fluir. O que tiver de ser meu, encontrará o caminho até mim. O resto é paisagem.",
+      "Este ano vou fazer uma limpeza geral: na casa, na agenda e no coração. Quem não acrescenta, não faz falta. 2026 será o ano da leveza absoluta.",
+      "Que em 2026 eu tenha a sabedoria de perdoar o passado, mas a lucidez de não o repetir. Errar é crescer, mas insistir no erro é perder tempo.",
+      "Vou parar de procurar a felicidade nas grandes conquistas e começar a vê-la nos detalhes. Um café quente, um abraço apertado, um pôr do sol. 2026 será feito de pequenos milagres.",
+      "Não vou prometer que 2026 será perfeito, porque a vida não é linear. Mas prometo que não vou desistir de mim, mesmo nos dias em que tudo parecer difícil.",
+      "Desapegar não é desistir, é aceitar que certos ciclos terminaram. Em 2026, abro os braços para o novo, sem o peso da culpa do que ficou para trás.",
+      "A minha maior resolução para 2026? Ser autêntico. Não vou mudar a minha essência para caber no mundo de ninguém. Quem gostar, fica. Quem não gostar, segue.",
+      "Que 2026 me traga pessoas que saibam ser casa, colo e abrigo. Estou cansado de tempestades e gente que só sabe ser chuva passageira.",
+      "Em 2026, vou celebrar cada pequena vitória. Levantei-me da cama? Ótimo. Tentei de novo? Excelente. O sucesso constrói-se passo a passo.",
+      "Para 2026, escolho a paz em vez da razão. Não vou perder tempo a explicar-me a quem não me quer entender. O meu silêncio será a minha melhor resposta.",
+      "A minha paz tornou-se um luxo que não estou disposto a negociar. Se custa a minha tranquilidade, é demasiado caro para o meu orçamento de 2026.",
+      "Que 2026 seja o ano do silêncio produtivo. Menos barulho, menos discussões, menos drama e muito mais calma na alma para ouvir o que realmente importa.",
+      "Aprendi que a verdadeira paz não é a ausência de problemas, é a capacidade de manter o equilíbrio no meio da tempestade. É essa força que levo para 2026.",
+      "Este novo ano será o meu santuário. Vou proteger a minha energia como quem protege um tesouro. Nada nem ninguém terá o poder de me desestabilizar.",
+      "Em 2026, vou normalizar dizer 'não' sem sentir culpa e dizer 'vou descansar' sem sentir que estou a falhar. A minha saúde mental vem em primeiro lugar.",
+      "Quero um 2026 sereno. Onde os dias terminam com a cabeça leve na almofada e o coração grato, sem o peso da ansiedade pelo dia seguinte.",
+      "Vou fazer as pazes com o meu reflexo no espelho. Em 2026, a guerra contra mim mesmo acaba. Começa a era da aceitação e do auto-cuidado extremo.",
+      "Que o único barulho em 2026 seja o das gargalhadas e dos brindes. Tudo o que for tóxico, pesado ou cinzento, fica do lado de fora da minha porta.",
+      "Paz não é moleza, é conquista. E em 2026 vou lutar todos os dias para manter o meu centro, independentemente do caos que o mundo lá fora apresente.",
+      "Aos que duvidaram: observem. 2026 vai ser o ano em que o meu trabalho fala mais alto que qualquer palavra. O topo é o único destino possível.",
+      "Chega de jogar pequeno. O universo tem abundância e eu estou pronto para receber. Em 2026, a minha mentalidade é de crescimento, prosperidade e vitória.",
+      "Não vou contar os meus planos antes de acontecerem. Em 2026, o meu sucesso fará barulho por si só. Trabalhar em silêncio, vencer em público.",
+      "Este ano vou investir em mim como nunca. Livros, cursos, saúde, imagem. Eu sou o meu maior ativo e 2026 será o ano da valorização máxima.",
+      "O medo de falhar ficou em 2025. Em 2026, só tenho medo de ficar estagnado. Vou arriscar, vou inovar e vou colher os frutos da minha coragem.",
+      "Sucesso em 2026 não será apenas ter dinheiro na conta, mas ter liberdade no tempo. Vou trabalhar de forma inteligente para viver a vida que sempre sonhei.",
+      "Que a disciplina seja a minha melhor amiga em 2026. A motivação passa, mas a consistência é o que vai separar os meus sonhos da minha realidade.",
+      "Vou rodear-me de gigantes. Em 2026, quero na minha mesa pessoas que falam de ideias, negócios e evolução, não de pessoas e problemas alheios.",
+      "Escreve o que digo: 2026 é o ponto de viragem. Daqui a um ano, vou olhar para trás e ter orgulho da máquina de vencer em que me tornei.",
+    ],
     "Natal": [
       "Boas Festas! Que a luz do Natal ilumine cada canto do teu coração.",
       "Natal é querer que o outro ganhe, mesmo que percas o último bocadinho de bolo.",
@@ -176,69 +239,7 @@ export const PHRASES_DB: PhraseData = {
       "Que 2026 seja o teu ano de força mansa, daquelas que mudam o mundo sem fazer barulho.",
       "Que a vida te surpreenda com mais razões para agradecer do que para tentar esquecer."
     ],
-    "2026": [
-      "Em 2026, a regra é simples: se não me traz paz, não entra na minha vida. Este ano a prioridade sou eu, a minha saúde mental e quem me quer bem de verdade.",
-      "2026 não vai ser apenas 'mais um ano'. Vai ser o ano em que deixo de adiar os meus sonhos e começo, finalmente, a viver a vida que mereço.",
-      "Vou entrar em 2026 com a bagagem leve. Deixo para trás as mágoas, os 'quase' e quem não soube ficar. O futuro exige espaço para o que é novo.",
-      "Nota mental para 2026: Menos expectativas nos outros, mais investimento em mim. O segredo é não esperar que o ano mude, mas sim mudar a forma como olho para o ano.",
-      "Este ano aprendi a ser forte, mas em 2026 quero aprender a ser feliz. Que venha a leveza, os sorrisos fáceis e os dias sem pressa.",
-      "2026 vai ter de mudar muita coisa, a começar por esta mania de querer agradar a toda a gente. O meu 'sim' este ano vai ser sagrado.",
-      "Que 2026 me traga a coragem que faltou em 2025. Coragem para dizer não, coragem para ir embora e coragem para recomeçar do zero.",
-      "Em 2026, fecho a porta a tudo o que foi morno. Quero viver intensamente, amar sem medidas e sorrir até doer a cara. A vida é demasiado curta para ser vivida pela metade.",
-      "Aprendi que não posso controlar tudo, e essa é a minha missão para 2026: deixar fluir. O que tiver de ser meu, encontrará o caminho até mim. O resto é paisagem.",
-      "Este ano vou fazer uma limpeza geral: na casa, na agenda e no coração. Quem não acrescenta, não faz falta. 2026 será o ano da leveza absoluta.",
-      "Que em 2026 eu tenha a sabedoria de perdoar o passado, mas a lucidez de não o repetir. Errar é crescer, mas insistir no erro é perder tempo.",
-      "Vou parar de procurar a felicidade nas grandes conquistas e começar a vê-la nos detalhes. Um café quente, um abraço apertado, um pôr do sol. 2026 será feito de pequenos milagres.",
-      "Não vou prometer que 2026 será perfeito, porque a vida não é linear. Mas prometo que não vou desistir de mim, mesmo nos dias em que tudo parecer difícil.",
-      "Desapegar não é desistir, é aceitar que certos ciclos terminaram. Em 2026, abro os braços para o novo, sem o peso da culpa do que ficou para trás.",
-      "A minha maior resolução para 2026? Ser autêntico. Não vou mudar a minha essência para caber no mundo de ninguém. Quem gostar, fica. Quem não gostar, segue.",
-      "Que 2026 me traga pessoas que saibam ser casa, colo e abrigo. Estou cansado de tempestades e gente que só sabe ser chuva passageira.",
-      "Em 2026, vou celebrar cada pequena vitória. Levantei-me da cama? Ótimo. Tentei de novo? Excelente. O sucesso constrói-se passo a passo.",
-      "Em 2026, a regra é simples: o que me tira a paz, fica do lado de fora. Este ano eu escolho presença, saúde mental e pessoas que somam sem eu ter de me encolher.",
-      "2026 vai ser o ano em que eu paro de me explicar e começo a me respeitar. Quem entende, fica; quem não entende, segue caminho.",
-      "Vou entrar em 2026 com menos culpa e mais clareza: não devo lealdade a hábitos que me fazem mal nem a relações que me deixam vazio.",
-      "2026 não chega para me salvar; chega para eu me escolher. A mudança não é o calendário — sou eu a fazer diferente todos os dias.",
-      "Em 2026, eu troco urgência por direção. Não quero fazer muito; quero fazer o que faz sentido.",
-      "2026 vai ter de mudar muita coisa, incluindo a minha tolerância ao mínimo. Eu mereço consistência, respeito e verdade.",
-      "Este é o ano em que eu deixo de confundir amor com esforço sozinho. Em 2026, ou é recíproco, ou não é para mim.",
-      "Em 2026, eu não vou correr atrás de quem não caminha comigo. Vou investir onde há cuidado, presença e vontade real.",
-      "2026 vai ser assim: limites claros, coração leve e cabeça no lugar. Menos drama, mais paz.",
-      "Vou fazer de 2026 um recomeço sem barulho: menos promessas publicadas e mais mudanças praticadas.",
-      "Em 2026, eu não vou negociar com a minha saúde — nem física, nem emocional. O que me adoece, eu largo.",
-      "2026 vai ser o ano em que eu paro de esperar coragem e começo com medo mesmo. A vida não espera a perfeição.",
-      "Em 2026, eu escolho relações que me tragam descanso, não confusão. Leveza também é amor.",
-      "2026 vai ser o ano em que eu aprendo a dizer 'não' sem justificar e 'sim' sem me abandonar.",
-      "Que 2026 me traga disciplina para o que eu sonho e serenidade para o que eu não controlo. O resto, eu resolvo com calma.",
-      "Em 2026, fecho a porta a tudo o que foi morno. Quero viver intensamente, amar sem medidas e sorrir até doer a cara. A vida é demasiado curta para ser vivida pela metade.",
-      "Aprendi que não posso controlar tudo, e essa é a minha missão para 2026: deixar fluir. O que tiver de ser meu, encontrará o caminho até mim. O resto é paisagem.",
-      "Este ano vou fazer uma limpeza geral: na casa, na agenda e no coração. Quem não acrescenta, não faz falta. 2026 será o ano da leveza absoluta.",
-      "Que em 2026 eu tenha a sabedoria de perdoar o passado, mas a lucidez de não o repetir. Errar é crescer, mas insistir no erro é perder tempo.",
-      "Vou parar de procurar a felicidade nas grandes conquistas e começar a vê-la nos detalhes. Um café quente, um abraço apertado, um pôr do sol. 2026 será feito de pequenos milagres.",
-      "Não vou prometer que 2026 será perfeito, porque a vida não é linear. Mas prometo que não vou desistir de mim, mesmo nos dias em que tudo parecer difícil.",
-      "Desapegar não é desistir, é aceitar que certos ciclos terminaram. Em 2026, abro os braços para o novo, sem o peso da culpa do que ficou para trás.",
-      "A minha maior resolução para 2026? Ser autêntico. Não vou mudar a minha essência para caber no mundo de ninguém. Quem gostar, fica. Quem não gostar, segue.",
-      "Que 2026 me traga pessoas que saibam ser casa, colo e abrigo. Estou cansado de tempestades e gente que só sabe ser chuva passageira.",
-      "Em 2026, vou celebrar cada pequena vitória. Levantei-me da cama? Ótimo. Tentei de novo? Excelente. O sucesso constrói-se passo a passo.",
-      "Para 2026, escolho a paz em vez da razão. Não vou perder tempo a explicar-me a quem não me quer entender. O meu silêncio será a minha melhor resposta.",
-      "A minha paz tornou-se um luxo que não estou disposto a negociar. Se custa a minha tranquilidade, é demasiado caro para o meu orçamento de 2026.",
-      "Que 2026 seja o ano do silêncio produtivo. Menos barulho, menos discussões, menos drama e muito mais calma na alma para ouvir o que realmente importa.",
-      "Aprendi que a verdadeira paz não é a ausência de problemas, é a capacidade de manter o equilíbrio no meio da tempestade. É essa força que levo para 2026.",
-      "Este novo ano será o meu santuário. Vou proteger a minha energia como quem protege um tesouro. Nada nem ninguém terá o poder de me desestabilizar.",
-      "Em 2026, vou normalizar dizer 'não' sem sentir culpa e dizer 'vou descansar' sem sentir que estou a falhar. A minha saúde mental vem em primeiro lugar.",
-      "Quero um 2026 sereno. Onde os dias terminam com a cabeça leve na almofada e o coração grato, sem o peso da ansiedade pelo dia seguinte.",
-      "Vou fazer as pazes com o meu reflexo no espelho. Em 2026, a guerra contra mim mesmo acaba. Começa a era da aceitação e do auto-cuidado extremo.",
-      "Que o único barulho em 2026 seja o das gargalhadas e dos brindes. Tudo o que for tóxico, pesado ou cinzento, fica do lado de fora da minha porta.",
-      "Paz não é moleza, é conquista. E em 2026 vou lutar todos os dias para manter o meu centro, independentemente do caos que o mundo lá fora apresente.",
-      "Aos que duvidaram: observem. 2026 vai ser o ano em que o meu trabalho fala mais alto que qualquer palavra. O topo é o único destino possível.",
-      "Chega de jogar pequeno. O universo tem abundância e eu estou pronto para receber. Em 2026, a minha mentalidade é de crescimento, prosperidade e vitória.",
-      "Não vou contar os meus planos antes de acontecerem. Em 2026, o meu sucesso fará barulho por si só. Trabalhar em silêncio, vencer em público.",
-      "Este ano vou investir em mim como nunca. Livros, cursos, saúde, imagem. Eu sou o meu maior ativo e 2026 será o ano da valorização máxima.",
-      "O medo de falhar ficou em 2025. Em 2026, só tenho medo de ficar estagnado. Vou arriscar, vou inovar e vou colher os frutos da minha coragem.",
-      "Sucesso em 2026 não será apenas ter dinheiro na conta, mas ter liberdade no tempo. Vou trabalhar de forma inteligente para viver a vida que sempre sonhei.",
-      "Que a disciplina seja a minha melhor amiga em 2026. A motivação passa, mas a consistência é o que vai separar os meus sonhos da minha realidade.",
-      "Vou rodear-me de gigantes. Em 2026, quero na minha mesa pessoas que falam de ideias, negócios e evolução, não de pessoas e problemas alheios.",
-      "Escreve o que digo: 2026 é o ponto de viragem. Daqui a um ano, vou olhar para trás e ter orgulho da máquina de vencer em que me tornei.",
-    ],
+
     "Frases para Reflexão": [
       "Refletir é desligar o piloto automático da alma.",
       "A vida é um espelho: devolve o que mostras.",
@@ -2946,6 +2947,98 @@ export const PHRASES_DB: PhraseData = {
       "May the next twelve months bring peace to your mind and fire to your purpose.",
       "May this new year whisper hope into your heart until you believe in magic again."
     ],
+    "2026": [
+      "I learned that I cannot control everything, and that is my mission for 2026: just let it flow. What is meant for me will simply find me. The rest is just scenery.",
+      "For 2026, I am not asking for everything to be perfect. I am asking for the wisdom to accept what changes, the courage to let go of what weighs me down, and the faith to trust what's coming.",
+      "Stop trying to force doors that were meant to stay closed. In 2026, trust that rejection is just redirection. What is truly yours will not pass you by.",
+      "I am leaving the need to understand everything in 2025. I am entering 2026 with an open heart to just feel everything. Sometimes, magic happens when you stop trying to control the outcome.",
+      "Trust the timing of your life. If it didn't happen yet, it's because you are being prepared for something greater. 2026 is the year where patience pays off.",
+      "I promise that in 2026, I will not shrink myself to fit into places that have outgrown me. This year is about taking up space, using my voice, and embracing my own light.",
+      "My goal for 2026 is simple: I choose my peace over being right. I have learned that not every battle is worth my energy, and silence is often the most powerful answer.",
+      "I am no longer interested in impressing anyone; I left that behind. My goal for 2026 is to connect: with myself, with my truth, and with people who vibrate on the same frequency.",
+      "Let 2026 be the year we finally forgive ourselves for all the things we didn't know before we learned them. Peace for the past, strength for the present.",
+      "I am taking a light suitcase into 2026: there is only room for those who bring me peace, those who inspire me to be better, and those who know how to stay when it rains.",
+      "Do not be afraid to start over in 2026. You are not starting from scratch; you are starting from experience. This time you know the game, now go win it.",
+      "Maybe 2026 won't change the world, but if it changes the way I see it, I have already won. May I have the eyes to see miracles where I once only saw routine.",
+      "I don't need an easy year; I need an unbreakable spirit. May 2026 find me standing tall, not because I never fell, but because I learned how to rise stronger every time.",
+      "Cheers to the versions of myself I had to let die to become who I am today. 2026, I am ready to meet who I will become tomorrow.",
+      "If plan A doesn't work, remember the alphabet has 25 more letters. 2026 is not the year to give up; it is the year to reinvent the path as many times as needed.",
+      "I’ve learned I can’t control everything, and that’s my mission for 2026: to let it flow. What’s meant for me will find its way to me. The rest is just scenery.",
+
+
+      "In 2026, I’m choosing peace over proving a point. Not every conversation deserves my energy, and not every reaction deserves my attention.",
+
+
+      "I’m entering 2026 with lighter hands: no gripping, no forcing, no chasing. If it’s for me, it will stay. If it’s not, it will teach me and go.",
+
+
+      "My goal for 2026 isn’t perfection—it’s alignment. I want my days to match my values, and my choices to match my worth.",
+
+
+      "This year, I’m done negotiating with what drains me. 2026 is the year I protect my time like it’s sacred—because it is.",
+
+
+      "I’m not asking 2026 to be easy. I’m asking to be steady: clear in my decisions, kind to myself, and brave when it matters.",
+
+
+      "In 2026, I’ll stop romanticizing closure. Some things end without explanations, and I’m learning to let peace be the answer.",
+
+
+      "I’m leaving behind the need to understand everything right away. Sometimes life makes sense later. For now, I’ll trust the process.",
+
+
+      "If 2026 changes the plan, I won’t panic—I’ll pivot. A detour isn’t a disaster; it’s just a different route to the same growth.",
+
+
+      "This year I’m choosing discipline that comes from self-respect, not pressure. 2026 is about building a life I don’t need to escape from.",
+
+
+      "In 2026, I want a quiet kind of happiness—one that doesn’t need an audience, doesn’t need approval, and doesn’t disappear when life gets loud.",
+
+
+      "I’m done shrinking to fit places that never had room for my spirit. In 2026, I take up space gently, confidently, and without apology.",
+
+
+      "Healing isn’t pretending it didn’t hurt. Healing is remembering without bleeding. May 2026 turn my scars into wisdom.",
+
+
+      "I’m not starting from scratch in 2026—I’m starting from experience. The reset doesn’t erase the lessons; it upgrades the mindset.",
+
+
+      "This year, I’ll measure success by how often I come back to myself. If I can keep my peace, I’ve already won.",
+
+
+      "In 2026, I’ll stop treating rest like a reward. Rest is part of the work. Peace is part of the plan.",
+
+
+      "I’m learning that the right things don’t require me to abandon myself. In 2026, love—people, work, dreams—must feel like home, not a war.",
+
+
+      "May 2026 bring me the courage to close doors gently, and the wisdom not to reopen them just because I miss the familiar.",
+
+
+      "I’m walking into 2026 with fewer expectations and more intention. I don’t need to control the outcome—only my effort and my integrity.",
+
+
+      "If it’s meant for me, it won’t rush me, confuse me, or cost me my peace. That’s the standard I’m taking into 2026.",
+      "My vibe for 2026 is privacy and progress. I want to build in silence, let my results speak, and keep my peace protected at all costs.",
+      "I am entering 2026 with a new boundary: access to my energy is a privilege, not a right. If it costs me my peace, it is too expensive.",
+      "This year, I am normalizing saying 'no' without explaining myself. My time is my most valuable currency, and in 2026, I am spending it wisely.",
+      "Let go of the illusion that it could have been any different. Acceptance is the key to freedom. 2026 is about embracing what is, not what could have been.",
+      "I am done rushing. In 2026, I choose the slow burn. I choose steady growth over temporary spikes. I choose to enjoy the journey, not just chase the destination.",
+      "Don't tell people your plans for 2026. Show them your results. Move in silence, and let your success make all the noise.",
+      "The goal for 2026 is not to be better than anyone else. The goal is to be better than the person I was yesterday. My only competition is in the mirror.",
+      "Stop waiting for the 'perfect time'. It doesn't exist. The perfect time is now. Make 2026 the year you stop dreaming and start doing.",
+      "Your potential is endless, but your time is not. Wake up in 2026 with a sense of urgency to live fully, love deeply, and pursue what sets your soul on fire.",
+      "Discipline is self-love. In 2026, love yourself enough to stick to the habits that will take you to where you want to be.",
+      "Richness in 2026 won't be about what is in the bank, but how little you need to feel complete. May your year be full of health, genuine laughs, and honest hugs.",
+      "Romanticize your life in 2026. Find joy in the morning coffee, the sunset, the quiet moments. Happiness is not a destination; it's a way of looking at things.",
+      "I am thankful for the storms of 2025, for they washed away the path for this new sun. 2026, I welcome you with no grudges and a heart full of hope.",
+      "Be the energy you want to attract. If you want love, be love. If you want honesty, be honest. 2026 is simply a mirror of what you put out into the universe.",
+      "May you fall in love with taking care of yourself this year. deep breaths, kind thoughts, and small steps. 2026 is your year to bloom.",
+
+    ],
+
     "Iconic Quotes": [
       "Ask not what your country can do for you—ask what you can do for your country. - John F. Kennedy",
       "That's one small step for a man, one giant leap for mankind. - Neil Armstrong",
@@ -4349,6 +4442,53 @@ export const PHRASES_DB: PhraseData = {
       "Que 2026 transforme tus heridas en sabiduría y tu cansancio en luz.",
       "Que tus pasos encuentren destino y tu corazón encuentre paz.",
       "Que el año nuevo sea un susurro de esperanza que nunca se apague en ti."
+    ],
+    "2026": [
+      "Aprendí que no puedo controlarlo todo, y esa es mi misión para el 2026: dejar fluir. Lo que tenga que ser mío, encontrará su camino hacia mí. El resto es solo paisaje.",
+      "Para el 2026 no pido que todo salga perfecto, solo pido la sabiduría para aceptar lo que cambia, el coraje para soltar lo que pesa y la fe para confiar en lo que viene.",
+      "Este año he entendido que forzar las cosas solo las rompe. En el 2026, mi única resolución es ser como el agua: adaptarme, fluir y abrirme paso sin herirme.",
+      "Dejo en el 2025 la necesidad de entenderlo todo. Entro al 2026 con el corazón abierto a sentirlo todo. A veces la magia sucede justo cuando dejas de intentar dirigir la orquesta.",
+      "A veces 'ganar' el año significa simplemente no perderse a uno mismo en el proceso. Mi meta para el 2026 es volver a mí, tantas veces como sea necesario.",
+      "Prometo que en este 2026 no me voy a disminuir para caber en lugares que me quedan chicos. Este año se trata de ocupar mi espacio, usar mi voz y abrazar mi luz.",
+      "Que el 2026 sea el año en el que finalmente nos perdonemos por todas esas cosas que no sabíamos antes de aprenderlas. Paz para el pasado, fuerza para el presente.",
+      "Ya no busco un año deslumbrante hacia afuera, busco un año tranquilo hacia adentro. Que el 2026 me traiga esa paz que no se negocia y esa felicidad que no se presume.",
+      "Me llevo al 2026 una maleta ligera: solo cabe quien me sume paz, quien me inspire a ser mejor y quien sepa quedarse cuando llueve. Lo demás, se queda atrás.",
+      "La lección más grande que me llevo es que soy mi proyecto más importante. En 2026 voy a invertir en mí, en mi salud mental y en mi propia felicidad, sin culpas.",
+      "Quizás el 2026 no cambie el mundo, pero si cambia mi forma de verlo, ya habré ganado. Que tenga ojos para ver milagros donde antes solo veía rutina.",
+      "Brindo por las versiones de mí que tuve que dejar morir para convertirme en quien soy hoy. 2026, estoy listo para conocer a quien seré mañana.",
+      "No necesito un año fácil, necesito un espíritu inquebrantable. Que el 2026 me encuentre de pie, no porque no haya caído, sino porque aprendí a levantarme con más fuerza.",
+      "Que el 2026 nos enseñe que los finales no son fracasos, sino el espacio necesario para que comiencen las mejores historias de nuestra vida.",
+      "Si el plan A no funciona, recuerda que el abecedario tiene 26 letras más. El 2026 no es el año de rendirse, es el año de reinventar el camino cuantas veces haga falta.",
+      "Para el 2026, he decidido dejar de correr detrás de lo que huye y empezar a caminar hacia lo que me espera. Lo que es para mí, no necesita persecución, solo preparación.",
+      "He aprendido que la prisa es enemiga de la perfección y ladrona del momento presente. En este nuevo año, elijo la calma. No se trata de llegar primero, sino de saber llegar.",
+      "Confío en los tiempos de la vida. Si este año algo se va, le abriré la puerta; si algo llega, le haré espacio. El 2026 será un año de puertas abiertas y expectativas sueltas.",
+      "No todo tiene que tener sentido inmediatamente. A veces, vivir es navegar la incertidumbre con la certeza de que, al final, todo encajará. Bienvenido, impredecible 2026.",
+      "Que este año entiendas que 'perder' a veces es la única manera de encontrar lo que realmente necesitabas. Que el 2026 te traiga menos de lo que quieres, pero todo lo que mereces.",
+      "Ya no me interesa impresionar a nadie, esa etapa la dejé atrás. Mi meta para el 2026 es conectar: conmigo, con mi verdad y con gente que vibre en mi misma frecuencia.",
+      "La perfección es un disfraz muy pesado. En el 2026 elijo la autenticidad. Prefiero ser un borrador feliz que una copia perfecta de algo que no soy.",
+      "Este año prometo escucharme más a mí que al ruido de afuera. Mi intuición ha tenido razón más veces que mis miedos, y en el 2026 pienso darle el micrófono.",
+      "Me despido de la necesidad de complacer a todos. Entendí que mi paz mental es demasiado cara como para regalarla. 2026: año de poner límites con amor, pero sin culpa.",
+      "Que el 2026 nos quite las máscaras y nos deje el alma desnuda. Porque al final del día, lo único que nos llevamos es lo mucho que amamos y lo auténticos que fuimos.",
+      "Sanar no significa que el daño nunca existió, significa que el daño ya no controla tu vida. Que el 2026 sea el año donde tus cicatrices se conviertan en mapas de tu resiliencia.",
+      "No entres al 2026 arrastrando las maletas rotas del 2025. Date el permiso de soltar el peso muerto. Mereces viajar ligero hacia todo lo bueno que te espera.",
+      "A veces el acto de valentía más grande es simplemente levantarse una mañana más y volver a creer. Brindo por esa fe ciega que nos trae hasta aquí, listos para un nuevo capítulo.",
+      "Que encuentres la valentía para cerrar ciclos que ya no vibran contigo. El 2026 te pide espacio vacío para poder llenarlo de cosas nuevas, mejores y más sanas.",
+      "Doy gracias por las tormentas del año pasado, porque limpiaron mi camino para este nuevo sol. 2026, te recibo sin rencores y con el corazón lleno de esperanza renovada.",
+      "Mi meta para el 2026 es simple: elegir mi paz por encima de tener la razón. He aprendido que no todas las batallas merecen mi energía, y que el silencio es a veces la mejor respuesta.",
+      "Este año voy a normalizar decir 'no' a todo lo que me drene, para poder decir 'sí' a todo lo que me llena. El autocuidado en 2026 deja de ser un lujo para ser una prioridad.",
+      "Ya no busco mesas llenas, busco mesas sinceras. Para el 2026, prefiero tener cuatro amigos de verdad que cien conocidos por conveniencia. Calidad sobre cantidad, siempre.",
+      "Que este año dejemos de medir nuestro éxito por lo cansados que estamos. Estar ocupado no es sinónimo de ser productivo, ni sufrir es sinónimo de merecer. 2026: año de descansar sin culpa.",
+      "Le pido al 2026 la claridad para distinguir entre quien me busca porque me extraña, y quien me busca porque se aburre. Mi tiempo es oro, y este año elijo bien con quién compartirlo.",
+      "No tengas miedo de empezar de cero en el 2026. No estás empezando desde cero, estás empezando desde la experiencia. Esta vez ya conoces el juego, ahora ve a ganarlo.",
+      "A veces hay que destruir un poco la vida que teníamos para construir la vida que soñamos. Que no te tiemble el pulso si el 2026 te pide mudarte, cambiar o saltar al vacío.",
+      "El error no es caer, el error es encariñarse con la piedra. Deja esa piedra en el 2025. El 2026 es terreno fértil, pero solo si te atreves a caminar por nuevos senderos.",
+      "Nunca es tarde para ser quien podrías haber sido. El calendario dice 2026, pero la vida te dice 'ahora'. Aprovecha este reinicio para perdonarte y reescribir tu guion.",
+      "Que el miedo a fallar no te impida jugar. En el 2026, recuerda que los errores son solo la prueba de que lo estás intentando. Prefiero un fracaso valiente que un 'hubiera' cobarde.",
+      "Deseo que en el 2026 encuentres la felicidad en las letras pequeñas de la vida: en un café caliente, en una risa compartida, en un atardecer tranquilo. La magia siempre está en lo cotidiano.",
+      "No esperes a que todo sea perfecto para disfrutar de la vida. Mi deseo para ti en 2026 es que aprendas a bailar bajo la lluvia en lugar de esperar a que pase la tormenta.",
+      "Ser rico en el 2026 no se tratará de lo que tienes en el banco, sino de lo poco que necesitas para sentirte pleno. Que abunde la salud, la gratitud y los abrazos sinceros.",
+      "Agradezco lo que fue, acepto lo que es y recibo con brazos abiertos lo que será. Con esta mantra entro al 2026: sin cargas, sin miedos, solo con gratitud absoluta.",
+      "Que este año te mires al espejo y te guste lo que ves, no por tu físico, sino por tu alma. Que el 2026 sea el año en que finalmente te conviertas en tu mejor amigo.",
     ],
     "Frases Celebres": [
       "Ladran, Sancho, señal que cabalgamos. - Miguel de Cervantes (Dom Quixote)",

@@ -10,7 +10,7 @@ export interface Template {
   id: string;
   name: string;
   // Alterado de union type restrito para string para permitir 'Meus Templates', etc.
-  category: 'Agradecimento' | 'Amor' | 'Aniversario' | 'BoaNoite' | 'BomDia' | 'Deus' | 'Diversos' | 'Gym' | 'Agradecimento' | 'Luto' | 'Mae' | 'Natal' | 'Neon' | 'Pai' | 'Paisagens' | 'Praia' |'Reflexao' | 'Sabedoria' | 'Vida' | string;
+  category: 'Agradecimento' | 'Amor' | 'Aniversario' | 'BoaNoite' | 'BomDia' | 'Deus' | 'Diversos' | 'Gym' | 'Agradecimento' | 'Luto' | 'Mae' | 'Natal' | 'Neon' | 'Pai' | 'Paisagens' | 'Praia' | 'Reflexao' | 'Sabedoria' | 'Vida' | string;
   backgroundType: 'image' | 'gradient' | 'solid';
   value: string; // URL or CSS gradient string
   textColor: string;
@@ -33,7 +33,7 @@ export interface EditorConfig {
   textColor: string;
   isBold: boolean;
   isItalic: boolean;
-  
+
   // Format Extras
   letterSpacing: number; // in pixels (approx)
   textTransform: TextTransform;
@@ -45,20 +45,20 @@ export interface EditorConfig {
   boxGradientColors?: string[]; // If present, overrides textBackgroundColor
 
   lineHeight: number;
-  
+
   // Text Gradient
   textGradientColors?: string[]; // If present, overrides textColor
 
   // Effects
-  textShadow: boolean; 
+  textShadow: boolean;
   textShadowOpacity: number; // 0 to 1
   textShadowColor: string; // New: Specific shadow color
   textShadowBlur: number; // New: Specific shadow blur
-  
+
   textOutline: boolean;
   textOutlineWidth: number; // 0 to 10 scale
   textOutlineColor: string;
-  
+
   // Glow
   textGlowWidth: number; // 0 to 20
   textGlowColor: string;
@@ -69,8 +69,10 @@ export interface EditorConfig {
   text3DColor: string;
 
   // Super Stroke
-  textSuperStrokeWidth: number ;
+  textSuperStrokeWidth: number;
   textSuperStrokeColor: string;
+
+
 }
 
 export type ScreenName = 'language' | 'categories' | 'phrases' | 'editor' | 'favorites';

@@ -42,6 +42,7 @@ const CATEGORY_TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
     'Neon': { 'pt-PT': 'Neon', 'pt-BR': 'Neon', 'en': 'Neon', 'es': 'Neón' },
     'Pai': { 'pt-PT': 'Pai', 'pt-BR': 'Pai', 'en': 'Father', 'es': 'Padre' },
     'Paisagens-Natureza': { 'pt-PT': 'Natureza', 'pt-BR': 'Natureza', 'en': 'Nature', 'es': 'Naturaleza' },
+    'PassagemDeAno': { 'pt-PT': 'Ano Novo', 'pt-BR': 'Ano Novo', 'en': 'New Year', 'es': 'Año Nuevo' },
     'Praias': { 'pt-PT': 'Praias', 'pt-BR': 'Praias', 'en': 'Beaches', 'es': 'Playas' },
     'Reflexão-Paz': { 'pt-PT': 'Reflexão', 'pt-BR': 'Reflexão', 'en': 'Reflection', 'es': 'Reflexión' },
     'Sabedoria': { 'pt-PT': 'Sabedoria', 'pt-BR': 'Sabedoria', 'en': 'Wisdom', 'es': 'Sabiduría' },
@@ -102,6 +103,8 @@ const COLORS = [
     '#fca5a5', '#fdba74', '#86efac', '#93c5fd', '#c4b5fd', '#f9a8d4',
     '#7f1d1d', '#78350f', '#14532d', '#1e3a8a', '#4c1d95', '#831843'
 ];
+
+
 
 interface PresetConfig extends Partial<EditorConfig> {
     name: string;
@@ -349,7 +352,7 @@ const PRESET_STYLES: PresetConfig[] = [
         textShadowColor: '#14532d',
         textShadowBlur: 14,
         textOutlineWidth: 4,
-        textOutlineColor: '#f97316', // laranja meia "luzinhas”
+        textOutlineColor: '#f97316', // laranja meia "luzinhas"
         textGlowWidth: 10,
         textGlowColor: '#bbf7d0',
         letterSpacing: 1.5
@@ -527,12 +530,13 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         text3DOffsetY: 0,
         text3DColor: '#000000',
         textSuperStrokeWidth: 0,
-        textSuperStrokeColor: '#ffffff'
+        textSuperStrokeColor: '#ffffff',
+
 
     });
     const [previewRatio, setPreviewRatio] = useState(1);
     const [activeTool, setActiveTool] = useState<string>('templates'); // Default to templates tab
-    const [templateCategory, setTemplateCategory] = useState<string>('Natal'); // Default to Natal category
+    const [templateCategory, setTemplateCategory] = useState<string>('PassagemDeAno'); // Default to New Year category
     const [isGenerating, setIsGenerating] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -642,6 +646,8 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
     };
 
     const categories = ['All', ...Array.from(new Set(allTemplates.map(t => t.category))).sort((a, b) => {
+        if (a === 'PassagemDeAno') return -1;
+        if (b === 'PassagemDeAno') return 1;
         if (a === 'Natal') return -1;
         if (b === 'Natal') return 1;
         return 0;
@@ -1134,6 +1140,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             backgroundClip: isGradient ? 'text' : 'border-box',
             WebkitTextStroke: config.textOutlineWidth > 0 ? `${config.textOutlineWidth * 0.2}px ${config.textOutlineColor}` : '0px transparent',
             textShadow: shadows.join(', '),
+            whiteSpace: 'pre-wrap',
         };
     };
 
@@ -1238,7 +1245,10 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                     style={{
                         width: '90%',
                         aspectRatio: `${previewRatio}`, // ✅ Agora a caixa adapta-se ao formato!
-                        maxWidth: '400px'
+
+                        maxWidth: '400px',
+                        maskRepeat: 'no-repeat',
+                        WebkitMaskRepeat: 'no-repeat'
                     }}>
 
                     <div className="absolute inset-0 z-0">
@@ -1576,6 +1586,8 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                             </div>
                         </div>
                     )}
+
+
                 </div>
 
                 <div className="flex overflow-x-auto no-scrollbar py-3 px-2 gap-1 bg-dark-carbon">
@@ -1611,456 +1623,472 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             </div>
 
             {/* ... (Export, Template, Preview Modals - Unchanged) */}
-            {showExportMenu && (
-                <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="w-full bg-dark-graphite rounded-t-3xl p-6 text-white pb-10 shadow-2xl border-t border-dark-steel">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold">{t.export}</h2>
-                            <button onClick={() => setShowExportMenu(false)} className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80">
+            {
+                showExportMenu && (
+                    <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="w-full bg-dark-graphite rounded-t-3xl p-6 text-white pb-10 shadow-2xl border-t border-dark-steel">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold">{t.export}</h2>
+                                <button onClick={() => setShowExportMenu(false)} className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80">
+                                    <X className="w-5 h-5 text-text-secondary" />
+                                </button>
+                            </div>
+
+                            <div className="mb-6 flex gap-2 p-1 bg-dark-steel/50 rounded-xl">
+                                <button
+                                    onClick={() => setExportQuality('standard')}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${exportQuality === 'standard' ? 'bg-dark-carbon text-white shadow-md' : 'text-text-dim hover:text-white'}`}
+                                >
+                                    <Zap className="w-4 h-4" /> {t.exportStandard}
+                                </button>
+                                <button
+                                    onClick={toggleQuality}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${exportQuality === 'hd' ? 'bg-neon-pulse text-dark-carbon shadow-md' : 'text-text-dim hover:text-white'}`}
+                                >
+                                    <Crown className={`w-4 h-4 ${exportQuality === 'hd' ? 'fill-dark-carbon' : 'text-neon-pulse'}`} /> {t.exportHD}
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider px-1">{t.saveGallery}</p>
+
+                                    <button
+                                        onClick={() => handleSaveFile('square')}
+                                        className="w-full flex items-center justify-between p-4 bg-dark-steel hover:bg-dark-steel/80 rounded-xl transition-colors group border border-transparent hover:border-neon-mint/30"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-neon-pulse/20 p-2 rounded-full text-neon-pulse shadow-sm">
+                                                <Download className="w-6 h-6" />
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="font-bold text-white">Square (1:1)</p>
+                                                <p className="text-xs text-text-secondary">
+                                                    {exportQuality === 'hd' ? '2048 x 2048 px' : '1080 x 1080 px'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="text-neon-pulse">⬇️</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleSaveFile('story')}
+                                        className="w-full flex items-center justify-between p-4 bg-dark-steel hover:bg-dark-steel/80 rounded-xl transition-colors group border border-transparent hover:border-neon-mint/30"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-neon-pulse/20 p-2 rounded-full text-neon-pulse shadow-sm">
+                                                <Download className="w-6 h-6" />
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="font-bold text-white">Story (9:16)</p>
+                                                <p className="text-xs text-text-secondary">
+                                                    {exportQuality === 'hd' ? '2160 x 3840 px' : '1080 x 1920 px'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="text-neon-pulse">⬇️</span>
+                                    </button>
+                                </div>
+
+                                <div className="relative flex py-2 items-center">
+                                    <div className="flex-grow border-t border-dark-steel"></div>
+                                    <span className="flex-shrink-0 mx-4 text-text-dim text-xs font-bold uppercase">{t.shareTo}</span>
+                                    <div className="flex-grow border-t border-dark-steel"></div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        onClick={() => handleSocialPreview('story')}
+                                        className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-purple-900/20 to-pink-900/20 rounded-xl border border-pink-500/20 hover:border-pink-500/50 transition-all active:scale-95"
+                                    >
+                                        <div className="w-10 h-10 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
+                                            <Instagram className="w-6 h-6" />
+                                        </div>
+                                        <span className="font-bold text-sm text-gray-200">Instagram</span>
+                                        <span className="text-[10px] text-gray-400">
+                                            {exportQuality === 'hd' ? '2160x3840 px' : '1080x1920 px'}
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleSocialPreview('story')}
+                                        className="flex flex-col items-center justify-center p-4 bg-dark-steel/50 hover:bg-dark-steel rounded-xl border border-dark-steel hover:border-gray-500 transition-all active:scale-95"
+                                    >
+                                        <div className="w-10 h-10 bg-black rounded-lg text-white flex items-center justify-center mb-2 shadow-sm border border-gray-700">
+                                            <Music className="w-6 h-6" />
+                                        </div>
+                                        <span className="font-bold text-sm text-gray-200">TikTok</span>
+                                        <span className="text-[10px] text-gray-400">
+                                            {exportQuality === 'hd' ? '2160x3840 px' : '1080x1920 px'}
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleSocialPreview('square')}
+                                        className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-green-900/20 to-emerald-900/20 rounded-xl border border-emerald-500/20 hover:border-emerald-500/50 transition-all active:scale-95"
+                                    >
+                                        <div className="w-10 h-10 bg-green-500 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
+                                            <Share2 className="w-6 h-6" />
+                                        </div>
+                                        <span className="font-bold text-sm text-gray-200">WhatsApp</span>
+                                        <span className="text-[10px] text-gray-400">
+                                            {exportQuality === 'hd' ? '2048x2048 px' : '1080x1080 px'}
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleSocialPreview('square')}
+                                        className="flex flex-col items-center justify-center p-4 bg-blue-900/20 hover:bg-blue-900/30 rounded-xl border border-blue-500/20 hover:border-blue-500/50 transition-all active:scale-95"
+                                    >
+                                        <div className="w-10 h-10 bg-blue-600 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
+                                            <Facebook className="w-6 h-6" />
+                                        </div>
+                                        <span className="font-bold text-sm text-gray-200">Facebook</span>
+                                        <span className="text-[10px] text-gray-400">
+                                            {exportQuality === 'hd' ? '2048x2048 px' : '1080x1080 px'}
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {
+                showTemplateModal && (
+                    <div className="absolute inset-0 z-50 bg-dark-carbon flex flex-col animate-fade-up">
+                        <div className="flex items-center justify-between p-4 border-b border-dark-steel bg-dark-graphite">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                                <Layout className="w-5 h-5 text-neon-pulse" />
+                                {t.chooseTemplate}
+                            </h2>
+                            <button
+                                onClick={() => setShowTemplateModal(false)}
+                                className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80 transition-colors"
+                            >
                                 <X className="w-5 h-5 text-text-secondary" />
                             </button>
                         </div>
 
-                        <div className="mb-6 flex gap-2 p-1 bg-dark-steel/50 rounded-xl">
-                            <button
-                                onClick={() => setExportQuality('standard')}
-                                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${exportQuality === 'standard' ? 'bg-dark-carbon text-white shadow-md' : 'text-text-dim hover:text-white'}`}
-                            >
-                                <Zap className="w-4 h-4" /> {t.exportStandard}
-                            </button>
-                            <button
-                                onClick={toggleQuality}
-                                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${exportQuality === 'hd' ? 'bg-neon-pulse text-dark-carbon shadow-md' : 'text-text-dim hover:text-white'}`}
-                            >
-                                <Crown className={`w-4 h-4 ${exportQuality === 'hd' ? 'fill-dark-carbon' : 'text-neon-pulse'}`} /> {t.exportHD}
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <p className="text-xs font-bold text-text-secondary uppercase tracking-wider px-1">{t.saveGallery}</p>
-
-                                <button
-                                    onClick={() => handleSaveFile('square')}
-                                    className="w-full flex items-center justify-between p-4 bg-dark-steel hover:bg-dark-steel/80 rounded-xl transition-colors group border border-transparent hover:border-neon-mint/30"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-neon-pulse/20 p-2 rounded-full text-neon-pulse shadow-sm">
-                                            <Download className="w-6 h-6" />
-                                        </div>
-                                        <div className="text-left">
-                                            <p className="font-bold text-white">Square (1:1)</p>
-                                            <p className="text-xs text-text-secondary">
-                                                {exportQuality === 'hd' ? '2048 x 2048 px' : '1080 x 1080 px'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <span className="text-neon-pulse">⬇️</span>
-                                </button>
-
-                                <button
-                                    onClick={() => handleSaveFile('story')}
-                                    className="w-full flex items-center justify-between p-4 bg-dark-steel hover:bg-dark-steel/80 rounded-xl transition-colors group border border-transparent hover:border-neon-mint/30"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-neon-pulse/20 p-2 rounded-full text-neon-pulse shadow-sm">
-                                            <Download className="w-6 h-6" />
-                                        </div>
-                                        <div className="text-left">
-                                            <p className="font-bold text-white">Story (9:16)</p>
-                                            <p className="text-xs text-text-secondary">
-                                                {exportQuality === 'hd' ? '2160 x 3840 px' : '1080 x 1920 px'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <span className="text-neon-pulse">⬇️</span>
-                                </button>
+                        <div className="flex-1 overflow-hidden flex flex-col">
+                            <div className="p-4 border-b border-dark-steel bg-dark-carbon/50 backdrop-blur-sm">
+                                <div ref={categoryScrollRef} className="flex gap-3 overflow-x-auto no-scrollbar pb-3">
+                                    {categories.map(cat => (
+                                        <button
+                                            key={cat}
+                                            data-category={cat}
+                                            onClick={() => setTemplateCategory(cat)}
+                                            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${templateCategory === cat ? 'bg-neon-pulse text-dark-carbon' : 'bg-dark-steel text-text-dim hover:text-neon-pulse'}`}
+                                        >
+                                            {translateCategory(cat, language)}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
-                            <div className="relative flex py-2 items-center">
-                                <div className="flex-grow border-t border-dark-steel"></div>
-                                <span className="flex-shrink-0 mx-4 text-text-dim text-xs font-bold uppercase">{t.shareTo}</span>
-                                <div className="flex-grow border-t border-dark-steel"></div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <button
-                                    onClick={() => handleSocialPreview('story')}
-                                    className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-purple-900/20 to-pink-900/20 rounded-xl border border-pink-500/20 hover:border-pink-500/50 transition-all active:scale-95"
-                                >
-                                    <div className="w-10 h-10 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
-                                        <Instagram className="w-6 h-6" />
-                                    </div>
-                                    <span className="font-bold text-sm text-gray-200">Instagram</span>
-                                    <span className="text-[10px] text-gray-400">
-                                        {exportQuality === 'hd' ? '2160x3840 px' : '1080x1920 px'}
-                                    </span>
-                                </button>
-
-                                <button
-                                    onClick={() => handleSocialPreview('story')}
-                                    className="flex flex-col items-center justify-center p-4 bg-dark-steel/50 hover:bg-dark-steel rounded-xl border border-dark-steel hover:border-gray-500 transition-all active:scale-95"
-                                >
-                                    <div className="w-10 h-10 bg-black rounded-lg text-white flex items-center justify-center mb-2 shadow-sm border border-gray-700">
-                                        <Music className="w-6 h-6" />
-                                    </div>
-                                    <span className="font-bold text-sm text-gray-200">TikTok</span>
-                                    <span className="text-[10px] text-gray-400">
-                                        {exportQuality === 'hd' ? '2160x3840 px' : '1080x1920 px'}
-                                    </span>
-                                </button>
-
-                                <button
-                                    onClick={() => handleSocialPreview('square')}
-                                    className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-green-900/20 to-emerald-900/20 rounded-xl border border-emerald-500/20 hover:border-emerald-500/50 transition-all active:scale-95"
-                                >
-                                    <div className="w-10 h-10 bg-green-500 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
-                                        <Share2 className="w-6 h-6" />
-                                    </div>
-                                    <span className="font-bold text-sm text-gray-200">WhatsApp</span>
-                                    <span className="text-[10px] text-gray-400">
-                                        {exportQuality === 'hd' ? '2048x2048 px' : '1080x1080 px'}
-                                    </span>
-                                </button>
-
-                                <button
-                                    onClick={() => handleSocialPreview('square')}
-                                    className="flex flex-col items-center justify-center p-4 bg-blue-900/20 hover:bg-blue-900/30 rounded-xl border border-blue-500/20 hover:border-blue-500/50 transition-all active:scale-95"
-                                >
-                                    <div className="w-10 h-10 bg-blue-600 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
-                                        <Facebook className="w-6 h-6" />
-                                    </div>
-                                    <span className="font-bold text-sm text-gray-200">Facebook</span>
-                                    <span className="text-[10px] text-gray-400">
-                                        {exportQuality === 'hd' ? '2048x2048 px' : '1080x1080 px'}
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showTemplateModal && (
-                <div className="absolute inset-0 z-50 bg-dark-carbon flex flex-col animate-fade-up">
-                    <div className="flex items-center justify-between p-4 border-b border-dark-steel bg-dark-graphite">
-                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                            <Layout className="w-5 h-5 text-neon-pulse" />
-                            {t.chooseTemplate}
-                        </h2>
-                        <button
-                            onClick={() => setShowTemplateModal(false)}
-                            className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80 transition-colors"
-                        >
-                            <X className="w-5 h-5 text-text-secondary" />
-                        </button>
-                    </div>
-
-                    <div className="flex-1 overflow-hidden flex flex-col">
-                        <div className="p-4 border-b border-dark-steel bg-dark-carbon/50 backdrop-blur-sm">
-                            <div ref={categoryScrollRef} className="flex gap-3 overflow-x-auto no-scrollbar pb-3">
-                                {categories.map(cat => (
-                                    <button
-                                        key={cat}
-                                        data-category={cat}
-                                        onClick={() => setTemplateCategory(cat)}
-                                        className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${templateCategory === cat ? 'bg-neon-pulse text-dark-carbon' : 'bg-dark-steel text-text-dim hover:text-neon-pulse'}`}
-                                    >
-                                        {translateCategory(cat, language)}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                {templateCategory === 'All' && (
-                                    <button
-                                        onClick={handleUploadClick}
-                                        className="relative w-full h-40 sm:h-44 md:h-48 rounded-xl bg-dark-steel/50 flex flex-col items-center justify-center border-2 border-dashed border-text-dim hover:border-neon-pulse transition-all gap-2 group"
-                                    >
-                                        <div className="bg-dark-steel p-3 rounded-full group-hover:bg-neon-pulse/20 transition-colors">
-                                            <Upload className="w-6 h-6 text-text-dim group-hover:text-neon-pulse" />
-                                        </div>
-                                        <span className="text-xs text-text-dim group-hover:text-white uppercase font-bold tracking-wide">
-                                            {t.uploadImage}
-                                        </span>
-                                        {!isPremium && (
-                                            <div className="absolute top-2 right-2 bg-neon-pulse rounded-full p-1 shadow-sm">
-                                                <Crown className="w-3 h-3 text-dark-carbon fill-dark-carbon" />
+                            <div className="flex-1 overflow-y-auto p-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    {templateCategory === 'All' && (
+                                        <button
+                                            onClick={handleUploadClick}
+                                            className="relative w-full h-40 sm:h-44 md:h-48 rounded-xl bg-dark-steel/50 flex flex-col items-center justify-center border-2 border-dashed border-text-dim hover:border-neon-pulse transition-all gap-2 group"
+                                        >
+                                            <div className="bg-dark-steel p-3 rounded-full group-hover:bg-neon-pulse/20 transition-colors">
+                                                <Upload className="w-6 h-6 text-text-dim group-hover:text-neon-pulse" />
                                             </div>
-                                        )}
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            onChange={handleFileChange}
-                                            className="hidden"
-                                            accept="image/*"
-                                        />
-                                    </button>
-                                )}
+                                            <span className="text-xs text-text-dim group-hover:text-white uppercase font-bold tracking-wide">
+                                                {t.uploadImage}
+                                            </span>
+                                            {!isPremium && (
+                                                <div className="absolute top-2 right-2 bg-neon-pulse rounded-full p-1 shadow-sm">
+                                                    <Crown className="w-3 h-3 text-dark-carbon fill-dark-carbon" />
+                                                </div>
+                                            )}
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                onChange={handleFileChange}
+                                                className="hidden"
+                                                accept="image/*"
+                                            />
+                                        </button>
+                                    )}
 
-                                {filteredTemplates.map(template => (
-                                    <button
-                                        key={template.id}
-                                        onClick={async () => {
-                                            if ((template as any).isPremium === true && !isPremium) {
-                                                // Verifica se já está desbloqueado hoje
-                                                if (dailyUnlockService.isTemplateUnlocked(template.id)) {
-                                                    setConfig({ ...config, templateId: template.id });
-                                                    setPreviewFitMode('cover'); // Reset para cover
-                                                    setShowTemplateModal(false);
-                                                    setActiveTool('styles'); // Switch to styles tab automatically
+                                    {filteredTemplates.map(template => (
+                                        <button
+                                            key={template.id}
+                                            onClick={async () => {
+                                                if ((template as any).isPremium === true && !isPremium) {
+                                                    // Verifica se já está desbloqueado hoje
+                                                    if (dailyUnlockService.isTemplateUnlocked(template.id)) {
+                                                        setConfig({ ...config, templateId: template.id });
+                                                        setPreviewFitMode('cover'); // Reset para cover
+                                                        setShowTemplateModal(false);
+                                                        setActiveTool('styles'); // Switch to styles tab automatically
+                                                        return;
+                                                    }
+
+                                                    // Mostra modal premium (com botão de rewarded ad se disponível)
+                                                    setRewardedModalType('template');
+                                                    setRewardedTargetId(template.id);
+                                                    setShowPremiumModal(true);
                                                     return;
                                                 }
 
-                                                // Mostra modal premium (com botão de rewarded ad se disponível)
-                                                setRewardedModalType('template');
-                                                setRewardedTargetId(template.id);
-                                                setShowPremiumModal(true);
-                                                return;
-                                            }
+                                                setConfig({ ...config, templateId: template.id }); // aplica template
+                                                setPreviewFitMode('cover'); // Reset para cover
+                                                setShowTemplateModal(false);
+                                                setActiveTool('styles'); // Switch to styles tab automatically
+                                            }}
+                                            className={`relative w-full h-40 sm:h-44 md:h-48 rounded-xl overflow-hidden border-2 transition-all group ${config.templateId === template.id
+                                                ? 'border-neon-pulse shadow-[0_0_15px_rgba(0,255,114,0.3)]'
+                                                : 'border-transparent hover:border-neon-pulse/50'
+                                                }`}
+                                        >
+                                            {template.backgroundType === 'image' ? (
+                                                <img
+                                                    src={template.value}
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                    alt={template.name}
+                                                />
+                                            ) : (
+                                                <div
+                                                    className="w-full h-full"
+                                                    style={{ background: template.value }}
+                                                />
+                                            )}
 
-                                            setConfig({ ...config, templateId: template.id }); // aplica template
-                                            setPreviewFitMode('cover'); // Reset para cover
-                                            setShowTemplateModal(false);
-                                            setActiveTool('styles'); // Switch to styles tab automatically
-                                        }}
-                                        className={`relative w-full h-40 sm:h-44 md:h-48 rounded-xl overflow-hidden border-2 transition-all group ${config.templateId === template.id
-                                            ? 'border-neon-pulse shadow-[0_0_15px_rgba(0,255,114,0.3)]'
-                                            : 'border-transparent hover:border-neon-pulse/50'
-                                            }`}
-                                    >
-                                        {template.backgroundType === 'image' ? (
-                                            <img
-                                                src={template.value}
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                alt={template.name}
-                                            />
-                                        ) : (
-                                            <div
-                                                className="w-full h-full"
-                                                style={{ background: template.value }}
-                                            />
-                                        )}
+                                            {(template as any).isPremium === true && (
+                                                <div className="absolute top-2 left-2 bg-neon-pulse text-dark-carbon text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md">
+                                                    <Crown className="w-3 h-3 fill-dark-carbon" />
+                                                    PRO
+                                                </div>
+                                            )}
 
-                                        {(template as any).isPremium === true && (
-                                            <div className="absolute top-2 left-2 bg-neon-pulse text-dark-carbon text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md">
-                                                <Crown className="w-3 h-3 fill-dark-carbon" />
-                                                PRO
-                                            </div>
-                                        )}
+                                            {/* Check de selecionado */}
 
-                                        {/* Check de selecionado */}
-
-                                        {config.templateId === template.id && (
-                                            <div className="absolute top-2 right-2 bg-neon-pulse rounded-full p-1">
-                                                <Check className="w-3 h-3 text-dark-carbon" />
-                                            </div>
-                                        )}
-                                    </button>
-                                ))}
+                                            {config.templateId === template.id && (
+                                                <div className="absolute top-2 right-2 bg-neon-pulse rounded-full p-1">
+                                                    <Check className="w-3 h-3 text-dark-carbon" />
+                                                </div>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {showPreviewDialog && exportPreviewUrl && (
-                <div className="absolute inset-0 z-[60] bg-dark-carbon flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200">
-                    <div className="w-full flex justify-between items-center p-6 absolute top-0 left-0 bg-gradient-to-b from-black/80 to-transparent z-10">
-                        <button onClick={() => setShowPreviewDialog(false)} className="text-white/80 hover:text-white flex items-center gap-1">
-                            <ArrowLeft className="w-5 h-5" /> Edit
-                        </button>
-                        <span className="font-bold text-white tracking-widest text-sm uppercase opacity-90">{t.preview}</span>
-                        <button
-                            onClick={() => setPreviewFitMode(prev => prev === 'cover' ? 'contain' : 'cover')}
-                            className="text-white/80 hover:text-white flex items-center gap-1 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10"
-                        >
-                            {previewFitMode === 'cover' ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                            <span className="text-xs font-medium">{previewFitMode === 'cover' ? 'Fit' : 'Fill'}</span>
-                        </button>
-                    </div>
-
-                    <div className="relative w-full h-full flex items-center justify-center p-8">
-                        <div className={`relative bg-gray-800 rounded-[2rem] border-4 border-gray-700 shadow-2xl overflow-hidden ${selectedShareFormat === 'story' ? 'aspect-[9/16] h-[75%]' : 'aspect-square w-[90%]'}`}>
-                            {/* Container com position relative */}
-                            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-
-                                {/* CAMADA 1: FUNDO (Imagem com Zoom/Pan) */}
-                                <TransformWrapper
-                                    initialScale={1}
-                                    minScale={0.5}
-                                    maxScale={5}
-                                    centerOnInit={true}
-                                    limitToBounds={false}
-                                    panning={{ disabled: false }}
-                                    pinch={{ disabled: false }}
-                                    doubleClick={{ disabled: false }}
-                                >
-                                    <TransformComponent
-                                        wrapperStyle={{
-                                            width: '100%',
-                                            height: '100%'
-                                        }}
-                                        contentStyle={{
-                                            width: '100%',
-                                            height: '100%',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}
-                                    >
-                                        {getCurrentTemplate().backgroundType === 'image' || customImage ? (
-                                            <img
-                                                src={customImage || getCurrentTemplate().value}
-                                                alt="Preview"
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    objectFit: previewFitMode,
-                                                }}
-                                            />
-                                        ) : (
-                                            <div
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    backgroundColor: getCurrentTemplate().value
-                                                }}
-                                            />
-                                        )}
-                                    </TransformComponent>
-                                </TransformWrapper>
-
-                                {/* CAMADA 2: OVERLAY (Tint) */}
-                                <div
-                                    className="absolute inset-0 bg-black pointer-events-none"
-                                    style={{ opacity: getCurrentTemplate().overlayOpacity || 0 }}
-                                />
-
-                                {/* CAMADA 3: TEXTO (Fixo) */}
-                                <div
-                                    className="absolute inset-0 flex justify-center pointer-events-none z-10 p-8"
-                                    style={{
-                                        alignItems: config.verticalAlign === 'top' ? 'flex-start' :
-                                            config.verticalAlign === 'bottom' ? 'flex-end' : 'center'
-                                    }}
-                                >
-                                    {renderTextWithBackground()}
-                                </div>
-
-                                {/* CAMADA 4: UI DECORATIVA (Notch/Label) */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                    pointerEvents: 'none',
-                                    zIndex: 20
-                                }}>
-                                    {/* Notch do telemóvel */}
-                                    <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-1 bg-black/50 rounded-full"></div>
-
-                                    {/* Label "Your Story" para formato story */}
-                                    {selectedShareFormat === 'story' && (
-                                        <div className="absolute top-6 left-4 text-[10px] text-white/70 font-mono">Your Story</div>
-                                    )}
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="w-full p-6 bg-dark-graphite border-t border-dark-steel">
-                        <button
-                            onClick={executeShare}
-                            className="w-full bg-neon-pulse text-dark-carbon font-bold py-4 rounded-full text-lg shadow-[0_0_20px_rgba(0,255,114,0.4)] hover:bg-neon-mint transition-colors flex items-center justify-center gap-2"
-                        >
-                            <Share2 className="w-5 h-5" /> {t.shareNow}
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {isEditingText && (
-                <div className="absolute inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
-                    <div className="w-full max-w-md bg-dark-graphite rounded-2xl p-6 shadow-2xl border border-dark-steel">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-white font-bold text-lg">{t.editText}</h3>
-                            <button onClick={() => setIsEditingText(false)} className="p-1 bg-dark-steel rounded-full">
-                                <X className="w-4 h-4 text-text-dim" />
+            {
+                showPreviewDialog && exportPreviewUrl && (
+                    <div className="absolute inset-0 z-[60] bg-dark-carbon flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200">
+                        <div className="w-full flex justify-between items-center p-6 absolute top-0 left-0 bg-gradient-to-b from-black/80 to-transparent z-10">
+                            <button onClick={() => setShowPreviewDialog(false)} className="text-white/80 hover:text-white flex items-center gap-1">
+                                <ArrowLeft className="w-5 h-5" /> Edit
+                            </button>
+                            <span className="font-bold text-white tracking-widest text-sm uppercase opacity-90">{t.preview}</span>
+                            <button
+                                onClick={() => setPreviewFitMode(prev => prev === 'cover' ? 'contain' : 'cover')}
+                                className="text-white/80 hover:text-white flex items-center gap-1 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10"
+                            >
+                                {previewFitMode === 'cover' ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                                <span className="text-xs font-medium">{previewFitMode === 'cover' ? 'Fit' : 'Fill'}</span>
                             </button>
                         </div>
-                        <textarea
-                            autoFocus
-                            value={config.text}
-                            onChange={(e) => setConfig({ ...config, text: e.target.value })}
-                            className="w-full bg-dark-carbon text-white p-4 rounded-xl border border-dark-steel focus:border-neon-pulse focus:ring-1 focus:ring-neon-pulse outline-none min-h-[150px] text-lg resize-none mb-4"
-                            placeholder={t.writePhrase}
-                        />
-                        <button
-                            onClick={() => setIsEditingText(false)}
-                            className="w-full bg-neon-pulse text-dark-carbon font-bold py-3 rounded-xl hover:bg-neon-mint transition-colors shadow-lg shadow-neon-pulse/20"
-                        >
-                            {t.done}
-                        </button>
-                    </div>
-                </div>
-            )}
 
-            {showSaveSuccess && (
-                <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-dark-graphite border-2 border-dark-steel rounded-2xl shadow-2xl px-8 py-6 max-w-sm mx-4 animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-                        <div className="flex items-center gap-4 mb-3">
-                            <div className="w-12 h-12 rounded-full bg-neon-pulse/20 flex items-center justify-center">
-                                <Check className="w-7 h-7 text-neon-pulse" strokeWidth={3} />
+                        <div className="relative w-full h-full flex items-center justify-center p-8">
+                            <div className={`relative bg-gray-800 rounded-[2rem] border-4 border-gray-700 shadow-2xl overflow-hidden ${selectedShareFormat === 'story' ? 'aspect-[9/16] h-[75%]' : 'aspect-square w-[90%]'}`}>
+                                {/* Container com position relative */}
+                                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+
+                                    {/* CAMADA 1: FUNDO (Imagem com Zoom/Pan) */}
+                                    <TransformWrapper
+                                        initialScale={1}
+                                        minScale={0.5}
+                                        maxScale={5}
+                                        centerOnInit={true}
+                                        limitToBounds={false}
+                                        panning={{ disabled: false }}
+                                        pinch={{ disabled: false }}
+                                        doubleClick={{ disabled: false }}
+                                    >
+                                        <TransformComponent
+                                            wrapperStyle={{
+                                                width: '100%',
+                                                height: '100%'
+                                            }}
+                                            contentStyle={{
+                                                width: '100%',
+                                                height: '100%',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            {getCurrentTemplate().backgroundType === 'image' || customImage ? (
+                                                <img
+                                                    src={customImage || getCurrentTemplate().value}
+                                                    alt="Preview"
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: previewFitMode,
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        backgroundColor: getCurrentTemplate().value
+                                                    }}
+                                                />
+                                            )}
+                                        </TransformComponent>
+                                    </TransformWrapper>
+
+                                    {/* CAMADA 2: OVERLAY (Tint) */}
+                                    <div
+                                        className="absolute inset-0 bg-black pointer-events-none"
+                                        style={{ opacity: getCurrentTemplate().overlayOpacity || 0 }}
+                                    />
+
+                                    {/* CAMADA 3: TEXTO (Fixo) */}
+                                    <div
+                                        className="absolute inset-0 flex justify-center pointer-events-none z-10 p-8"
+                                        style={{
+                                            alignItems: config.verticalAlign === 'top' ? 'flex-start' :
+                                                config.verticalAlign === 'bottom' ? 'flex-end' : 'center'
+                                        }}
+                                    >
+                                        {renderTextWithBackground()}
+                                    </div>
+
+                                    {/* CAMADA 4: UI DECORATIVA (Notch/Label) */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        pointerEvents: 'none',
+                                        zIndex: 20
+                                    }}>
+                                        {/* Notch do telemóvel */}
+                                        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-1 bg-black/50 rounded-full"></div>
+
+                                        {/* Label "Your Story" para formato story */}
+                                        {selectedShareFormat === 'story' && (
+                                            <div className="absolute top-6 left-4 text-[10px] text-white/70 font-mono">Your Story</div>
+                                        )}
+                                    </div>
+
+                                </div>
                             </div>
-                            <h3 className="text-2xl font-bold text-neon-pulse drop-shadow-[0_0_10px_rgba(0,255,114,0.5)]">
-                                {t.savedSuccess}
-                            </h3>
                         </div>
-                        <p className="text-text-secondary text-sm pl-16">
-                            {t.savedDescription}
-                        </p>
+
+                        <div className="w-full p-6 bg-dark-graphite border-t border-dark-steel">
+                            <button
+                                onClick={executeShare}
+                                className="w-full bg-neon-pulse text-dark-carbon font-bold py-4 rounded-full text-lg shadow-[0_0_20px_rgba(0,255,114,0.4)] hover:bg-neon-mint transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Share2 className="w-5 h-5" /> {t.shareNow}
+                            </button>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {showPremiumModal && (
-                <PremiumModal
-                    onClose={() => setShowPremiumModal(false)}
-                    onUnlock={handleUnlock}
-                    language={language}
-                    showRewardedButton={
-                        rewardedModalType === 'template'
-                            ? dailyUnlockService.canUnlockTemplate()
-                            : dailyUnlockService.canUnlockPreset()
-                    }
-                    onWatchAd={handleOpenRewardedModal}
-                />
-            )}
+            {
+                isEditingText && (
+                    <div className="absolute inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
+                        <div className="w-full max-w-md bg-dark-graphite rounded-2xl p-6 shadow-2xl border border-dark-steel">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-white font-bold text-lg">{t.editText}</h3>
+                                <button onClick={() => setIsEditingText(false)} className="p-1 bg-dark-steel rounded-full">
+                                    <X className="w-4 h-4 text-text-dim" />
+                                </button>
+                            </div>
+                            <textarea
+                                autoFocus
+                                value={config.text}
+                                onChange={(e) => setConfig({ ...config, text: e.target.value })}
+                                className="w-full bg-dark-carbon text-white p-4 rounded-xl border border-dark-steel focus:border-neon-pulse focus:ring-1 focus:ring-neon-pulse outline-none min-h-[150px] text-lg resize-none mb-4"
+                                placeholder={t.writePhrase}
+                            />
+                            <button
+                                onClick={() => setIsEditingText(false)}
+                                className="w-full bg-neon-pulse text-dark-carbon font-bold py-3 rounded-xl hover:bg-neon-mint transition-colors shadow-lg shadow-neon-pulse/20"
+                            >
+                                {t.done}
+                            </button>
+                        </div>
+                    </div>
+                )
+            }
 
-            {showRewardedModal && (
-                <RewardedAdModal
-                    isOpen={showRewardedModal}
-                    onClose={() => setShowRewardedModal(false)}
-                    onWatchAd={handleWatchRewardedAd}
-                    type={rewardedModalType}
-                    language={language}
-                />
-            )}
+            {
+                showSaveSuccess && (
+                    <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-dark-graphite border-2 border-dark-steel rounded-2xl shadow-2xl px-8 py-6 max-w-sm mx-4 animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+                            <div className="flex items-center gap-4 mb-3">
+                                <div className="w-12 h-12 rounded-full bg-neon-pulse/20 flex items-center justify-center">
+                                    <Check className="w-7 h-7 text-neon-pulse" strokeWidth={3} />
+                                </div>
+                                <h3 className="text-2xl font-bold text-neon-pulse drop-shadow-[0_0_10px_rgba(0,255,114,0.5)]">
+                                    {t.savedSuccess}
+                                </h3>
+                            </div>
+                            <p className="text-text-secondary text-sm pl-16">
+                                {t.savedDescription}
+                            </p>
+                        </div>
+                    </div>
+                )
+            }
 
-            {showSubscriptionModal && (
-                <SubscriptionModal
-                    isOpen={showSubscriptionModal}
-                    onClose={() => setShowSubscriptionModal(false)}
-                    onPurchase={handlePurchase}
-                    onRestore={handleRestorePurchases}
-                    language={language}
-                />
-            )}
-        </div>
+            {
+                showPremiumModal && (
+                    <PremiumModal
+                        onClose={() => setShowPremiumModal(false)}
+                        onUnlock={handleUnlock}
+                        language={language}
+                        showRewardedButton={
+                            rewardedModalType === 'template'
+                                ? dailyUnlockService.canUnlockTemplate()
+                                : dailyUnlockService.canUnlockPreset()
+                        }
+                        onWatchAd={handleOpenRewardedModal}
+                    />
+                )
+            }
+
+            {
+                showRewardedModal && (
+                    <RewardedAdModal
+                        isOpen={showRewardedModal}
+                        onClose={() => setShowRewardedModal(false)}
+                        onWatchAd={handleWatchRewardedAd}
+                        type={rewardedModalType}
+                        language={language}
+                    />
+                )
+            }
+
+            {
+                showSubscriptionModal && (
+                    <SubscriptionModal
+                        isOpen={showSubscriptionModal}
+                        onClose={() => setShowSubscriptionModal(false)}
+                        onPurchase={handlePurchase}
+                        onRestore={handleRestorePurchases}
+                        language={language}
+                    />
+                )
+            }
+        </div >
     );
 };

@@ -30,21 +30,21 @@ const App: React.FC = () => {
   // Splash Screen & Onboarding Logic
   useEffect(() => {
     const checkOnboarding = () => {
-        const hasSeen = localStorage.getItem('superquote_onboarding_seen');
-        if (!hasSeen) {
-            setShowOnboarding(true);
-        }
-        
-        // Verifica se tem premium secreto ativado
-        const hasSecretPremium = localStorage.getItem('superquote_secret_premium') === 'true';
-        if (hasSecretPremium) {
-            setIsPremiumUser(true);
-        }
-        
-        setIsLoading(false);
+      const hasSeen = localStorage.getItem('superquote_onboarding_seen');
+      if (!hasSeen) {
+        setShowOnboarding(true);
+      }
+
+      // Verifica se tem premium secreto ativado
+      const hasSecretPremium = localStorage.getItem('superquote_secret_premium') === 'true';
+      if (hasSecretPremium) {
+        setIsPremiumUser(true);
+      }
+
+      setIsLoading(false);
     };
 
-    const timer = setTimeout(checkOnboarding, 2500); 
+    const timer = setTimeout(checkOnboarding, 2500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -58,13 +58,13 @@ const App: React.FC = () => {
           initializeForTesting: false, // Produção - ads reais
         });
         console.log('AdMob initialized successfully');
-        
+
         // Adiciona listeners para interstitials
         admobService.addInterstitialListeners();
-        
+
         // Prepara o primeiro interstitial
         admobService.prepareInterstitial();
-        
+
         // Prepara o primeiro rewarded ad
         admobService.prepareRewarded();
       } catch (error) {
@@ -90,7 +90,7 @@ const App: React.FC = () => {
         }
       }
     };
-    
+
     checkWebPremium();
   }, []);
 
@@ -111,14 +111,14 @@ const App: React.FC = () => {
           if (data.email) {
             console.log('Verified purchase for:', data.email);
             localStorage.setItem('userEmail', data.email);
-            
+
             // Force check premium immediately
             const isPremium = await StripeService.checkSubscriptionStatus(data.email);
             if (isPremium) {
               setIsPremiumUser(true);
               alert('Compra confirmada! O Premium foi ativado.');
             }
-            
+
             // Clean URL
             window.history.replaceState({}, document.title, window.location.pathname);
           }
@@ -143,11 +143,11 @@ const App: React.FC = () => {
         }
 
         await revenueCatService.initialize();
-        
+
         // Verifica se já tem subscrição ativa
         const isPremium = await revenueCatService.checkSubscriptionStatus();
         setIsPremiumUser(isPremium);
-        
+
         console.log('RevenueCat initialized. Premium:', isPremium);
       } catch (error) {
         console.error('Error initializing RevenueCat:', error);
@@ -182,22 +182,22 @@ const App: React.FC = () => {
   };
 
   const handleFinishOnboarding = () => {
-      localStorage.setItem('superquote_onboarding_seen', 'true');
-      setShowOnboarding(false);
+    localStorage.setItem('superquote_onboarding_seen', 'true');
+    setShowOnboarding(false);
   };
 
   const handleUnlockPremium = async () => {
-      setIsPremiumUser(true);
-      
-      // Re-verifica o status no RevenueCat para sincronizar (apenas em plataformas nativas)
-      try {
-          const isNative = Capacitor.isNativePlatform();
-          if (isNative) {
-              await revenueCatService.checkSubscriptionStatus();
-          }
-      } catch (error) {
-          console.error('Error syncing premium status:', error);
+    setIsPremiumUser(true);
+
+    // Re-verifica o status no RevenueCat para sincronizar (apenas em plataformas nativas)
+    try {
+      const isNative = Capacitor.isNativePlatform();
+      if (isNative) {
+        await revenueCatService.checkSubscriptionStatus();
       }
+    } catch (error) {
+      console.error('Error syncing premium status:', error);
+    }
   };
 
   const handleLanguageSelect = (lang: LanguageCode) => {
@@ -218,26 +218,26 @@ const App: React.FC = () => {
 
   const handleSurprise = () => {
     if (!nav.selectedLanguage) return;
-    
+
     // 1. Pick a random category
     const cats = PHRASES_DB[nav.selectedLanguage];
     const catKeys = Object.keys(cats);
     if (catKeys.length === 0) return;
 
     const randomCatKey = catKeys[Math.floor(Math.random() * catKeys.length)];
-    
+
     // 2. Pick a random phrase from that category
     const phrases = cats[randomCatKey];
     if (!phrases || phrases.length === 0) return;
-    
+
     const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
 
     // 3. Go straight to editor
     setNav({
-        ...nav,
-        selectedCategory: randomCatKey,
-        selectedPhrase: randomPhrase,
-        currentScreen: 'editor'
+      ...nav,
+      selectedCategory: randomCatKey,
+      selectedPhrase: randomPhrase,
+      currentScreen: 'editor'
     });
   };
 
@@ -256,20 +256,20 @@ const App: React.FC = () => {
   // Render Logic
   if (isLoading) {
     return (
-        <div className="h-full w-full max-w-md mx-auto bg-white shadow-2xl relative overflow-hidden">
-            <SplashScreen />
-        </div>
+      <div className="h-full w-full max-w-md mx-auto bg-white shadow-2xl relative overflow-hidden">
+        <SplashScreen />
+      </div>
     );
   }
 
   if (showOnboarding) {
-      return (
-        <div className="h-full w-full max-w-md mx-auto bg-white shadow-2xl relative overflow-hidden">
-            <OnboardingScreen onFinish={handleFinishOnboarding} />
-        </div>
-      );
+    return (
+      <div className="h-full w-full max-w-md mx-auto bg-white shadow-2xl relative overflow-hidden">
+        <OnboardingScreen onFinish={handleFinishOnboarding} />
+      </div>
+    );
   }
-  
+
   // Default to pt-PT if no language selected yet (though logic prevents reaching screens without it)
   const currentLanguage = nav.selectedLanguage || 'pt-PT';
 
@@ -278,19 +278,19 @@ const App: React.FC = () => {
     case 'language':
       content = <LanguageScreen onSelectLanguage={handleLanguageSelect} />;
       break;
-      
+
     case 'categories':
       if (!nav.selectedLanguage) break;
       const categories = Object.keys(PHRASES_DB[nav.selectedLanguage]);
       content = (
-        <CategoriesScreen 
-            categories={categories} 
-            onBack={goBack} 
-            onSelectCategory={handleCategorySelect}
-            onSurprise={handleSurprise}
-            onOpenFavorites={handleGoToFavorites}
-            language={currentLanguage}
-            isPremium={isPremiumUser}
+        <CategoriesScreen
+          categories={categories}
+          onBack={goBack}
+          onSelectCategory={handleCategorySelect}
+          onSurprise={handleSurprise}
+          onOpenFavorites={handleGoToFavorites}
+          language={currentLanguage}
+          isPremium={isPremiumUser}
         />
       );
       break;
@@ -299,27 +299,27 @@ const App: React.FC = () => {
       if (!nav.selectedLanguage || !nav.selectedCategory) break;
       const phrases = PHRASES_DB[nav.selectedLanguage][nav.selectedCategory];
       content = (
-        <PhrasesScreen 
-            category={nav.selectedCategory} 
-            phrases={phrases} 
-            onBack={goBack} 
-            onSelectPhrase={handlePhraseSelect} 
-            isPremium={isPremiumUser}
-            favorites={favoritePhrases}
-            onToggleFavorite={handleToggleFavorite}
-            language={currentLanguage}
+        <PhrasesScreen
+          category={nav.selectedCategory}
+          phrases={phrases}
+          onBack={goBack}
+          onSelectPhrase={handlePhraseSelect}
+          isPremium={isPremiumUser}
+          favorites={favoritePhrases}
+          onToggleFavorite={handleToggleFavorite}
+          language={currentLanguage}
         />
       );
       break;
 
     case 'favorites':
       content = (
-        <FavoritesScreen 
-            favorites={favoritePhrases}
-            onBack={goBack}
-            onSelectPhrase={handlePhraseSelect}
-            onToggleFavorite={handleToggleFavorite}
-            language={currentLanguage}
+        <FavoritesScreen
+          favorites={favoritePhrases}
+          onBack={goBack}
+          onSelectPhrase={handlePhraseSelect}
+          onToggleFavorite={handleToggleFavorite}
+          language={currentLanguage}
         />
       );
       break;
@@ -327,23 +327,23 @@ const App: React.FC = () => {
     case 'editor':
       if (!nav.selectedPhrase) break;
       content = (
-          <EditorScreen 
-            initialPhrase={nav.selectedPhrase} 
-            onBack={goBack} 
-            isPremium={isPremiumUser}
-            onUnlock={handleUnlockPremium}
-            language={currentLanguage}
-          />
+        <EditorScreen
+          initialPhrase={nav.selectedPhrase}
+          onBack={goBack}
+          isPremium={isPremiumUser}
+          onUnlock={handleUnlockPremium}
+          language={currentLanguage}
+        />
       );
       break;
-      
+
     default:
       content = <div>Error: Unknown screen</div>;
   }
 
   return (
     <div className="h-full w-full max-w-md mx-auto bg-white shadow-2xl relative overflow-y-auto overflow-x-hidden">
-        {content}
+      {content}
     </div>
   );
 };

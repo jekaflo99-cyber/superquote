@@ -129,7 +129,6 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
 
     // Find the priority categories from the list, matching by keywords
     const found = {
-      christmas: null as string | null,
       cat2026: null as string | null,
       newYear: null as string | null,
       reflection: null as string | null,
@@ -137,11 +136,6 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
 
     categories.forEach(cat => {
       const lower = cat.toLowerCase();
-
-      // Match Christmas/Natal variants
-      if (!found.christmas && (lower.includes('natal') || lower.includes('christmas') || lower.includes('navidad'))) {
-        found.christmas = cat;
-      }
 
       // Match 2026
       if (!found.cat2026 && lower.includes('2026')) {
@@ -161,8 +155,8 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
       }
     });
 
-    // Return the priority categories in order: Natal, 2026, Ano Novo, Reflexão
-    return [found.christmas, found.cat2026, found.newYear, found.reflection].filter(cat => cat !== null) as string[];
+    // Return the priority categories in order: 2026, Ano Novo, Reflexão
+    return [found.cat2026, found.newYear, found.reflection].filter(cat => cat !== null) as string[];
   }, [categories]);
 
   const filteredCategories = categories.filter(c =>
