@@ -117,10 +117,10 @@ const PRESET_STYLES: PresetConfig[] = [
     // FREE STYLES (10 selected)
     { id: 'p1', name: 'Clean', isPremium: false, fontFamily: 'Inter', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textShadowOpacity: 0, textOutlineWidth: 0, textBackgroundColor: '#ffffff', textBackgroundOpacity: 0 },
     { id: 'p2', name: 'Romantic', isPremium: false, fontFamily: 'Great Vibes', fontSize: 22, textAlign: 'justify', textColor: '#b03030', textShadowOpacity: 0, textOutlineWidth: 0 },
-    { id: 'p3', name: 'Impact', isPremium: false, fontFamily: 'Oswald', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', isBold: true, textShadowOpacity: 0.8, textShadowBlur: 5, textShadowColor: '#000000' },
+    { id: 'p3', name: 'Impact', isPremium: false, fontFamily: 'Oswald', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textShadowOpacity: 0.8, textShadowBlur: 5, textShadowColor: '#000000' },
     { id: 'p8', name: 'Neon', isPremium: false, fontFamily: 'Righteous', fontSize: 22, textAlign: 'justify', textColor: '#00ff99', textShadowOpacity: 0.3, textShadowColor: '#00ff99', textShadowBlur: 10, textBackgroundColor: '#000000', textBackgroundOpacity: 0.7, textBoxStyle: 'block' },
     { id: 'p9', name: 'Note', isPremium: false, fontFamily: 'Indie Flower', fontSize: 22, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#fef3c7', textBackgroundOpacity: 1, textBoxStyle: 'block' },
-    { id: 'p11', name: 'Dark', isPremium: false, fontFamily: 'Roboto', isBold: true, fontSize: 22, textAlign: 'justify', textColor: '#f8fafc', textBackgroundColor: '#000000', textBackgroundOpacity: 0.85, textBoxStyle: 'block' },
+    { id: 'p11', name: 'Dark', isPremium: false, fontFamily: 'Roboto', fontSize: 22, textAlign: 'justify', textColor: '#f8fafc', textBackgroundColor: '#000000', textBackgroundOpacity: 0.85, textBoxStyle: 'block' },
     { id: 'p17', name: 'Chill', isPremium: false, fontFamily: 'Lato', fontSize: 22, textAlign: 'justify', textColor: '#475569', textBackgroundColor: '#f1f5f9', textBackgroundOpacity: 0.7, textBoxStyle: 'block' },
     { id: 'p24', name: 'Block', isPremium: false, fontFamily: "Indie Flower", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#2563eb", textBackgroundColor: "#dbeafe", textBackgroundOpacity: 0.9, textBoxStyle: "block", lineHeight: 1.5, textShadowOpacity: 0, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 4, textOutlineColor: "#2563eb", textGlowWidth: 2, textGlowColor: "#ffffff", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false },
     { id: 'p29', name: 'Candy', isPremium: false, fontFamily: "Indie Flower", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#bd00ad", textBackgroundColor: "#fbcfe8", textBackgroundOpacity: 0.9, textBoxStyle: "block", lineHeight: 1.5, textShadowOpacity: 0, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 4, textOutlineColor: "#bd00ad", textGlowWidth: 2, textGlowColor: "#ffffff", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false },
@@ -147,10 +147,10 @@ const PRESET_STYLES: PresetConfig[] = [
     { id: 'p4', name: 'Signature', isPremium: true, fontFamily: 'WindSong', fontSize: 22, textAlign: 'justify', textColor: '#e2c792' },
     { id: 'p5', name: 'Classic', isPremium: true, fontFamily: 'Merriweather', fontSize: 22, textAlign: 'justify', textColor: '#1a1a1a' },
     { id: 'p6', name: 'Pastel', isPremium: true, fontFamily: 'Quicksand', fontSize: 22, textAlign: 'justify', textColor: '#4a4a4a', textBackgroundColor: '#fce7f3', textBackgroundOpacity: 0.7, textBoxStyle: 'block' },
-    { id: 'p7', name: 'Boss', isPremium: true, fontFamily: 'Montserrat', isBold: true, fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#0f172a', textBackgroundOpacity: 0.9, textBoxStyle: 'block' },
+    { id: 'p7', name: 'Boss', isPremium: true, fontFamily: 'Montserrat', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#0f172a', textBackgroundOpacity: 0.9, textBoxStyle: 'block' },
     { id: 'p10', name: 'Gold', isPremium: true, fontFamily: 'Playfair Display', fontSize: 22, textAlign: 'justify', textColor: '#d4af37', text3DOffsetX: 2, text3DOffsetY: 1, text3DColor: '#3c3c3cff' },
     { id: 'p12', name: 'Vintage', isPremium: true, fontFamily: 'Roboto Mono', fontSize: 22, textAlign: 'justify', textColor: '#3f2e26', textBackgroundColor: '#f5ebe0', textBackgroundOpacity: 0.95, textBoxStyle: 'block' },
-    { id: 'p13', name: 'Story', isPremium: true, fontFamily: 'Open Sans', isBold: true, fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#000000', textBackgroundOpacity: 0.5, textBoxStyle: 'highlight' },
+    { id: 'p13', name: 'Story', isPremium: true, fontFamily: 'Open Sans', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#000000', textBackgroundOpacity: 0.5, textBoxStyle: 'highlight' },
     { id: 'p14', name: 'Faith', isPremium: true, fontFamily: 'Cinzel', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#818cf8', textBackgroundOpacity: 0.4, textBoxStyle: 'block' },
     { id: 'p15', name: 'Cute', isPremium: true, fontFamily: 'Fredoka', fontSize: 22, textAlign: 'justify', textColor: '#db2777', textBackgroundColor: '#fce7f3', textBackgroundOpacity: 0.8, textBoxStyle: 'block' },
     { id: 'p16', name: 'Street', isPremium: true, fontFamily: 'Anton', fontSize: 22, textAlign: 'justify', textColor: '#fbbf24', textBackgroundColor: '#171717', textBackgroundOpacity: 0.8, textBoxStyle: 'highlight' },
@@ -161,12 +161,12 @@ const PRESET_STYLES: PresetConfig[] = [
     { id: 'p22', name: 'Ice', isPremium: true, fontFamily: 'Raleway', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#ffffff', textBackgroundOpacity: 0.3, textShadowOpacity: 0.3, textBoxStyle: 'block' },
     { id: 'p23', name: 'Retro', isPremium: true, fontFamily: 'Pacifico', fontSize: 22, textAlign: 'justify', textColor: '#f59e0b', textOutlineWidth: 4, textOutlineColor: '#000000', textShadowOpacity: 1, textShadowColor: '#000000', textShadowBlur: 0, text3DOffsetX: 3, text3DOffsetY: 3, text3DColor: '#000000' },
     { id: 'p25', name: 'Duotone', isPremium: true, fontFamily: 'Bebas Neue', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#db2777', textBackgroundOpacity: 1, textOutlineWidth: 1, textOutlineColor: '#ffffff', textBoxStyle: 'block' },
-    { id: 'p26', name: 'Neon M', isPremium: true, fontFamily: 'Montserrat', isBold: true, fontSize: 22, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#a3e635', textBackgroundOpacity: 0.3, textGlowWidth: 5, textGlowColor: '#a3e635', textBoxStyle: 'highlight' },
+    { id: 'p26', name: 'Neon M', isPremium: true, fontFamily: 'Montserrat', fontSize: 22, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#a3e635', textBackgroundOpacity: 0.3, textGlowWidth: 5, textGlowColor: '#a3e635', textBoxStyle: 'highlight' },
     { id: 'p27', name: 'Soft', isPremium: true, fontFamily: 'Nunito', fontSize: 22, textAlign: 'justify', textColor: '#787878', textOutlineWidth: 2, textOutlineColor: '#ff9ed7', textShadowOpacity: 0.1, textShadowColor: '#f472b6', textBoxStyle: 'block', textGlowWidth: 5, textGlowColor: '#ff00ff' },
     { id: 'p28', name: 'Double', isPremium: true, fontFamily: 'Cinzel', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textOutlineWidth: 1, textOutlineColor: '#4c0519', textGlowWidth: 10, textGlowColor: '#9f1239' },
     { id: 'p30', name: 'Noir', isPremium: true, fontFamily: 'Playfair Display', fontSize: 22, textAlign: 'justify', textColor: '#fefce8', textBackgroundColor: '#000000', textBackgroundOpacity: 0.6, textBoxStyle: 'highlight' },
     { id: 'p31', name: 'Pulse', isPremium: true, fontFamily: 'Righteous', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textGlowColor: '#9bff8a', textGlowWidth: 5, textShadowColor: '#00ff88', textShadowBlur: 10, textOutlineColor: '#003300', textOutlineWidth: 3, textGradientColors: ['#00ff88', '#00ccff'] },
-    { id: 'p32', name: 'Royal', isPremium: true, fontFamily: "Cinzel", fontSize: 22, textAlign: "justify", verticalAlign: "center", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.3, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 2, textOutlineColor: "#f2be50", textGlowWidth: 0, textGlowColor: "#ffdd55", text3DOffsetX: 2, text3DOffsetY: 2, text3DColor: "#6e4c1e", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isBold: true, isItalic: false, textGradientColors: ["#fbd786", "#f7797d", "#c6ffdd"], },
+    { id: 'p32', name: 'Royal', isPremium: true, fontFamily: "Cinzel", fontSize: 22, textAlign: "justify", verticalAlign: "center", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.3, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 2, textOutlineColor: "#f2be50", textGlowWidth: 0, textGlowColor: "#ffdd55", text3DOffsetX: 2, text3DOffsetY: 2, text3DColor: "#6e4c1e", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#fbd786", "#f7797d", "#c6ffdd"], },
     { id: 'p33', name: 'Diamond', isPremium: true, fontFamily: 'Playfair Display', fontSize: 22, textAlign: 'justify', textColor: '#e2e2e2', textGradientColors: ['#ffffff', '#d7d7d7', '#bcbcbc'], textShadowColor: '#000000', textShadowBlur: 10, textGlowColor: '#d6d6d6', textGlowWidth: 8, letterSpacing: 2, textOutlineWidth: 2, textOutlineColor: "#ffffff" },
     { id: 'p34', name: 'Thunder', isPremium: true, fontFamily: 'Bebas Neue', fontSize: 22, textAlign: 'justify', textColor: '#cce7ff', textGlowColor: '#0a9dff', textGlowWidth: 3, textShadowColor: '#0033cc', textShadowBlur: 10, textGradientColors: ['#0077ff', '#00c8ff'], textOutlineWidth: 2, textOutlineColor: "#001685" },
     { id: 'p36', name: '80s', isPremium: true, fontFamily: 'Pacifico', fontSize: 22, textAlign: 'justify', textColor: '#fff', textGradientColors: ['#ff00cc', '#3333ff'], textGlowColor: '#ff33ff', textShadowColor: '#220044', textShadowBlur: 12, letterSpacing: 1.5 },
@@ -187,7 +187,7 @@ const PRESET_STYLES: PresetConfig[] = [
     { id: 'p52', name: 'Lux Gold', isPremium: true, fontFamily: "Playfair Display", fontSize: 22, textAlign: "justify", verticalAlign: "center", textGradientColors: ["#ffe29e", "#f6cc84ff"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#4b3505", textShadowBlur: 15, textOutlineWidth: 0, textOutlineColor: "#f9a8d4", textGlowWidth: 1, textGlowColor: "#ffdd94", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 3, textSuperStrokeColor: "#2c1f08", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, },
     { id: 'p53', name: 'Toon', isPremium: true, fontFamily: "Luckiest Guy", fontSize: 22, textAlign: "justify", verticalAlign: "center", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 0, textGradientColors: ["#5d5d5dff", "#353535ff", "#6d6d6dff"], textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 5.5, textOutlineColor: "#ffeb00", textGlowWidth: 10, textGlowColor: "#4d4d00", text3DOffsetX: 5, text3DOffsetY: 5, text3DColor: "#000000", textSuperStrokeWidth: 5, textSuperStrokeColor: "#000000", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, },
     { id: 'p54', name: 'Rose', isPremium: true, fontFamily: "Amatic SC", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#ffffff", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#b14a72", textShadowBlur: 10, textOutlineWidth: 2, textOutlineColor: "#ff8ada", textGlowWidth: 13, textGlowColor: "#fbbdff", text3DOffsetX: 1, text3DOffsetY: 2, text3DColor: "#d14700", textSuperStrokeWidth: 3, textSuperStrokeColor: "#910094", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, textGradientColors: ["#ffb7d9", "#ff89ae"] },
-    { id: 'p55', name: 'Cyan', isPremium: true, fontFamily: "Montserrat", fontSize: 22, textAlign: "justify", verticalAlign: "center", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#003c3f", textShadowBlur: 20, textOutlineWidth: 5, textOutlineColor: "#00e682", textGlowWidth: 0, textGlowColor: "#00faff", text3DOffsetX: 3, text3DOffsetY: 3, text3DColor: "#72bba3", textSuperStrokeWidth: 5, textSuperStrokeColor: "#004c4e", letterSpacing: 0, textTransform: "none", isBold: true, isItalic: false, textGradientColors: ["#00a0a5", "#00a0a5"] },
+    { id: 'p55', name: 'Cyan', isPremium: true, fontFamily: "Montserrat", fontSize: 22, textAlign: "justify", verticalAlign: "center", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#003c3f", textShadowBlur: 20, textOutlineWidth: 5, textOutlineColor: "#00e682", textGlowWidth: 0, textGlowColor: "#00faff", text3DOffsetX: 3, text3DOffsetY: 3, text3DColor: "#72bba3", textSuperStrokeWidth: 5, textSuperStrokeColor: "#004c4e", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#00a0a5", "#00a0a5"] },
     { id: 'p56', name: 'Inferno', isPremium: true, fontFamily: 'Anton', fontSize: 22, textAlign: 'justify', textGradientColors: ["#ff6a00", "#ff0000"], textShadowColor: "#650000", textShadowBlur: 18, textGlowColor: "#ff4800", textGlowWidth: 14, textOutlineColor: "#7a0000", textOutlineWidth: 4, textSuperStrokeColor: "#3a0000", textSuperStrokeWidth: 4 },
     { id: 'p59', name: 'Candy', isPremium: true, fontFamily: 'Fredoka', fontSize: 22, textAlign: 'justify', textGradientColors: ["#ff90d0", "#ff4fa6"], textShadowColor: "#b80062", textShadowBlur: 18, textGlowColor: "#ffbde6", textGlowWidth: 0, textOutlineColor: "#ff66b8", textOutlineWidth: 4, textSuperStrokeColor: "#7c0041", textSuperStrokeWidth: 4 },
     { id: 'p60', name: 'Silver', isPremium: true, fontFamily: "Playfair Display", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#000000", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 0, textShadowColor: "#0f1f38", textShadowBlur: 5, textOutlineWidth: 5, textOutlineColor: "#545454", textGlowWidth: 50, textGlowColor: "#ededed", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#0a0a0a", textSuperStrokeWidth: 3, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, textGradientColors: ["#f8f8f8", "#c6c6c6"] },
@@ -196,9 +196,9 @@ const PRESET_STYLES: PresetConfig[] = [
     { id: 'p63', name: 'Purple', isPremium: true, fontFamily: "Luckiest Guy", fontSize: 22, textAlign: "justify", verticalAlign: "center", textGradientColors: ["#e9ceff", "#b777ff"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 0, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 10, textOutlineColor: "#630099", textGlowWidth: 13, textGlowColor: "#ff00d0", text3DOffsetX: 5, text3DOffsetY: 5, text3DColor: "#5a008e", textSuperStrokeWidth: 0, textSuperStrokeColor: "#3a005a", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false },
     { id: 'p64', name: 'Aqua', isPremium: true, fontFamily: 'Fredoka', fontSize: 22, textAlign: 'justify', textColor: "#66fff5", textShadowColor: "#008099", textShadowBlur: 2, textGlowColor: "#91f2ff", textGlowWidth: 31, textOutlineColor: "#00e9ff", textOutlineWidth: 3, textSuperStrokeColor: "#005a66", textSuperStrokeWidth: 5, text3DOffsetX: 1, text3DOffsetY: 0, text3DColor: '#005a66' },
     { id: 'p65', name: 'Night', isPremium: true, fontFamily: "Montserrat", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#9497ff", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#0b2e57", textShadowBlur: 12, textOutlineWidth: 3.5, textOutlineColor: "#b2a8ff", textGlowWidth: 17, textGlowColor: "#0062ff", text3DOffsetX: 3, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 5, textSuperStrokeColor: "#5c00e6", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#9ad7ff", "#dff2ff"] },
-    { id: 'p66', name: 'Ruby', isPremium: true, fontFamily: "Nunito", fontSize: 22, textAlign: "justify", verticalAlign: "center", textGradientColors: ["#9B2A2A", "#AD1111", "#9B2A2A"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#6d0023", textShadowBlur: 14, textOutlineWidth: 7.5, textOutlineColor: "#ff2e2e", textGlowWidth: 12, textGlowColor: "#d97706", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 4, textSuperStrokeColor: "#482323", letterSpacing: 0, textTransform: "none", isBold: true, isItalic: false },
-    { id: 'p67', name: 'Emerald', isPremium: true, fontFamily: "Poppins", fontSize: 22, textAlign: "justify", verticalAlign: "center", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#004d20", textShadowBlur: 15, textOutlineWidth: 7.5, textOutlineColor: "#0c8d22", textGlowWidth: 9, text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textGlowColor: "#70ff70", letterSpacing: 0, textTransform: "none", isBold: true, isItalic: false, textGradientColors: ["#6df7c0", "#59f7b8"] },
-    { id: 'p68', name: 'Violet', isPremium: true, fontFamily: "Oswald", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#262626", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#1e0060", textShadowBlur: 14, textOutlineWidth: 5.5, textOutlineColor: "#ff00d0", textGlowWidth: 1, textGlowColor: "#000000", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", letterSpacing: 0, textTransform: "none", isBold: true, isItalic: false },
+    { id: 'p66', name: 'Ruby', isPremium: true, fontFamily: "Nunito", fontSize: 22, textAlign: "justify", verticalAlign: "center", textGradientColors: ["#9B2A2A", "#AD1111", "#9B2A2A"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#6d0023", textShadowBlur: 14, textOutlineWidth: 7.5, textOutlineColor: "#ff2e2e", textGlowWidth: 12, textGlowColor: "#d97706", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 4, textSuperStrokeColor: "#482323", letterSpacing: 0, textTransform: "none", isItalic: false },
+    { id: 'p67', name: 'Emerald', isPremium: true, fontFamily: "Poppins", fontSize: 22, textAlign: "justify", verticalAlign: "center", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#004d20", textShadowBlur: 15, textOutlineWidth: 7.5, textOutlineColor: "#0c8d22", textGlowWidth: 9, text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textGlowColor: "#70ff70", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#6df7c0", "#59f7b8"] },
+    { id: 'p68', name: 'Violet', isPremium: true, fontFamily: "Oswald", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#262626", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#1e0060", textShadowBlur: 14, textOutlineWidth: 5.5, textOutlineColor: "#ff00d0", textGlowWidth: 1, textGlowColor: "#000000", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", letterSpacing: 0, textTransform: "none", isItalic: false },
     { id: 'p69', name: 'Liquid', isPremium: true, fontFamily: 'Montserrat', fontSize: 22, textAlign: 'justify', textGradientColors: ["#ffffff", "#d2e4ff", "#ffffff"], textShadowColor: "#3a3a3a", textShadowBlur: 12, textShadowOpacity: 1, textOutlineColor: "#2efff1", textOutlineWidth: 6, textSuperStrokeColor: "#000000", textSuperStrokeWidth: 3, textGlowWidth: 11, textGlowColor: "#72eeee" },
     { id: 'p70', name: 'Nova', isPremium: true, fontFamily: 'Poppins', fontSize: 22, textAlign: 'justify', textGradientColors: ["#ffe6ff", "#cbbaff"], textShadowColor: "#2b0052", textShadowBlur: 16, textGlowColor: "#c793ff", textGlowWidth: 14, textOutlineColor: "#7a2eff", textOutlineWidth: 4, textSuperStrokeColor: "#1a0036", textSuperStrokeWidth: 4 },
 
@@ -694,7 +694,8 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             // setPreviewRatio(w / h); 
 
             // 2. Gera a imagem com as dimensões corretas
-            const blob = await generateImage(config, template, w, h, isPremium, true);
+            const sanitizedConfig = { ...config, text: config.text.replace(/<br\s*\/?>\s+/gi, '<br>') };
+            const blob = await generateImage(sanitizedConfig, template, w, h, isPremium, true);
 
             if (blob && active) {
                 const url = URL.createObjectURL(blob);
@@ -887,8 +888,8 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         setIsGenerating(true);
         const template = getCurrentTemplate();
         const { w, h } = getExportDimensions(format);
-
-        const blob = await generateImage(config, template, w, h, isPremium, false);
+        const sanitizedConfig = { ...config, text: config.text.replace(/<br\s*\/?>\s+/gi, '<br>') };
+        const blob = await generateImage(sanitizedConfig, template, w, h, isPremium, false);
         if (blob) {
             try {
                 // Converter blob para base64
@@ -993,7 +994,8 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         const template = getCurrentTemplate();
         const { w, h } = getExportDimensions(format);
 
-        const blob = await generateImage(config, template, w, h, isPremium, false);
+        const sanitizedConfig = { ...config, text: config.text.replace(/<br\s*\/?>\s+/gi, '<br>') };
+        const blob = await generateImage(sanitizedConfig, template, w, h, isPremium, false);
         if (blob) {
             const url = URL.createObjectURL(blob);
             setExportBlob(blob);
@@ -1148,6 +1150,8 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         const styles = getPreviewStyles();
         const isJustify = config.textAlign === 'justify';
 
+        const sanitizedText = config.text.replace(/<br\s*\/?>\s+/gi, '<br>');
+
         const bgStyle: React.CSSProperties = {
             ...styles,
             position: 'relative',
@@ -1196,26 +1200,45 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         };
 
         return (
-            <div style={{ position: 'relative', width: isJustify ? '100%' : 'auto', display: isJustify ? 'block' : 'inline-block' }}>
+            <div className="preview-rich-text" style={{ position: 'relative', width: isJustify ? '100%' : 'auto', display: isJustify ? 'block' : 'inline-block' }}>
+                <style>{`
+                    .preview-rich-text b {
+                        text-transform: uppercase !important;
+                    }
+                    .preview-rich-text u {
+                        text-decoration: none !important;
+                        position: relative;
+                        background-color: color-mix(in srgb, ${config.textColor}, transparent 75%);
+                        padding: 0 2px;
+                        border-radius: 4px;
+                    }
+                    .preview-rich-text u::after {
+                        display: none;
+                    }
+                `}</style>
                 {/* Solution: Dense Text-Shadow Layer behind text simulating a smooth stroke */}
                 {config.textSuperStrokeWidth > 0 && (
-                    <div style={superStrokeStyle}>
-                        {config.text}
-                    </div>
+                    <div
+                        style={superStrokeStyle}
+                        dangerouslySetInnerHTML={{ __html: sanitizedText }}
+                    />
                 )}
 
                 <div style={bgStyle}>
                     {config.textGradientColors && config.boxGradientColors && (
-                        <span style={{
-                            backgroundImage: `linear-gradient(to bottom, ${config.textGradientColors.join(', ')})`,
-                            WebkitBackgroundClip: 'text',
-                            backgroundClip: 'text',
-                            color: 'transparent'
-                        }}>
-                            {config.text}
-                        </span>
+                        <span
+                            style={{
+                                backgroundImage: `linear-gradient(to bottom, ${config.textGradientColors.join(', ')})`,
+                                WebkitBackgroundClip: 'text',
+                                backgroundClip: 'text',
+                                color: 'transparent'
+                            }}
+                            dangerouslySetInnerHTML={{ __html: sanitizedText }}
+                        />
                     )}
-                    {(!config.textGradientColors || !config.boxGradientColors) && config.text}
+                    {(!config.textGradientColors || !config.boxGradientColors) && (
+                        <div dangerouslySetInnerHTML={{ __html: sanitizedText }} />
+                    )}
                 </div>
             </div>
         );

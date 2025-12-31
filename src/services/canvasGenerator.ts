@@ -105,6 +105,26 @@ export const generateImage = async (
     ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${config.fontFamily}`;
     ctx.textBaseline = 'middle';
 
+    // --- HELPERS ---
+    const measureRichTextWidth = (richText: string): number => {
+        const parts = richText.split(/(<b>.*?<\/b>|<u>.*?<\/u>)/g);
+        let totalWidth = 0;
+        ctx.save();
+        parts.forEach(part => {
+            const content = part.replace(/<[^>]*>/g, "");
+            if (!content) return;
+            if (part.startsWith('<b>') || config.isBold) {
+                ctx.font = `${config.isItalic ? 'italic' : 'normal'} bold ${fontSize}px ${config.fontFamily}`;
+                textToDraw = textToDraw.toUpperCase();
+            } else {
+                ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${config.fontFamily}`;
+            }
+            totalWidth += ctx.measureText(content).width;
+        });
+        ctx.restore();
+        return totalWidth;
+    };
+
     // Letter Spacing (New Feature)
     if (config.letterSpacing) {
         // Use canvas letterSpacing if supported, else ignore (polyfill is complex)
@@ -114,7 +134,11 @@ export const generateImage = async (
     }
 
     // Text Transform (New Feature)
-    let textToDraw = config.text;
+    let textToDraw = config.text
+        .replace(/<br\s*\/?>\s*/gi, '\n')
+        .split('\n')
+        .map(line => line.trim())
+        .join('\n');
     if (config.textTransform === 'uppercase') textToDraw = textToDraw.toUpperCase();
     if (config.textTransform === 'lowercase') textToDraw = textToDraw.toLowerCase();
 
@@ -132,7 +156,7 @@ export const generateImage = async (
 
         for (let i = 1; i < words.length; i++) {
             const word = words[i];
-            const width = ctx.measureText(currentLine + " " + word).width;
+            const width = ctx.measureText((currentLine + " " + word).replace(/<[^>]*>/g, "")).width;
             if (width < maxWidth) {
                 currentLine += " " + word;
             } else {
@@ -207,7 +231,7 @@ export const generateImage = async (
             // Draw Single Block (Unified Box Style)
             let maxLineWidth = 0;
             lines.forEach(line => {
-                const w = ctx.measureText(line).width;
+                const w = measureRichTextWidth(line);
                 if (w > maxLineWidth) maxLineWidth = w;
             });
 
@@ -245,39 +269,78 @@ export const generateImage = async (
         }
     }
 
-    // Helper to draw lines with specific settings
-    const drawLines = (drawFn: (line: string, x: number, y: number, isJustify: boolean, justifyWidth: number) => void) => {
-        lines.forEach((line, index) => {
+
+    // --- VERSÃO HTML (SUPORTA <b> e <u>) ---
+    const drawLines = (drawFn: (line: string, x: number, y: number) => void) => {
+        lines.forEach((originalLine, index) => {
+            // 1. LIMPEZA TOTAL: Garante que não há espaços nas pontas
+            originalLine = originalLine.trim();
+            if (!originalLine) return; // Salta linhas vazias
+
             const y = startY + (index * pxLineHeight);
 
-            // Justify Logic
-            if (config.textAlign === 'justify') {
-                const lineWords = line.split(' ');
-                if (lineWords.length > 1 && index < lines.length - 1) { // Don't justify last line
-                    const totalWidthOfWords = lineWords.reduce((acc, word) => acc + ctx.measureText(word).width, 0);
-                    const spaceAvailable = maxWidth - totalWidthOfWords;
-                    const spacePerWord = spaceAvailable / (lineWords.length - 1);
+            // 2. MEDIÇÃO PRECISA
+            const lineWidth = measureRichTextWidth(originalLine);
 
-                    let currentX = width * 0.075;
+            // 3. ALINHAMENTO INTELIGENTE
+            ctx.textAlign = 'left'; // Forçamos left para o loop de pedaços
+            let startX = width * 0.075; // Margem Esquerda Padrão
 
-                    lineWords.forEach((word) => {
-                        drawFn(word, currentX, y, false, 0);
-                        currentX += ctx.measureText(word).width + spacePerWord;
-                    });
-                } else {
-                    // Last line or single word behaves like left align
-                    const xPos = width * 0.075;
-                    drawFn(line, xPos, y, false, 0);
-                }
-            } else {
-                // Standard Align
-                ctx.textAlign = config.textAlign as CanvasTextAlign;
-                let xPos = width / 2;
-                if (config.textAlign === 'left') xPos = width * 0.075;
-                if (config.textAlign === 'right') xPos = width * 0.925;
-
-                drawFn(line, xPos, y, false, 0);
+            if (config.textAlign === 'center') {
+                startX = (width - lineWidth) / 2;
+            } else if (config.textAlign === 'right') {
+                startX = (width * 0.925) - lineWidth;
             }
+            // (Nota: 'justify' cai aqui no default 'left', que é mais seguro)
+
+            // 4. DESENHO DOS PEDAÇOS
+            const parts = originalLine.split(/(<b>.*?<\/b>|<u>.*?<\/u>)/g);
+            let currentX = startX;
+
+            parts.forEach(part => {
+                // Remove tags para verificar se tem conteúdo
+                const content = part.replace(/<[^>]*>/g, "");
+                if (!content) return;
+
+                let textToDraw = content;
+                let isBold = part.startsWith('<b>');
+                let isUnderline = part.startsWith('<u>');
+
+                ctx.save();
+
+                if (isBold || config.isBold) {
+                    ctx.font = `${config.isItalic ? 'italic' : 'normal'} bold ${fontSize}px ${config.fontFamily}`;
+                    textToDraw = textToDraw.toUpperCase();
+                }
+
+                if (isUnderline) {
+                    ctx.save();
+                    const uWidth = ctx.measureText(textToDraw).width;
+
+                    // Cor do marcador (cor do texto com opacidade)
+                    // ctx.fillStyle já está definido com a cor do texto ou gradiente
+                    ctx.globalAlpha = 0.25; // Transparência suave
+
+                    // Desenha um retângulo que cobre a altura da letra
+                    const hHeight = fontSize * 0.8;
+                    const hY = y - (fontSize * 0.6);
+
+                    // Borda arredondada
+                    if ((ctx as any).roundRect) {
+                        ctx.beginPath();
+                        (ctx as any).roundRect(currentX - 2, hY, uWidth + 4, hHeight, 4);
+                        ctx.fill();
+                    } else {
+                        ctx.fillRect(currentX - 2, hY, uWidth + 4, hHeight);
+                    }
+                    ctx.restore();
+                }
+
+                drawFn(textToDraw, currentX, y);
+
+                currentX += ctx.measureText(textToDraw).width;
+                ctx.restore();
+            });
         });
     };
 

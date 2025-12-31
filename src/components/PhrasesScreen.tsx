@@ -111,7 +111,7 @@ export const PhrasesScreen: React.FC<Props> = ({ category, phrases, onBack, onSe
                             {/* --- CONTENT --- */}
                             <div className="relative z-0">
                                 <p className={`text-lg leading-relaxed mb-4 font-sans font-medium ${isLocked ? 'blur-md opacity-20 select-none text-text-dim' : 'text-text-primary'}`}>
-                                    "{phrase}"
+                                    "{phrase.replace(/<[^>]*>/g, "")}"
                                 </p>
 
                                 {!isLocked && (

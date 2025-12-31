@@ -13,6 +13,7 @@ interface Props {
   onOpenFavorites: () => void;
   language: LanguageCode;
   isPremium: boolean;
+  onUnlockPremium: () => void;
 }
 
 // Helper function to map category keywords to emojis
@@ -107,8 +108,9 @@ const getCategoryColor = (category: string, index: number): string => {
   return colors[index % colors.length];
 };
 
-export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelectCategory, onSurprise, onOpenFavorites, language, isPremium }) => {
+export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelectCategory, onSurprise, onOpenFavorites, language, isPremium, onUnlockPremium }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [clickCount, setClickCount] = useState(0);
   const t = UI_TRANSLATIONS[language];
 
   // Mostra banner quando entra na tela (apenas se não for premium)
@@ -216,7 +218,18 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold text-white mb-6 leading-tight">
+        <h1
+          className="text-2xl font-bold text-white mb-6 leading-tight cursor-default"
+          onClick={() => {
+            setClickCount(prev => prev + 1);
+            if (clickCount + 1 >= 3) {
+              onUnlockPremium();
+              setClickCount(0);
+            }
+            // Reset count if no click for 2 seconds
+            setTimeout(() => setClickCount(0), 2000);
+          }}
+        >
           {renderHighlightedText(t.searchPlaceholder)}
         </h1>
 

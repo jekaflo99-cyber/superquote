@@ -18,7 +18,9 @@ import './index.css';
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [isPremiumUser, setIsPremiumUser] = useState(false);
+  const [isPremiumUser, setIsPremiumUser] = useState(() => {
+    return localStorage.getItem('superquote_secret_premium') === 'true';
+  });
   const [favoritePhrases, setFavoritePhrases] = useState<string[]>([]);
   const [nav, setNav] = useState<NavigationState>({
     currentScreen: 'language',
@@ -35,11 +37,7 @@ const App: React.FC = () => {
         setShowOnboarding(true);
       }
 
-      // Verifica se tem premium secreto ativado
-      const hasSecretPremium = localStorage.getItem('superquote_secret_premium') === 'true';
-      if (hasSecretPremium) {
-        setIsPremiumUser(true);
-      }
+      // Premium secreto já é verificado na inicialização do state agora
 
       setIsLoading(false);
     };
@@ -200,6 +198,13 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUnlockSecretPremium = () => {
+    setIsPremiumUser(true);
+    localStorage.setItem('superquote_secret_premium', 'true');
+    // feedback visual ou som poderia ser adicionado aqui
+    console.log('Secret Premium Unlocked!');
+  };
+
   const handleLanguageSelect = (lang: LanguageCode) => {
     setNav({ ...nav, selectedLanguage: lang, currentScreen: 'categories' });
   };
@@ -281,16 +286,16 @@ const App: React.FC = () => {
 
     case 'categories':
       if (!nav.selectedLanguage) break;
-      const categories = Object.keys(PHRASES_DB[nav.selectedLanguage]);
       content = (
         <CategoriesScreen
-          categories={categories}
+          categories={Object.keys(PHRASES_DB[nav.selectedLanguage])}
           onBack={goBack}
           onSelectCategory={handleCategorySelect}
           onSurprise={handleSurprise}
           onOpenFavorites={handleGoToFavorites}
-          language={currentLanguage}
+          language={nav.selectedLanguage}
           isPremium={isPremiumUser}
+          onUnlockPremium={handleUnlockSecretPremium}
         />
       );
       break;
