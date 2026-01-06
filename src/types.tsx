@@ -72,7 +72,9 @@ export interface EditorConfig {
   textSuperStrokeWidth: number;
   textSuperStrokeColor: string;
 
-
+  // Texture Overlays
+  textureType?: 'none' | 'grain' | 'paper' | 'leak' | 'dust';
+  textureOpacity?: number;
 }
 
 export type ScreenName = 'language' | 'categories' | 'phrases' | 'editor' | 'favorites';

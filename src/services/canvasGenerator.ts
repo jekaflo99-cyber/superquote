@@ -85,6 +85,71 @@ export const generateImage = async (
         }
     }
 
+    // 1.5 Draw Texture Overlay
+    if (config.textureType && config.textureType !== 'none' && config.textureOpacity && config.textureOpacity > 0) {
+        ctx.save();
+        ctx.globalAlpha = config.textureOpacity;
+        ctx.globalCompositeOperation = 'screen'; // Default for most overlays
+
+        if (config.textureType === 'grain') {
+            // Procedural Grain (Noise)
+            const grainCanvas = document.createElement('canvas');
+            grainCanvas.width = 128; // Small tile
+            grainCanvas.height = 128;
+            const gCtx = grainCanvas.getContext('2d');
+            if (gCtx) {
+                const gData = gCtx.createImageData(128, 128);
+                for (let i = 0; i < gData.data.length; i += 4) {
+                    const v = Math.random() * 255;
+                    gData.data[i] = v;
+                    gData.data[i + 1] = v;
+                    gData.data[i + 2] = v;
+                    gData.data[i + 3] = 255;
+                }
+                gCtx.putImageData(gData, 0, 0);
+                ctx.fillStyle = ctx.createPattern(grainCanvas, 'repeat')!;
+                ctx.fillRect(0, 0, width, height);
+            }
+        } else {
+            // Image-based textures (Paper, Leak, Dust)
+            // Using placeholder URLs for these as we don't have the assets yet
+            // In a real app, these would be local assets
+            const textureUrls: Record<string, string> = {
+                'paper': 'https://www.transparenttextures.com/patterns/old-mathematics.png',
+                'leak': 'https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=1000&auto=format&fit=crop', // Abstract light leak-ish
+                'dust': 'https://www.transparenttextures.com/patterns/p6-polka.png' // Placeholder for dust
+            };
+
+            const url = textureUrls[config.textureType];
+            if (url) {
+                try {
+                    const tImg = new Image();
+                    tImg.crossOrigin = "anonymous";
+                    await new Promise((resolve, reject) => {
+                        tImg.onload = resolve;
+                        tImg.onerror = reject;
+                        tImg.src = url;
+                    });
+
+                    if (config.textureType === 'paper') {
+                        ctx.globalCompositeOperation = 'multiply';
+                        ctx.fillStyle = ctx.createPattern(tImg, 'repeat')!;
+                        ctx.fillRect(0, 0, width, height);
+                    } else {
+                        // Fit to screen for leaks and dust
+                        const scale = Math.max(width / tImg.width, height / tImg.height);
+                        const tx = (width / 2) - (tImg.width / 2) * scale;
+                        const ty = (height / 2) - (tImg.height / 2) * scale;
+                        ctx.drawImage(tImg, tx, ty, tImg.width * scale, tImg.height * scale);
+                    }
+                } catch (e) {
+                    console.error("Failed to load texture", e);
+                }
+            }
+        }
+        ctx.restore();
+    }
+
     // If excludeText is true, we stop here (used for preview background only)
     if (excludeText) {
         return new Promise((resolve) => {
@@ -106,20 +171,39 @@ export const generateImage = async (
     ctx.textBaseline = 'middle';
 
     // --- HELPERS ---
+    const drawRoundedRect = (gCtx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+        if (typeof (gCtx as any).roundRect === 'function') {
+            (gCtx as any).roundRect(x, y, w, h, r);
+        } else {
+            // Fallback for older environments
+            if (w < 2 * r) r = w / 2;
+            if (h < 2 * r) r = h / 2;
+            gCtx.moveTo(x + r, y);
+            gCtx.arcTo(x + w, y, x + w, y + h, r);
+            gCtx.arcTo(x + w, y + h, x, y + h, r);
+            gCtx.arcTo(x, y + h, x, y, r);
+            gCtx.arcTo(x, y, x + w, y, r);
+        }
+    };
+
     const measureRichTextWidth = (richText: string): number => {
-        const parts = richText.split(/(<b>.*?<\/b>|<u>.*?<\/u>)/g);
+        const parts = richText.split(/(<b.*?>.*?<\/b>|<u.*?>.*?<\/u>)/gi);
         let totalWidth = 0;
         ctx.save();
         parts.forEach(part => {
             const content = part.replace(/<[^>]*>/g, "");
             if (!content) return;
-            if (part.startsWith('<b>') || config.isBold) {
-                ctx.font = `${config.isItalic ? 'italic' : 'normal'} bold ${fontSize}px ${config.fontFamily}`;
-                textToDraw = textToDraw.toUpperCase();
+
+            let textToMeasure = content;
+            if (part.toLowerCase().startsWith('<b') || config.isBold) {
+                ctx.font = `${config.isItalic ? 'italic' : 'normal'} 900 ${fontSize}px ${config.fontFamily}`;
+                if (config.letterSpacing) (ctx as any).letterSpacing = `${config.letterSpacing * scaleFactor}px`;
+                textToMeasure = content.toUpperCase();
             } else {
                 ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${config.fontFamily}`;
+                if (config.letterSpacing) (ctx as any).letterSpacing = `${config.letterSpacing * scaleFactor}px`;
             }
-            totalWidth += ctx.measureText(content).width;
+            totalWidth += ctx.measureText(textToMeasure).width;
         });
         ctx.restore();
         return totalWidth;
@@ -145,26 +229,40 @@ export const generateImage = async (
     // 3. Text Wrapping (Improved for \n support)
     // For vertical layouts, we keep 85% width to avoid hitting UI elements (like/comment buttons on Reels)
     const maxWidth = width * 0.85;
-    const lines: string[] = [];
 
     // Split by explicit newlines first, then wrap each paragraph
     const paragraphs = textToDraw.split('\n');
+    const wrappedParagraphs: string[][] = [];
 
     paragraphs.forEach(paragraph => {
         const words = paragraph.split(' ');
+        const linesInPara: string[] = [];
         let currentLine = words[0];
 
         for (let i = 1; i < words.length; i++) {
             const word = words[i];
-            const width = ctx.measureText((currentLine + " " + word).replace(/<[^>]*>/g, "")).width;
+            const width = measureRichTextWidth(currentLine + " " + word);
             if (width < maxWidth) {
                 currentLine += " " + word;
             } else {
-                lines.push(currentLine);
+                linesInPara.push(currentLine);
                 currentLine = word;
             }
         }
-        lines.push(currentLine);
+        linesInPara.push(currentLine);
+        wrappedParagraphs.push(linesInPara);
+    });
+
+    const lines = wrappedParagraphs.flat();
+
+    // Create a map to know which lines are NOT the last in their paragraph (for justify)
+    const isNotLastLineMap = new Set<number>();
+    let lineCounter = 0;
+    wrappedParagraphs.forEach(pLines => {
+        for (let j = 0; j < pLines.length - 1; j++) {
+            isNotLastLineMap.add(lineCounter + j);
+        }
+        lineCounter += pLines.length;
     });
 
     // 4. Calculate Positioning
@@ -203,9 +301,22 @@ export const generateImage = async (
         if (bgCtx) {
             // Box Gradient Logic
 
-            if (config.boxGradientColors && config.boxGradientColors.length >= 2) {
+            const radius = fontSize * 0.24; // Increased rounded corners for better visibility
 
-                const bgGradient = bgCtx.createLinearGradient(0, 0, width, height); // Diagonal gradient for box
+            let paddingY = 0;
+            let paddingX = 0;
+
+            if (config.textBoxStyle === 'highlight') { // "Fit" mode
+                paddingY = fontSize * 0.15;
+                paddingX = 0; // ZERO padding for ultimate tightness
+            } else { // "Block" mode
+                paddingY = fontSize * 0.20;
+                paddingX = 0; // ZERO padding for ultimate tightness
+            }
+
+            if (config.boxGradientColors && config.boxGradientColors.length >= 2) {
+                // Gradient relative to the text area, not the whole canvas
+                const bgGradient = bgCtx.createLinearGradient(0, startY - paddingY, 0, startY + totalTextHeight + paddingY);
                 config.boxGradientColors.forEach((color, index) => {
                     bgGradient.addColorStop(index / (config.boxGradientColors!.length - 1), color);
                 });
@@ -214,54 +325,73 @@ export const generateImage = async (
                 bgCtx.fillStyle = config.textBackgroundColor;
             }
 
-            const radius = 0; // 0x Radius (Sharp corners)
+            // Subtle border for box to match preview (rgba(255,255,255,0.2))
+            bgCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+            bgCtx.lineWidth = 1 * resolutionMultiplier;
 
-            let paddingY = 0;
-            let paddingX = 0;
+            // Draw Box(es)
+            if (config.textBoxStyle === 'highlight') {
+                // Per-Line Box Mode
+                lines.forEach((line, index) => {
+                    const lineWidth = measureRichTextWidth(line);
+                    if (lineWidth <= 0) return;
 
-            if (config.textBoxStyle === 'highlight') { // "Fit" mode
-                // Minimal Padding 2px (at scale)
-                paddingY = fontSize * 0.04; // ~2px scaled
-                paddingX = fontSize * 0.01; // ~0.5px scaled
-            } else { // "Block" mode
-                paddingY = fontSize * 0.2; // Standard padding
-                paddingX = fontSize * 0.35;
+                    const lineBoxWidth = lineWidth + (paddingX * 2);
+                    const lineBoxHeight = fontSize + (paddingY * 2);
+
+                    let lineBoxX = 0;
+                    if (config.textAlign === 'center') {
+                        lineBoxX = (width - lineBoxWidth) / 2;
+                    } else if (config.textAlign === 'left' || config.textAlign === 'justify') {
+                        lineBoxX = (width * 0.075) - paddingX;
+                    } else if (config.textAlign === 'right') {
+                        lineBoxX = (width * 0.925) + paddingX - lineBoxWidth;
+                    }
+
+                    const lineY = startY + (index * pxLineHeight);
+                    const lineBoxY = lineY - (fontSize / 2) - paddingY;
+
+                    bgCtx.beginPath();
+                    drawRoundedRect(bgCtx, lineBoxX, lineBoxY, lineBoxWidth, lineBoxHeight, radius);
+                    bgCtx.fill();
+                    bgCtx.stroke();
+                });
+            } else {
+                // Unified Block Mode
+                let maxLineWidth = 0;
+                lines.forEach(line => {
+                    const w = measureRichTextWidth(line);
+                    if (w > maxLineWidth) maxLineWidth = w;
+                });
+
+                if (config.textAlign === 'justify' && lines.length > 1) {
+                    maxLineWidth = maxWidth;
+                }
+
+                const boxWidth = maxLineWidth + (paddingX * 2);
+                const boxHeight = totalTextHeight + (paddingY * 2) - (pxLineHeight - fontSize);
+
+                let boxX = 0;
+                if (config.textAlign === 'center') {
+                    boxX = (width - boxWidth) / 2;
+                } else if (config.textAlign === 'left') {
+                    boxX = (width * 0.075) - paddingX;
+                } else if (config.textAlign === 'right') {
+                    boxX = (width * 0.925) + paddingX - boxWidth;
+                } else if (config.textAlign === 'justify') {
+                    boxX = (width * 0.075) - paddingX;
+                }
+
+                const boxY = startY - (pxLineHeight / 2) - paddingY + (pxLineHeight - fontSize) / 2;
+
+                bgCtx.beginPath();
+                drawRoundedRect(bgCtx, boxX, boxY, boxWidth, boxHeight, radius);
+                bgCtx.fill();
+                bgCtx.stroke();
             }
 
-            // Draw Single Block (Unified Box Style)
-            let maxLineWidth = 0;
-            lines.forEach(line => {
-                const w = measureRichTextWidth(line);
-                if (w > maxLineWidth) maxLineWidth = w;
-            });
 
-            if (config.textAlign === 'justify' && lines.length > 1) {
-                maxLineWidth = maxWidth;
-            }
-
-            const boxWidth = maxLineWidth + (paddingX * 2);
-            const boxHeight = totalTextHeight + (paddingY * 2) - (pxLineHeight - fontSize);
-
-            let boxX = 0;
-            if (config.textAlign === 'center') {
-                boxX = (width - boxWidth) / 2;
-            } else if (config.textAlign === 'left') {
-                boxX = (width * 0.075) - paddingX;
-            } else if (config.textAlign === 'right') {
-                boxX = (width * 0.925) + paddingX - boxWidth;
-            } else if (config.textAlign === 'justify') {
-                boxX = (width * 0.075) - paddingX;
-            }
-
-            // Adjust Y to center the box around the text block
-            const boxY = startY - (pxLineHeight / 2) - paddingY + (pxLineHeight - fontSize) / 2;
-
-            bgCtx.beginPath();
-            bgCtx.roundRect(boxX, boxY, boxWidth, boxHeight, radius);
-            bgCtx.fill();
-
-
-            // Composite the background layer onto main canvas
+            // 3. Apply colored fill (from bgCanvas)
             ctx.save();
             ctx.globalAlpha = config.textBackgroundOpacity;
             ctx.drawImage(bgCanvas, 0, 0);
@@ -294,52 +424,68 @@ export const generateImage = async (
             // (Nota: 'justify' cai aqui no default 'left', que é mais seguro)
 
             // 4. DESENHO DOS PEDAÇOS
-            const parts = originalLine.split(/(<b>.*?<\/b>|<u>.*?<\/u>)/g);
+            const parts = originalLine.split(/(<b.*?>.*?<\/b>|<u.*?>.*?<\/u>)/gi);
             let currentX = startX;
+
+            // --- JUSTIFY LOGIC ---
+            let extraSpace = 0;
+            const isJustify = config.textAlign === 'justify' && isNotLastLineMap.has(index);
+            if (isJustify) {
+                const spaceCount = (originalLine.match(/ /g) || []).length;
+                if (spaceCount > 0) {
+                    extraSpace = (maxWidth - lineWidth) / spaceCount;
+                }
+            }
 
             parts.forEach(part => {
                 // Remove tags para verificar se tem conteúdo
                 const content = part.replace(/<[^>]*>/g, "");
                 if (!content) return;
 
-                let textToDraw = content;
-                let isBold = part.startsWith('<b>');
-                let isUnderline = part.startsWith('<u>');
+                let isBold = part.toLowerCase().startsWith('<b');
+                let isUnderline = part.toLowerCase().startsWith('<u');
 
-                ctx.save();
+                // Split part into words if justifying to apply extra space
+                const wordsInPart = content.split(' ');
 
-                if (isBold || config.isBold) {
-                    ctx.font = `${config.isItalic ? 'italic' : 'normal'} bold ${fontSize}px ${config.fontFamily}`;
-                    textToDraw = textToDraw.toUpperCase();
-                }
+                wordsInPart.forEach((word, wIdx) => {
+                    let textToDraw = word;
+                    if (wIdx < wordsInPart.length - 1) textToDraw += " ";
 
-                if (isUnderline) {
                     ctx.save();
-                    const uWidth = ctx.measureText(textToDraw).width;
-
-                    // Cor do marcador (cor do texto com opacidade)
-                    // ctx.fillStyle já está definido com a cor do texto ou gradiente
-                    ctx.globalAlpha = 0.25; // Transparência suave
-
-                    // Desenha um retângulo que cobre a altura da letra
-                    const hHeight = fontSize * 0.8;
-                    const hY = y - (fontSize * 0.6);
-
-                    // Borda arredondada
-                    if ((ctx as any).roundRect) {
-                        ctx.beginPath();
-                        (ctx as any).roundRect(currentX - 2, hY, uWidth + 4, hHeight, 4);
-                        ctx.fill();
+                    if (isBold || config.isBold) {
+                        ctx.font = `${config.isItalic ? 'italic' : 'normal'} 900 ${fontSize}px ${config.fontFamily}`;
+                        if (config.letterSpacing) (ctx as any).letterSpacing = `${config.letterSpacing * scaleFactor}px`;
+                        textToDraw = textToDraw.toUpperCase();
                     } else {
-                        ctx.fillRect(currentX - 2, hY, uWidth + 4, hHeight);
+                        // Reset font in case it was changed by bold part
+                        ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${config.fontFamily}`;
+                        if (config.letterSpacing) (ctx as any).letterSpacing = `${config.letterSpacing * scaleFactor}px`;
                     }
+
+                    if (isUnderline) {
+                        // Drawing highlighter (consistent with preview <u> style)
+                        ctx.save();
+                        ctx.globalAlpha = 0.25; // 75% transparent matches color-mix(..., transparent 75%)
+                        ctx.fillStyle = ctx.fillStyle; // Use current text color
+                        const hHeight = fontSize * 0.55;
+                        const hY = y - fontSize * 0.15; // Vertical alignment of the highlight
+                        ctx.fillRect(currentX, hY, ctx.measureText(textToDraw).width, hHeight);
+                        ctx.restore();
+                    }
+
+                    drawFn(textToDraw, currentX, y);
+
+                    const wordWidth = ctx.measureText(textToDraw).width;
+                    currentX += wordWidth;
+
+                    // Add extra justify space if this word ended with a space
+                    if (isJustify && textToDraw.endsWith(" ")) {
+                        currentX += extraSpace;
+                    }
+
                     ctx.restore();
-                }
-
-                drawFn(textToDraw, currentX, y);
-
-                currentX += ctx.measureText(textToDraw).width;
-                ctx.restore();
+                });
             });
         });
     };
@@ -423,7 +569,8 @@ export const generateImage = async (
         // FIX: Use scaleFactor directly to match font scaling.
         // 0.5 factor aligns roughly with how CSS stroke width behaves relative to font size container.
         // This ensures 20px stroke looks like 20px regardless of 1080p or 4K.
-        ctx.lineWidth = config.textSuperStrokeWidth * scaleFactor * 1.0;
+        // FIX: Match preview scaling (roughly 0.6x of the width value)
+        ctx.lineWidth = config.textSuperStrokeWidth * scaleFactor * 0.65;
         ctx.strokeStyle = config.textSuperStrokeColor;
         ctx.lineJoin = 'round';
         ctx.miterLimit = 2;
@@ -485,7 +632,10 @@ export const generateImage = async (
         if (config.textOutlineWidth > 0) {
             ctx.strokeText(text, x, y);
         }
-        ctx.fillText(text, x, y);
+        // ONLY fill if not transparent OR if we have a gradient
+        if (config.textColor !== 'transparent' || gradientApplied) {
+            ctx.fillText(text, x, y);
+        }
     });
     ctx.restore();
 

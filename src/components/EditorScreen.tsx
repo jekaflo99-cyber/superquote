@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Download, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Box, Layers, PenTool, Lightbulb, Sparkles, Minus, Plus, Layout, Share2, X, Instagram, Facebook, Music, ArrowUpToLine, ArrowDownToLine, MoveVertical, Crown, Check, Edit2, Zap, Upload, Maximize2, Minimize2 } from 'lucide-react';
+import { ArrowLeft, Download, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Box, Layers, PenTool, Lightbulb, Sparkles, Minus, Plus, Layout, Share2, X, Instagram, Facebook, Music, ArrowUpToLine, ArrowDownToLine, MoveVertical, Crown, Check, Edit2, Zap, Upload, Maximize2, Minimize2, Aperture } from 'lucide-react';
 import { type EditorConfig, type Template, type LanguageCode } from '../types';
 import { UI_TRANSLATIONS } from '../Data/translations';
 import { generateImage } from '../services/canvasGenerator';
@@ -505,7 +505,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         text: initialPhrase,
         templateId: 't1',
         fontSize: 22,
-        textAlign: 'justify',
+        textAlign: 'center',
         verticalAlign: 'center',
         fontFamily: 'Inter',
         textColor: '#ffffff',
@@ -515,7 +515,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         textTransform: 'none',
         textBackgroundColor: '#ffffff',
         textBackgroundOpacity: 0,
-        textBoxStyle: 'block',
+        textBoxStyle: 'highlight',
         lineHeight: 1.4,
         textShadow: false,
         textShadowOpacity: 0,
@@ -531,6 +531,8 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         text3DColor: '#000000',
         textSuperStrokeWidth: 0,
         textSuperStrokeColor: '#ffffff',
+        textureType: 'none',
+        textureOpacity: 0.5,
 
 
     });
@@ -768,6 +770,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             ...prev,
             ...defaultStyleState,
             ...preset,
+            textAlign: 'center', // Always center aligned as requested
             textGradientColors: preset.textGradientColors || undefined,
             boxGradientColors: preset.boxGradientColors || undefined
         }));
@@ -779,7 +782,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             return;
         }
 
-        const lockedTools = ['stroke', 'box', 'glow', '3d'];
+        const lockedTools = ['stroke', 'box', 'glow', '3d', 'textures'];
         if (lockedTools.includes(toolId) && !isPremium) {
             setShowPremiumModal(true);
         } else {
@@ -1146,21 +1149,59 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         };
     };
 
+    const renderTextureOverlay = () => {
+        if (!config.textureType || config.textureType === 'none' || !config.textureOpacity) return null;
+
+        const textureUrls: Record<string, string> = {
+            'grain': 'none', // Grain is procedural CSS
+            'paper': 'https://www.transparenttextures.com/patterns/old-mathematics.png',
+            'leak': 'https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=1000&auto=format&fit=crop',
+            'dust': 'https://www.transparenttextures.com/patterns/p6-polka.png'
+        };
+
+        if (config.textureType === 'grain') {
+            return (
+                <div className="absolute inset-0 z-[5] pointer-events-none opacity-40 mix-blend-screen"
+                    style={{
+                        opacity: config.textureOpacity,
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+                    }}
+                />
+            );
+        }
+
+        return (
+            <div className="absolute inset-0 z-[5] pointer-events-none mix-blend-screen"
+                style={{
+                    opacity: config.textureOpacity,
+                    backgroundImage: `url(${textureUrls[config.textureType]})`,
+                    backgroundSize: config.textureType === 'paper' ? 'auto' : 'cover',
+                    mixBlendMode: config.textureType === 'paper' ? 'multiply' : 'screen'
+                }}
+            />
+        );
+    };
+
     const renderTextWithBackground = () => {
         const styles = getPreviewStyles();
         const isJustify = config.textAlign === 'justify';
 
         const sanitizedText = config.text.replace(/<br\s*\/?>\s+/gi, '<br>');
+        const lines = sanitizedText.split('<br>');
 
         const bgStyle: React.CSSProperties = {
             ...styles,
             position: 'relative',
             zIndex: 10,
             backgroundColor: config.textBackgroundOpacity > 0 ? `rgba(${hexToRgba(config.textBackgroundColor).r}, ${hexToRgba(config.textBackgroundColor).g}, ${hexToRgba(config.textBackgroundColor).b}, ${config.textBackgroundOpacity})` : 'transparent',
-            padding: config.textBoxStyle === 'highlight' ? '1px 0.5px' : '2px 0px',
-            borderRadius: config.textBackgroundOpacity > 0 ? '0px' : '0',
+            padding: config.textBoxStyle === 'highlight' ? '0.15em 0' : '0.20em 0',
+            borderRadius: config.textBackgroundOpacity > 0 ? `${config.fontSize * 0.24}px` : '0',
+            // Blur removed as requested
+            border: 'none',
             width: isJustify ? '100%' : 'fit-content',
             display: isJustify ? 'block' : 'inline-block',
+            boxDecorationBreak: 'clone',
+            WebkitBoxDecorationBreak: 'clone',
         };
 
         if (config.boxGradientColors && config.boxGradientColors.length >= 2 && config.textBackgroundOpacity > 0) {
@@ -1173,20 +1214,9 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             }
         }
 
-        // Base style for the underlying super stroke layer
         const superStrokeStyle: React.CSSProperties = {
-            fontFamily: config.fontFamily,
-            fontSize: `${config.fontSize}px`,
-            fontWeight: config.isBold ? 'bold' : 'normal',
-            fontStyle: config.isItalic ? 'italic' : 'normal',
-            lineHeight: config.lineHeight,
-            letterSpacing: `${config.letterSpacing}px`,
-            textTransform: config.textTransform,
-            textAlign: config.textAlign as any,
-
-            // FIX: Using calculated text-shadow instead of text-stroke to avoid miter spikes
+            ...styles,
             textShadow: getStrokeShadow(config.textSuperStrokeWidth * 0.6, config.textSuperStrokeColor),
-
             color: 'transparent',
             padding: bgStyle.padding,
             display: isJustify ? 'block' : 'inline-block',
@@ -1194,16 +1224,24 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             position: 'absolute',
             top: 0,
             left: 0,
-            zIndex: -1, // Behind main text
+            zIndex: -1,
             pointerEvents: 'none',
             userSelect: 'none',
         };
 
         return (
-            <div className="preview-rich-text" style={{ position: 'relative', width: isJustify ? '100%' : 'auto', display: isJustify ? 'block' : 'inline-block' }}>
+            <div className="preview-rich-text" style={{
+                position: 'relative',
+                width: isJustify ? '100%' : 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: config.textAlign === 'center' ? 'center' : config.textAlign === 'right' ? 'flex-end' : 'flex-start',
+                gap: config.textBoxStyle === 'highlight' ? '-0.1em' : '4px'
+            }}>
                 <style>{`
                     .preview-rich-text b {
                         text-transform: uppercase !important;
+                        font-weight: 900 !important;
                     }
                     .preview-rich-text u {
                         text-decoration: none !important;
@@ -1212,34 +1250,40 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                         padding: 0 2px;
                         border-radius: 4px;
                     }
-                    .preview-rich-text u::after {
-                        display: none;
-                    }
                 `}</style>
-                {/* Solution: Dense Text-Shadow Layer behind text simulating a smooth stroke */}
-                {config.textSuperStrokeWidth > 0 && (
-                    <div
-                        style={superStrokeStyle}
-                        dangerouslySetInnerHTML={{ __html: sanitizedText }}
-                    />
-                )}
 
-                <div style={bgStyle}>
-                    {config.textGradientColors && config.boxGradientColors && (
-                        <span
-                            style={{
-                                backgroundImage: `linear-gradient(to bottom, ${config.textGradientColors.join(', ')})`,
-                                WebkitBackgroundClip: 'text',
-                                backgroundClip: 'text',
-                                color: 'transparent'
-                            }}
-                            dangerouslySetInnerHTML={{ __html: sanitizedText }}
-                        />
-                    )}
-                    {(!config.textGradientColors || !config.boxGradientColors) && (
-                        <div dangerouslySetInnerHTML={{ __html: sanitizedText }} />
-                    )}
-                </div>
+                {config.textBoxStyle === 'block' ? (
+                    /* UMA ÚNICA CAIXA PARA TUDO */
+                    <div style={{ ...bgStyle, position: 'relative' }}>
+                        {config.textSuperStrokeWidth > 0 && lines.map((line, idx) => (
+                            <div key={`s-${idx}`} style={{ ...superStrokeStyle, position: 'absolute', top: `${idx * config.lineHeight}em`, left: 0 }} dangerouslySetInnerHTML={{ __html: line }} />
+                        ))}
+                        {lines.map((line, idx) => (
+                            <div key={idx} dangerouslySetInnerHTML={{ __html: line }} />
+                        ))}
+                    </div>
+                ) : (
+                    /* CAIXA POR LINHA (HIGHLIGHT) */
+                    lines.map((line, idx) => (
+                        <div key={idx} style={{ position: 'relative', width: isJustify ? '100%' : 'fit-content' }}>
+                            {config.textSuperStrokeWidth > 0 && (
+                                <div style={superStrokeStyle} dangerouslySetInnerHTML={{ __html: line }} />
+                            )}
+                            <div style={bgStyle}>
+                                {config.textGradientColors && config.boxGradientColors ? (
+                                    <span style={{
+                                        backgroundImage: `linear-gradient(to bottom, ${config.textGradientColors.join(', ')})`,
+                                        WebkitBackgroundClip: 'text',
+                                        backgroundClip: 'text',
+                                        color: 'transparent'
+                                    }} dangerouslySetInnerHTML={{ __html: line }} />
+                                ) : (
+                                    <div dangerouslySetInnerHTML={{ __html: line }} />
+                                )}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         );
     };
@@ -1291,6 +1335,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                             </div>
                         )}
                         {!previewUrl && getCurrentTemplate().backgroundType === 'image' && <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${getCurrentTemplate().overlayOpacity || 0})` }}></div>}
+                        {renderTextureOverlay()}
                     </div>
 
                     {previewUrl ? (
@@ -1610,6 +1655,39 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                         </div>
                     )}
 
+                    {activeTool === 'textures' && (
+                        <div className="space-y-2 h-full flex flex-col justify-center px-1">
+                            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar items-center">
+                                {[
+                                    { id: 'none', label: 'None', icon: <X className="w-4 h-4" /> },
+                                    { id: 'grain', label: 'Grain', icon: <Sparkles className="w-4 h-4" /> },
+                                    { id: 'paper', label: 'Paper', icon: <Box className="w-4 h-4" /> },
+                                    { id: 'leak', label: 'Leak', icon: <Zap className="w-4 h-4" /> },
+                                    { id: 'dust', label: 'Dust', icon: <Layout className="w-4 h-4" /> }
+                                ].map((tex) => (
+                                    <button
+                                        key={tex.id}
+                                        onClick={() => setConfig({ ...config, textureType: tex.id as any })}
+                                        className={`px-3 py-1.5 rounded-lg whitespace-nowrap flex flex-col items-center gap-1 border transition-all ${config.textureType === tex.id ? 'bg-neon-pulse border-neon-pulse text-dark-carbon' : 'bg-dark-steel border-dark-steel text-text-secondary hover:bg-dark-steel/80'}`}
+                                    >
+                                        {tex.icon}
+                                        <span className="text-[10px] font-bold">{tex.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-3 px-2">
+                                <span className="text-[9px] text-text-dim w-10">Opacity</span>
+                                <input
+                                    type="range" min="0" max="1" step="0.05"
+                                    value={config.textureOpacity || 0.5}
+                                    onChange={(e) => setConfig({ ...config, textureOpacity: Number(e.target.value) })}
+                                    className="flex-1 accent-neon-pulse h-1 bg-dark-steel rounded-lg appearance-none cursor-pointer"
+                                />
+                                <span className="text-[10px] font-bold text-text-primary">{Math.round((config.textureOpacity || 0.5) * 100)}%</span>
+                            </div>
+                        </div>
+                    )}
+
 
                 </div>
 
@@ -1626,6 +1704,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                         { id: 'glow', icon: Lightbulb, label: t.toolGlow, isLocked: true },
                         { id: 'effects', icon: Layers, label: t.toolEffects },
                         { id: '3d', icon: Box, label: t.tool3D, isLocked: true },
+                        { id: 'textures', icon: Aperture, label: t.toolTextures, isLocked: true },
                         { id: 'format', icon: AlignJustify, label: t.toolFormat },
                     ].map((tool) => (
                         <button

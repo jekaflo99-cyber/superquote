@@ -18,9 +18,7 @@ import './index.css';
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [isPremiumUser, setIsPremiumUser] = useState(() => {
-    return localStorage.getItem('superquote_secret_premium') === 'true';
-  });
+  const [isPremiumUser, setIsPremiumUser] = useState(true);
   const [favoritePhrases, setFavoritePhrases] = useState<string[]>([]);
   const [nav, setNav] = useState<NavigationState>({
     currentScreen: 'language',
@@ -144,7 +142,7 @@ const App: React.FC = () => {
 
         // Verifica se já tem subscrição ativa
         const isPremium = await revenueCatService.checkSubscriptionStatus();
-        setIsPremiumUser(isPremium);
+        setIsPremiumUser(true);
 
         console.log('RevenueCat initialized. Premium:', isPremium);
       } catch (error) {
