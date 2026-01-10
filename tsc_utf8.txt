@@ -1,0 +1,33 @@
+﻿src/components/EditorScreen.tsx(3,317): error TS2792: Cannot find module 'lucide-react'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/components/EditorScreen.tsx(12,23): error TS2792: Cannot find module '@capacitor/share'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/components/EditorScreen.tsx(13,39): error TS2792: Cannot find module '@capacitor/filesystem'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/components/EditorScreen.tsx(14,23): error TS2792: Cannot find module '@capacitor-community/media'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/components/EditorScreen.tsx(15,27): error TS2792: Cannot find module '@capacitor/core'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/components/EditorScreen.tsx(18,54): error TS2792: Cannot find module 'react-zoom-pan-pinch'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/components/EditorScreen.tsx(22,34): error TS2792: Cannot find module '../Data/templates_smart_data.json'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/components/EditorScreen.tsx(1346,21): error TS2339: Property 'backgroundImage' does not exist on type 'CSSProperties'.
+src/components/EditorScreen.tsx(1348,32): error TS2339: Property 'backgroundImage' does not exist on type 'CSSProperties'.
+src/components/EditorScreen.tsx(1349,32): error TS2339: Property 'WebkitBackgroundClip' does not exist on type 'CSSProperties'.
+src/components/EditorScreen.tsx(1350,32): error TS2339: Property 'backgroundClip' does not exist on type 'CSSProperties'.
+src/components/EditorScreen.tsx(1351,32): error TS2339: Property 'color' does not exist on type 'CSSProperties'.
+src/components/EditorScreen.tsx(1359,30): error TS2339: Property 'padding' does not exist on type 'CSSProperties'.
+src/components/RewardedAdModal.tsx(2,45): error TS2792: Cannot find module 'lucide-react'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/components/SubscriptionModal.tsx(2,33): error TS2792: Cannot find module 'lucide-react'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/components/SubscriptionModal.tsx(3,27): error TS2792: Cannot find module '@capacitor/core'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/Data/templates.ts(14,21): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/Data/templates.ts(14,33): error TS2339: Property 'glob' does not exist on type 'ImportMeta'.
+src/services/admobService.ts(1,105): error TS2792: Cannot find module '@capacitor-community/admob'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/services/admobService.ts(2,50): error TS2792: Cannot find module '@capacitor-community/admob'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/services/firebase.ts(1,31): error TS2792: Cannot find module 'firebase/app'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/services/firebase.ts(2,43): error TS2792: Cannot find module 'firebase/analytics'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/services/firebase.ts(3,51): error TS2792: Cannot find module 'firebase/remote-config'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/services/revenueCatService.ts(1,38): error TS2792: Cannot find module '@revenuecat/purchases-capacitor'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/services/revenueCatService.ts(2,59): error TS2792: Cannot find module '@revenuecat/purchases-capacitor'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/services/revenueCatService.ts(3,27): error TS2792: Cannot find module '@capacitor/core'. Did you mean to set the 'moduleResolution' option to 'nodenext', or to add aliases to the 'paths' option?
+src/services/revenueCatService.ts(260,58): error TS1323: Dynamic imports are only supported when the '--module' flag is set to 'es2020', 'es2022', 'esnext', 'commonjs', 'amd', 'system', 'umd', 'node16', 'node18', 'node20', or 'nodenext'.
+src/services/stripeService.ts(11,7): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/services/stripeService.ts(11,19): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/services/stripeService.ts(12,12): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/services/stripeService.ts(12,24): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/services/stripeService.ts(152,29): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
+src/services/stripeService.ts(152,41): error TS2339: Property 'env' does not exist on type 'ImportMeta'.

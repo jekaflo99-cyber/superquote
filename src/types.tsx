@@ -23,6 +23,22 @@ export type TextAlign = 'left' | 'center' | 'right' | 'justify';
 export type TextVerticalAlign = 'top' | 'center' | 'bottom';
 export type TextTransform = 'none' | 'uppercase' | 'lowercase';
 
+export interface TextRun {
+  text: string;
+  weight: 'regular' | 'extraBold';
+  color?: string; // Optional custom color for emphasized runs
+}
+
+export interface TextPlan {
+  textRaw: string;
+  textBroken: string;
+  breakMode: 'balanced' | 'compact' | 'impact';
+  highlights: string[];
+  spans: { start: number; end: number; weight: 'extraBold' }[];
+  runs: TextRun[];
+  lang: string;
+}
+
 export interface EditorConfig {
   text: string;
   templateId: string;
@@ -33,6 +49,11 @@ export interface EditorConfig {
   textColor: string;
   isBold: boolean;
   isItalic: boolean;
+
+  // Text Plan Extensions
+  textRuns?: TextRun[];
+  highlights?: string[];
+  breakMode?: 'balanced' | 'compact' | 'impact';
 
   // Format Extras
   letterSpacing: number; // in pixels (approx)
@@ -75,6 +96,11 @@ export interface EditorConfig {
   // Texture Overlays
   textureType?: 'none' | 'grain' | 'paper' | 'leak' | 'dust';
   textureOpacity?: number;
+
+  // Smart Data Extras
+  brightness?: number; // 0 to 255
+  noise?: number; // 0 to 100
+  disableSmartHighlights?: boolean;
 }
 
 export type ScreenName = 'language' | 'categories' | 'phrases' | 'editor' | 'favorites';

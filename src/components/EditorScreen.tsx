@@ -16,6 +16,11 @@ import { Capacitor } from '@capacitor/core';
 import { RewardedAdModal } from './RewardedAdModal';
 import { SubscriptionModal } from './SubscriptionModal';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import { buildTextPlan } from '../services/textPlan';
+import { splitRunsIntoLines } from '../services/emphasisPlan';
+import { extractPaletteFromImage, chooseSmartColor } from '../services/colorService';
+import TEMPLATES_SMART_DATA from '../Data/templates_smart_data.json';
+
 
 interface Props {
     initialPhrase: string;
@@ -115,92 +120,92 @@ interface PresetConfig extends Partial<EditorConfig> {
 // --- ALL PRESETS (1-70) ---
 const PRESET_STYLES: PresetConfig[] = [
     // FREE STYLES (10 selected)
-    { id: 'p1', name: 'Clean', isPremium: false, fontFamily: 'Inter', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textShadowOpacity: 0, textOutlineWidth: 0, textBackgroundColor: '#ffffff', textBackgroundOpacity: 0 },
-    { id: 'p2', name: 'Romantic', isPremium: false, fontFamily: 'Great Vibes', fontSize: 22, textAlign: 'justify', textColor: '#b03030', textShadowOpacity: 0, textOutlineWidth: 0 },
-    { id: 'p3', name: 'Impact', isPremium: false, fontFamily: 'Oswald', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textShadowOpacity: 0.8, textShadowBlur: 5, textShadowColor: '#000000' },
-    { id: 'p8', name: 'Neon', isPremium: false, fontFamily: 'Righteous', fontSize: 22, textAlign: 'justify', textColor: '#00ff99', textShadowOpacity: 0.3, textShadowColor: '#00ff99', textShadowBlur: 10, textBackgroundColor: '#000000', textBackgroundOpacity: 0.7, textBoxStyle: 'block' },
-    { id: 'p9', name: 'Note', isPremium: false, fontFamily: 'Indie Flower', fontSize: 22, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#fef3c7', textBackgroundOpacity: 1, textBoxStyle: 'block' },
-    { id: 'p11', name: 'Dark', isPremium: false, fontFamily: 'Roboto', fontSize: 22, textAlign: 'justify', textColor: '#f8fafc', textBackgroundColor: '#000000', textBackgroundOpacity: 0.85, textBoxStyle: 'block' },
-    { id: 'p17', name: 'Chill', isPremium: false, fontFamily: 'Lato', fontSize: 22, textAlign: 'justify', textColor: '#475569', textBackgroundColor: '#f1f5f9', textBackgroundOpacity: 0.7, textBoxStyle: 'block' },
-    { id: 'p24', name: 'Block', isPremium: false, fontFamily: "Indie Flower", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#2563eb", textBackgroundColor: "#dbeafe", textBackgroundOpacity: 0.9, textBoxStyle: "block", lineHeight: 1.5, textShadowOpacity: 0, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 4, textOutlineColor: "#2563eb", textGlowWidth: 2, textGlowColor: "#ffffff", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false },
-    { id: 'p29', name: 'Candy', isPremium: false, fontFamily: "Indie Flower", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#bd00ad", textBackgroundColor: "#fbcfe8", textBackgroundOpacity: 0.9, textBoxStyle: "block", lineHeight: 1.5, textShadowOpacity: 0, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 4, textOutlineColor: "#bd00ad", textGlowWidth: 2, textGlowColor: "#ffffff", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false },
-    { id: 'p35', name: '3D Pro', isPremium: false, fontFamily: 'Montserrat', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', text3DColor: '#00000099', text3DOffsetX: 7, text3DOffsetY: 7 },
+    { id: 'p1', name: 'Clean', isPremium: false, fontFamily: 'Inter', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textShadowOpacity: 0, textOutlineWidth: 0, textBackgroundColor: '#ffffff', textBackgroundOpacity: 0 },
+    { id: 'p2', name: 'Romantic', isPremium: false, fontFamily: 'Great Vibes', fontSize: 16, textAlign: 'justify', textColor: '#b03030', textShadowOpacity: 0, textOutlineWidth: 0 },
+    { id: 'p3', name: 'Impact', isPremium: false, fontFamily: 'Oswald', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textShadowOpacity: 1, textShadowBlur: 5, textShadowColor: '#000000' },
+    { id: 'p8', name: 'Neon', isPremium: false, fontFamily: 'Righteous', fontSize: 16, textAlign: 'justify', textColor: '#00ff99', textShadowOpacity: 1, textShadowColor: '#00ff99', textShadowBlur: 10, textBackgroundColor: '#000000', textBackgroundOpacity: 0.7, textBoxStyle: 'block' },
+    { id: 'p9', name: 'Note', isPremium: false, fontFamily: 'Indie Flower', fontSize: 16, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#fef3c7', textBackgroundOpacity: 1, textBoxStyle: 'block' },
+    { id: 'p11', name: 'Dark', isPremium: false, fontFamily: 'Roboto', fontSize: 16, textAlign: 'justify', textColor: '#f8fafc', textBackgroundColor: '#000000', textBackgroundOpacity: 0.85, textBoxStyle: 'block' },
+    { id: 'p17', name: 'Chill', isPremium: false, fontFamily: 'Lato', fontSize: 16, textAlign: 'justify', textColor: '#475569', textBackgroundColor: '#f1f5f9', textBackgroundOpacity: 0.7, textBoxStyle: 'block' },
+    { id: 'p24', name: 'Block', isPremium: false, fontFamily: "Indie Flower", fontSize: 16, textAlign: "justify", verticalAlign: "center", textColor: "#2563eb", textBackgroundColor: "#dbeafe", textBackgroundOpacity: 0.9, textBoxStyle: "block", lineHeight: 1.5, textShadowOpacity: 0, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 4, textOutlineColor: "#2563eb", textGlowWidth: 2, textGlowColor: "#ffffff", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false },
+    { id: 'p29', name: 'Candy', isPremium: false, fontFamily: "Indie Flower", fontSize: 16, textAlign: "justify", verticalAlign: "center", textColor: "#bd00ad", textBackgroundColor: "#fbcfe8", textBackgroundOpacity: 0.9, textBoxStyle: "block", lineHeight: 1.5, textShadowOpacity: 0, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 4, textOutlineColor: "#bd00ad", textGlowWidth: 2, textGlowColor: "#ffffff", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false },
+    { id: 'p35', name: '3D Pro', isPremium: false, fontFamily: 'Montserrat', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', text3DColor: '#00000099', text3DOffsetX: 7, text3DOffsetY: 7 },
     {
         id: 'p72',
         name: 'Xmas Classic',
         isPremium: false,
         fontFamily: 'Playfair Display',
-        fontSize: 22,
+        fontSize: 16,
         textAlign: 'center',
         verticalAlign: 'center',
         textColor: '#fef9c3', // dourado claro
         textBackgroundColor: '#7f1d1d', // vermelho vinho
         textBackgroundOpacity: 0.9,
         textBoxStyle: 'block',
-        textShadowOpacity: 0.7,
+        textShadowOpacity: 1,
         textShadowColor: '#000000',
         textShadowBlur: 14,
         letterSpacing: 1.2
     },
-    { id: 'p88', name: 'Ginger', isPremium: false, fontFamily: 'Fredoka', fontSize: 22, textAlign: 'justify', textColor: '#8B4513', textGradientColors: ["#cd853f", "#8b4513"], textOutlineColor: "#ffffff", textOutlineWidth: 3, textShadowColor: "#5e300d", textShadowBlur: 5, textSuperStrokeColor: "#3e1f08", textSuperStrokeWidth: 2 },
+    { id: 'p88', name: 'Ginger', isPremium: false, fontFamily: 'Fredoka', fontSize: 16, textAlign: 'justify', textColor: '#8B4513', textGradientColors: ["#cd853f", "#8b4513"], textOutlineColor: "#ffffff", textOutlineWidth: 3, textShadowColor: "#5e300d", textShadowBlur: 5, textSuperStrokeColor: "#3e1f08", textSuperStrokeWidth: 2 },
     // PREMIUM STYLES
-    { id: 'p4', name: 'Signature', isPremium: true, fontFamily: 'WindSong', fontSize: 22, textAlign: 'justify', textColor: '#e2c792' },
-    { id: 'p5', name: 'Classic', isPremium: true, fontFamily: 'Merriweather', fontSize: 22, textAlign: 'justify', textColor: '#1a1a1a' },
-    { id: 'p6', name: 'Pastel', isPremium: true, fontFamily: 'Quicksand', fontSize: 22, textAlign: 'justify', textColor: '#4a4a4a', textBackgroundColor: '#fce7f3', textBackgroundOpacity: 0.7, textBoxStyle: 'block' },
-    { id: 'p7', name: 'Boss', isPremium: true, fontFamily: 'Montserrat', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#0f172a', textBackgroundOpacity: 0.9, textBoxStyle: 'block' },
-    { id: 'p10', name: 'Gold', isPremium: true, fontFamily: 'Playfair Display', fontSize: 22, textAlign: 'justify', textColor: '#d4af37', text3DOffsetX: 2, text3DOffsetY: 1, text3DColor: '#3c3c3cff' },
-    { id: 'p12', name: 'Vintage', isPremium: true, fontFamily: 'Roboto Mono', fontSize: 22, textAlign: 'justify', textColor: '#3f2e26', textBackgroundColor: '#f5ebe0', textBackgroundOpacity: 0.95, textBoxStyle: 'block' },
-    { id: 'p13', name: 'Story', isPremium: true, fontFamily: 'Open Sans', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#000000', textBackgroundOpacity: 0.5, textBoxStyle: 'highlight' },
-    { id: 'p14', name: 'Faith', isPremium: true, fontFamily: 'Cinzel', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#818cf8', textBackgroundOpacity: 0.4, textBoxStyle: 'block' },
-    { id: 'p15', name: 'Cute', isPremium: true, fontFamily: 'Fredoka', fontSize: 22, textAlign: 'justify', textColor: '#db2777', textBackgroundColor: '#fce7f3', textBackgroundOpacity: 0.8, textBoxStyle: 'block' },
-    { id: 'p16', name: 'Street', isPremium: true, fontFamily: 'Anton', fontSize: 22, textAlign: 'justify', textColor: '#fbbf24', textBackgroundColor: '#171717', textBackgroundOpacity: 0.8, textBoxStyle: 'highlight' },
-    { id: 'p18', name: 'Outline', isPremium: true, fontFamily: 'Bebas Neue', fontSize: 22, textAlign: 'justify', textColor: 'transparent', textOutlineWidth: 2, textOutlineColor: '#ffffff' },
-    { id: 'p19', name: 'Type', isPremium: true, fontFamily: 'Courier Prime', fontSize: 22, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#ffffff', textBackgroundOpacity: 0.9, textBoxStyle: 'block' },
-    { id: 'p20', name: 'Marker', isPremium: true, fontFamily: 'Permanent Marker', fontSize: 22, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#bef264', textBackgroundOpacity: 0.8, textBoxStyle: 'highlight' },
-    { id: 'p21', name: 'Cyber', isPremium: true, fontFamily: 'Orbitron', fontSize: 22, textAlign: 'justify', textColor: '#06b6d4', textGlowWidth: 15, textGlowColor: '#06b6d4', textOutlineWidth: 1, textOutlineColor: '#164e63' },
-    { id: 'p22', name: 'Ice', isPremium: true, fontFamily: 'Raleway', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#ffffff', textBackgroundOpacity: 0.3, textShadowOpacity: 0.3, textBoxStyle: 'block' },
-    { id: 'p23', name: 'Retro', isPremium: true, fontFamily: 'Pacifico', fontSize: 22, textAlign: 'justify', textColor: '#f59e0b', textOutlineWidth: 4, textOutlineColor: '#000000', textShadowOpacity: 1, textShadowColor: '#000000', textShadowBlur: 0, text3DOffsetX: 3, text3DOffsetY: 3, text3DColor: '#000000' },
-    { id: 'p25', name: 'Duotone', isPremium: true, fontFamily: 'Bebas Neue', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#db2777', textBackgroundOpacity: 1, textOutlineWidth: 1, textOutlineColor: '#ffffff', textBoxStyle: 'block' },
-    { id: 'p26', name: 'Neon M', isPremium: true, fontFamily: 'Montserrat', fontSize: 22, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#a3e635', textBackgroundOpacity: 0.3, textGlowWidth: 5, textGlowColor: '#a3e635', textBoxStyle: 'highlight' },
-    { id: 'p27', name: 'Soft', isPremium: true, fontFamily: 'Nunito', fontSize: 22, textAlign: 'justify', textColor: '#787878', textOutlineWidth: 2, textOutlineColor: '#ff9ed7', textShadowOpacity: 0.1, textShadowColor: '#f472b6', textBoxStyle: 'block', textGlowWidth: 5, textGlowColor: '#ff00ff' },
-    { id: 'p28', name: 'Double', isPremium: true, fontFamily: 'Cinzel', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textOutlineWidth: 1, textOutlineColor: '#4c0519', textGlowWidth: 10, textGlowColor: '#9f1239' },
-    { id: 'p30', name: 'Noir', isPremium: true, fontFamily: 'Playfair Display', fontSize: 22, textAlign: 'justify', textColor: '#fefce8', textBackgroundColor: '#000000', textBackgroundOpacity: 0.6, textBoxStyle: 'highlight' },
-    { id: 'p31', name: 'Pulse', isPremium: true, fontFamily: 'Righteous', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textGlowColor: '#9bff8a', textGlowWidth: 5, textShadowColor: '#00ff88', textShadowBlur: 10, textOutlineColor: '#003300', textOutlineWidth: 3, textGradientColors: ['#00ff88', '#00ccff'] },
-    { id: 'p32', name: 'Royal', isPremium: true, fontFamily: "Cinzel", fontSize: 22, textAlign: "justify", verticalAlign: "center", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.3, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 2, textOutlineColor: "#f2be50", textGlowWidth: 0, textGlowColor: "#ffdd55", text3DOffsetX: 2, text3DOffsetY: 2, text3DColor: "#6e4c1e", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#fbd786", "#f7797d", "#c6ffdd"], },
-    { id: 'p33', name: 'Diamond', isPremium: true, fontFamily: 'Playfair Display', fontSize: 22, textAlign: 'justify', textColor: '#e2e2e2', textGradientColors: ['#ffffff', '#d7d7d7', '#bcbcbc'], textShadowColor: '#000000', textShadowBlur: 10, textGlowColor: '#d6d6d6', textGlowWidth: 8, letterSpacing: 2, textOutlineWidth: 2, textOutlineColor: "#ffffff" },
-    { id: 'p34', name: 'Thunder', isPremium: true, fontFamily: 'Bebas Neue', fontSize: 22, textAlign: 'justify', textColor: '#cce7ff', textGlowColor: '#0a9dff', textGlowWidth: 3, textShadowColor: '#0033cc', textShadowBlur: 10, textGradientColors: ['#0077ff', '#00c8ff'], textOutlineWidth: 2, textOutlineColor: "#001685" },
-    { id: 'p36', name: '80s', isPremium: true, fontFamily: 'Pacifico', fontSize: 22, textAlign: 'justify', textColor: '#fff', textGradientColors: ['#ff00cc', '#3333ff'], textGlowColor: '#ff33ff', textShadowColor: '#220044', textShadowBlur: 12, letterSpacing: 1.5 },
-    { id: 'p37', name: 'Cinema', isPremium: true, fontFamily: 'Oswald', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textGradientColors: ['#202020', '#000000'], textShadowColor: '#000000', textShadowBlur: 12, letterSpacing: 2, textTransform: 'uppercase' },
-    { id: 'p38', name: 'Pink', isPremium: true, fontFamily: 'Fredoka', fontSize: 22, textAlign: 'justify', textColor: '#ffd6f6', textGlowColor: '#c200c2', textGlowWidth: 12, textShadowColor: '#b300b3', textShadowBlur: 14 },
-    { id: 'p39', name: 'Magma', isPremium: true, fontFamily: 'Anton', fontSize: 22, textAlign: 'justify', textColor: '#fff5e6', textGradientColors: ['#ff7a00', '#ff0033'], textShadowColor: '#660000', textShadowBlur: 10, textGlowColor: '#cc2900' },
-    { id: 'p40', name: 'Clean Pro', isPremium: true, fontFamily: 'Inter', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#000000', textBackgroundOpacity: 0.25, textShadowColor: '#00000055', textShadowBlur: 4, letterSpacing: 1, textBoxStyle: 'block' },
-    { id: 'p41', name: 'Ice Blue', isPremium: true, fontFamily: 'Inter', fontSize: 22, textAlign: 'center', textGradientColors: ["#e6f7ff", "#b3e0ff"], textBackgroundColor: "#002233", textBackgroundOpacity: 0.25, textGlowColor: "#0095c7", textGlowWidth: 3, textShadowColor: "#00334d", textShadowBlur: 14, textOutlineColor: "#99e6ff", textOutlineWidth: 2, text3DColor: "#004466", text3DOffsetX: 2, text3DOffsetY: 2, textBoxStyle: 'block' },
-    { id: 'p42', name: 'Lux Noir', isPremium: true, fontFamily: 'Jost', fontSize: 22, textAlign: 'center', letterSpacing: 2, textGradientColors: ["#1a1a1a", "#000000"], textGlowColor: "#614100", textGlowWidth: 12, textShadowColor: "#3d2b00", textShadowBlur: 10, textOutlineColor: "#d9a441", textOutlineWidth: 2, textBoxStyle: 'block', textTransform: "none", isBold: false, isItalic: false },
-    { id: 'p43', name: 'Pastel C', isPremium: true, fontFamily: 'Nunito', fontSize: 22, textAlign: 'center', textTransform: "none", textGradientColors: ["#ffe6ff", "#ffeedd"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textGlowColor: "#ffb3ff", textGlowWidth: 10, textShadowColor: "#ff99cc", textShadowBlur: 10, textOutlineColor: "#ffccff", textOutlineWidth: 3, textBoxStyle: 'block' },
-    { id: 'p44', name: 'Nebula', isPremium: true, fontFamily: 'Montserrat', fontSize: 22, textAlign: 'center', letterSpacing: 3, textGradientColors: ["#8e2de2", "#4a00e0"], textGlowColor: "#c799ff", textGlowWidth: 35, textShadowColor: "#1d0033", textShadowBlur: 18, text3DColor: "#330066", text3DOffsetX: 5, text3DOffsetY: 5 },
-    { id: 'p45', name: 'Sunset', isPremium: true, fontFamily: 'Raleway', fontSize: 22, textAlign: 'center', textTransform: "uppercase", textGradientColors: ["#ff9966", "#ff5e62"], textShadowColor: "#663300", textShadowBlur: 8, textGlowColor: "#940000", textGlowWidth: 10 },
-    { id: 'p46', name: 'Metal', isPremium: true, fontFamily: 'Jost', fontSize: 22, textAlign: 'center', textGradientColors: ["#eeeeee", "#bbbbbb", "#d5d5d5ff"], textShadowColor: "#222", textShadowBlur: 12, textGlowColor: "#ffffff", textGlowWidth: 10 },
-    { id: 'p47', name: 'Hellfire', isPremium: true, fontFamily: 'Urbanist', fontSize: 22, textAlign: 'center', textGradientColors: ["#ff1a1a", "#de0000ff"], textShadowColor: "#330000", textShadowBlur: 18, textGlowColor: "#ff3300", textGlowWidth: 5, textOutlineColor: "#4d0000", textOutlineWidth: 3 },
-    { id: 'p48', name: 'Matrix', isPremium: true, fontFamily: 'Bebas Neue', fontSize: 22, textAlign: 'center', letterSpacing: 3, textGradientColors: ["#00ff99", "#00ca86ff"], textShadowColor: "#003322", textShadowBlur: 15, textGlowColor: "#00996b", textGlowWidth: 8 },
-    { id: 'p50', name: 'Chalk', isPremium: true, fontFamily: 'Mulish', fontSize: 22, textAlign: 'left', letterSpacing: 1, textBackgroundColor: "#1e1e1e", textBackgroundOpacity: 1, textShadowColor: "#000", textShadowBlur: 6, textGlowColor: "#ffffff", textGlowWidth: 5, text3DColor: "#00000055", text3DOffsetX: 0, text3DOffsetY: 0, textBoxStyle: 'block' },
-    { id: 'p51', name: 'Royal', isPremium: true, fontFamily: 'Poppins', fontSize: 22, textAlign: 'justify', textGradientColors: ["#6aa3ffff", "#4d7fffff"], textShadowColor: "#002b93", textShadowBlur: 18, textGlowColor: "#74a6ff", textGlowWidth: 14, textOutlineColor: "#0c2a80", textOutlineWidth: 3, textSuperStrokeColor: "#00215e", textSuperStrokeWidth: 3 },
-    { id: 'p52', name: 'Lux Gold', isPremium: true, fontFamily: "Playfair Display", fontSize: 22, textAlign: "justify", verticalAlign: "center", textGradientColors: ["#ffe29e", "#f6cc84ff"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#4b3505", textShadowBlur: 15, textOutlineWidth: 0, textOutlineColor: "#f9a8d4", textGlowWidth: 1, textGlowColor: "#ffdd94", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 3, textSuperStrokeColor: "#2c1f08", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, },
-    { id: 'p53', name: 'Toon', isPremium: true, fontFamily: "Luckiest Guy", fontSize: 22, textAlign: "justify", verticalAlign: "center", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 0, textGradientColors: ["#5d5d5dff", "#353535ff", "#6d6d6dff"], textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 5.5, textOutlineColor: "#ffeb00", textGlowWidth: 10, textGlowColor: "#4d4d00", text3DOffsetX: 5, text3DOffsetY: 5, text3DColor: "#000000", textSuperStrokeWidth: 5, textSuperStrokeColor: "#000000", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, },
-    { id: 'p54', name: 'Rose', isPremium: true, fontFamily: "Amatic SC", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#ffffff", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#b14a72", textShadowBlur: 10, textOutlineWidth: 2, textOutlineColor: "#ff8ada", textGlowWidth: 13, textGlowColor: "#fbbdff", text3DOffsetX: 1, text3DOffsetY: 2, text3DColor: "#d14700", textSuperStrokeWidth: 3, textSuperStrokeColor: "#910094", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, textGradientColors: ["#ffb7d9", "#ff89ae"] },
-    { id: 'p55', name: 'Cyan', isPremium: true, fontFamily: "Montserrat", fontSize: 22, textAlign: "justify", verticalAlign: "center", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#003c3f", textShadowBlur: 20, textOutlineWidth: 5, textOutlineColor: "#00e682", textGlowWidth: 0, textGlowColor: "#00faff", text3DOffsetX: 3, text3DOffsetY: 3, text3DColor: "#72bba3", textSuperStrokeWidth: 5, textSuperStrokeColor: "#004c4e", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#00a0a5", "#00a0a5"] },
-    { id: 'p56', name: 'Inferno', isPremium: true, fontFamily: 'Anton', fontSize: 22, textAlign: 'justify', textGradientColors: ["#ff6a00", "#ff0000"], textShadowColor: "#650000", textShadowBlur: 18, textGlowColor: "#ff4800", textGlowWidth: 14, textOutlineColor: "#7a0000", textOutlineWidth: 4, textSuperStrokeColor: "#3a0000", textSuperStrokeWidth: 4 },
-    { id: 'p59', name: 'Candy', isPremium: true, fontFamily: 'Fredoka', fontSize: 22, textAlign: 'justify', textGradientColors: ["#ff90d0", "#ff4fa6"], textShadowColor: "#b80062", textShadowBlur: 18, textGlowColor: "#ffbde6", textGlowWidth: 0, textOutlineColor: "#ff66b8", textOutlineWidth: 4, textSuperStrokeColor: "#7c0041", textSuperStrokeWidth: 4 },
-    { id: 'p60', name: 'Silver', isPremium: true, fontFamily: "Playfair Display", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#000000", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 0, textShadowColor: "#0f1f38", textShadowBlur: 5, textOutlineWidth: 5, textOutlineColor: "#545454", textGlowWidth: 50, textGlowColor: "#ededed", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#0a0a0a", textSuperStrokeWidth: 3, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, textGradientColors: ["#f8f8f8", "#c6c6c6"] },
-    { id: 'p71', name: 'Orange', isPremium: true, fontFamily: "Luckiest Guy", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#512006", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#000000", textShadowBlur: 20, textOutlineWidth: 5, textOutlineColor: "#db8b00", textGlowWidth: 5, textGlowColor: "#bd6e00", text3DOffsetX: 4, text3DOffsetY: 5, text3DColor: "#d14700", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ef4444", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false },
-    { id: 'p62', name: 'Lime', isPremium: true, fontFamily: 'Fredoka', fontSize: 22, textAlign: 'justify', textColor: "#bcff85", textShadowColor: "#478f00", textShadowBlur: 20, textGlowColor: "#c9ff8e", textGlowWidth: 2, textOutlineColor: "#80ff00", textOutlineWidth: 4, textSuperStrokeColor: "#335700", textSuperStrokeWidth: 4, text3DOffsetX: 4, text3DOffsetY: 4, text3DColor: '#3d6a00' },
-    { id: 'p63', name: 'Purple', isPremium: true, fontFamily: "Luckiest Guy", fontSize: 22, textAlign: "justify", verticalAlign: "center", textGradientColors: ["#e9ceff", "#b777ff"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 0, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 10, textOutlineColor: "#630099", textGlowWidth: 13, textGlowColor: "#ff00d0", text3DOffsetX: 5, text3DOffsetY: 5, text3DColor: "#5a008e", textSuperStrokeWidth: 0, textSuperStrokeColor: "#3a005a", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false },
-    { id: 'p64', name: 'Aqua', isPremium: true, fontFamily: 'Fredoka', fontSize: 22, textAlign: 'justify', textColor: "#66fff5", textShadowColor: "#008099", textShadowBlur: 2, textGlowColor: "#91f2ff", textGlowWidth: 31, textOutlineColor: "#00e9ff", textOutlineWidth: 3, textSuperStrokeColor: "#005a66", textSuperStrokeWidth: 5, text3DOffsetX: 1, text3DOffsetY: 0, text3DColor: '#005a66' },
-    { id: 'p65', name: 'Night', isPremium: true, fontFamily: "Montserrat", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#9497ff", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#0b2e57", textShadowBlur: 12, textOutlineWidth: 3.5, textOutlineColor: "#b2a8ff", textGlowWidth: 17, textGlowColor: "#0062ff", text3DOffsetX: 3, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 5, textSuperStrokeColor: "#5c00e6", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#9ad7ff", "#dff2ff"] },
-    { id: 'p66', name: 'Ruby', isPremium: true, fontFamily: "Nunito", fontSize: 22, textAlign: "justify", verticalAlign: "center", textGradientColors: ["#9B2A2A", "#AD1111", "#9B2A2A"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#6d0023", textShadowBlur: 14, textOutlineWidth: 7.5, textOutlineColor: "#ff2e2e", textGlowWidth: 12, textGlowColor: "#d97706", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 4, textSuperStrokeColor: "#482323", letterSpacing: 0, textTransform: "none", isItalic: false },
-    { id: 'p67', name: 'Emerald', isPremium: true, fontFamily: "Poppins", fontSize: 22, textAlign: "justify", verticalAlign: "center", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#004d20", textShadowBlur: 15, textOutlineWidth: 7.5, textOutlineColor: "#0c8d22", textGlowWidth: 9, text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textGlowColor: "#70ff70", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#6df7c0", "#59f7b8"] },
-    { id: 'p68', name: 'Violet', isPremium: true, fontFamily: "Oswald", fontSize: 22, textAlign: "justify", verticalAlign: "center", textColor: "#262626", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#1e0060", textShadowBlur: 14, textOutlineWidth: 5.5, textOutlineColor: "#ff00d0", textGlowWidth: 1, textGlowColor: "#000000", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", letterSpacing: 0, textTransform: "none", isItalic: false },
-    { id: 'p69', name: 'Liquid', isPremium: true, fontFamily: 'Montserrat', fontSize: 22, textAlign: 'justify', textGradientColors: ["#ffffff", "#d2e4ff", "#ffffff"], textShadowColor: "#3a3a3a", textShadowBlur: 12, textShadowOpacity: 1, textOutlineColor: "#2efff1", textOutlineWidth: 6, textSuperStrokeColor: "#000000", textSuperStrokeWidth: 3, textGlowWidth: 11, textGlowColor: "#72eeee" },
-    { id: 'p70', name: 'Nova', isPremium: true, fontFamily: 'Poppins', fontSize: 22, textAlign: 'justify', textGradientColors: ["#ffe6ff", "#cbbaff"], textShadowColor: "#2b0052", textShadowBlur: 16, textGlowColor: "#c793ff", textGlowWidth: 14, textOutlineColor: "#7a2eff", textOutlineWidth: 4, textSuperStrokeColor: "#1a0036", textSuperStrokeWidth: 4 },
+    { id: 'p4', name: 'Signature', isPremium: true, fontFamily: 'WindSong', fontSize: 16, textAlign: 'justify', textColor: '#e2c792' },
+    { id: 'p5', name: 'Classic', isPremium: true, fontFamily: 'Merriweather', fontSize: 16, textAlign: 'justify', textColor: '#1a1a1a' },
+    { id: 'p6', name: 'Pastel', isPremium: true, fontFamily: 'Quicksand', fontSize: 16, textAlign: 'justify', textColor: '#4a4a4a', textBackgroundColor: '#fce7f3', textBackgroundOpacity: 0.7, textBoxStyle: 'block' },
+    { id: 'p7', name: 'Boss', isPremium: true, fontFamily: 'Montserrat', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#0f172a', textBackgroundOpacity: 0.9, textBoxStyle: 'block' },
+    { id: 'p10', name: 'Gold', isPremium: true, fontFamily: 'Playfair Display', fontSize: 16, textAlign: 'justify', textColor: '#d4af37', text3DOffsetX: 2, text3DOffsetY: 1, text3DColor: '#3c3c3cff' },
+    { id: 'p12', name: 'Vintage', isPremium: true, fontFamily: 'Roboto Mono', fontSize: 16, textAlign: 'justify', textColor: '#3f2e26', textBackgroundColor: '#f5ebe0', textBackgroundOpacity: 0.95, textBoxStyle: 'block' },
+    { id: 'p13', name: 'Story', isPremium: true, fontFamily: 'Open Sans', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#000000', textBackgroundOpacity: 0.5, textBoxStyle: 'highlight' },
+    { id: 'p14', name: 'Faith', isPremium: true, fontFamily: 'Cinzel', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#818cf8', textBackgroundOpacity: 0.4, textBoxStyle: 'block' },
+    { id: 'p15', name: 'Cute', isPremium: true, fontFamily: 'Fredoka', fontSize: 16, textAlign: 'justify', textColor: '#db2777', textBackgroundColor: '#fce7f3', textBackgroundOpacity: 0.8, textBoxStyle: 'block' },
+    { id: 'p16', name: 'Street', isPremium: true, fontFamily: 'Anton', fontSize: 16, textAlign: 'justify', textColor: '#fbbf24', textBackgroundColor: '#171717', textBackgroundOpacity: 0.8, textBoxStyle: 'highlight' },
+    { id: 'p18', name: 'Outline', isPremium: true, fontFamily: 'Bebas Neue', fontSize: 16, textAlign: 'justify', textColor: 'transparent', textOutlineWidth: 2, textOutlineColor: '#ffffff' },
+    { id: 'p19', name: 'Type', isPremium: true, fontFamily: 'Courier Prime', fontSize: 16, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#ffffff', textBackgroundOpacity: 0.9, textBoxStyle: 'block' },
+    { id: 'p20', name: 'Marker', isPremium: true, fontFamily: 'Permanent Marker', fontSize: 16, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#bef264', textBackgroundOpacity: 0.8, textBoxStyle: 'highlight' },
+    { id: 'p21', name: 'Cyber', isPremium: true, fontFamily: 'Orbitron', fontSize: 16, textAlign: 'justify', textColor: '#06b6d4', textGlowWidth: 15, textGlowColor: '#06b6d4', textOutlineWidth: 1, textOutlineColor: '#164e63' },
+    { id: 'p22', name: 'Ice', isPremium: true, fontFamily: 'Raleway', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#ffffff', textBackgroundOpacity: 0.3, textShadowOpacity: 1, textBoxStyle: 'block' },
+    { id: 'p23', name: 'Retro', isPremium: true, fontFamily: 'Pacifico', fontSize: 16, textAlign: 'justify', textColor: '#f59e0b', textOutlineWidth: 4, textOutlineColor: '#000000', textShadowOpacity: 1, textShadowColor: '#000000', textShadowBlur: 0, text3DOffsetX: 3, text3DOffsetY: 3, text3DColor: '#000000' },
+    { id: 'p25', name: 'Duotone', isPremium: true, fontFamily: 'Bebas Neue', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#db2777', textBackgroundOpacity: 1, textOutlineWidth: 1, textOutlineColor: '#ffffff', textBoxStyle: 'block' },
+    { id: 'p26', name: 'Neon M', isPremium: true, fontFamily: 'Montserrat', fontSize: 16, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#a3e635', textBackgroundOpacity: 0.3, textGlowWidth: 5, textGlowColor: '#a3e635', textBoxStyle: 'highlight' },
+    { id: 'p27', name: 'Soft', isPremium: true, fontFamily: 'Nunito', fontSize: 16, textAlign: 'justify', textColor: '#787878', textOutlineWidth: 2, textOutlineColor: '#ff9ed7', textShadowOpacity: 1, textShadowColor: '#f472b6', textBoxStyle: 'block', textGlowWidth: 5, textGlowColor: '#ff00ff' },
+    { id: 'p28', name: 'Double', isPremium: true, fontFamily: 'Cinzel', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textOutlineWidth: 1, textOutlineColor: '#4c0519', textGlowWidth: 10, textGlowColor: '#9f1239' },
+    { id: 'p30', name: 'Noir', isPremium: true, fontFamily: 'Playfair Display', fontSize: 16, textAlign: 'justify', textColor: '#fefce8', textBackgroundColor: '#000000', textBackgroundOpacity: 0.6, textBoxStyle: 'highlight' },
+    { id: 'p31', name: 'Pulse', isPremium: true, fontFamily: 'Righteous', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textGlowColor: '#9bff8a', textGlowWidth: 5, textShadowColor: '#00ff88', textShadowBlur: 10, textOutlineColor: '#003300', textOutlineWidth: 3, textGradientColors: ['#00ff88', '#00ccff'] },
+    { id: 'p32', name: 'Royal', isPremium: true, fontFamily: "Cinzel", fontSize: 16, textAlign: "justify", verticalAlign: "center", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.3, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 2, textOutlineColor: "#f2be50", textGlowWidth: 0, textGlowColor: "#ffdd55", text3DOffsetX: 2, text3DOffsetY: 2, text3DColor: "#6e4c1e", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#fbd786", "#f7797d", "#c6ffdd"], },
+    { id: 'p33', name: 'Diamond', isPremium: true, fontFamily: 'Playfair Display', fontSize: 16, textAlign: 'justify', textColor: '#e2e2e2', textGradientColors: ['#ffffff', '#d7d7d7', '#bcbcbc'], textShadowColor: '#000000', textShadowBlur: 10, textGlowColor: '#d6d6d6', textGlowWidth: 8, letterSpacing: 2, textOutlineWidth: 2, textOutlineColor: "#ffffff" },
+    { id: 'p34', name: 'Thunder', isPremium: true, fontFamily: 'Bebas Neue', fontSize: 16, textAlign: 'justify', textColor: '#cce7ff', textGlowColor: '#0a9dff', textGlowWidth: 3, textShadowColor: '#0033cc', textShadowBlur: 10, textGradientColors: ['#0077ff', '#00c8ff'], textOutlineWidth: 2, textOutlineColor: "#001685" },
+    { id: 'p36', name: '80s', isPremium: true, fontFamily: 'Pacifico', fontSize: 16, textAlign: 'justify', textColor: '#fff', textGradientColors: ['#ff00cc', '#3333ff'], textGlowColor: '#ff33ff', textShadowColor: '#220044', textShadowBlur: 12, letterSpacing: 1.5 },
+    { id: 'p37', name: 'Cinema', isPremium: true, fontFamily: 'Oswald', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textGradientColors: ['#202020', '#000000'], textShadowColor: '#000000', textShadowBlur: 12, letterSpacing: 2, textTransform: 'uppercase' },
+    { id: 'p38', name: 'Pink', isPremium: true, fontFamily: 'Fredoka', fontSize: 16, textAlign: 'justify', textColor: '#ffd6f6', textGlowColor: '#c200c2', textGlowWidth: 12, textShadowColor: '#b300b3', textShadowBlur: 14 },
+    { id: 'p39', name: 'Magma', isPremium: true, fontFamily: 'Anton', fontSize: 16, textAlign: 'justify', textColor: '#fff5e6', textGradientColors: ['#ff7a00', '#ff0033'], textShadowColor: '#660000', textShadowBlur: 10, textGlowColor: '#cc2900' },
+    { id: 'p40', name: 'Clean Pro', isPremium: true, fontFamily: 'Inter', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#000000', textBackgroundOpacity: 0.25, textShadowColor: '#00000055', textShadowBlur: 4, letterSpacing: 1, textBoxStyle: 'block' },
+    { id: 'p41', name: 'Ice Blue', isPremium: true, fontFamily: 'Inter', fontSize: 16, textAlign: 'center', textGradientColors: ["#e6f7ff", "#b3e0ff"], textBackgroundColor: "#002233", textBackgroundOpacity: 0.25, textGlowColor: "#0095c7", textGlowWidth: 3, textShadowColor: "#00334d", textShadowBlur: 14, textOutlineColor: "#99e6ff", textOutlineWidth: 2, text3DColor: "#004466", text3DOffsetX: 2, text3DOffsetY: 2, textBoxStyle: 'block' },
+    { id: 'p42', name: 'Lux Noir', isPremium: true, fontFamily: 'Jost', fontSize: 16, textAlign: 'center', letterSpacing: 2, textGradientColors: ["#1a1a1a", "#000000"], textGlowColor: "#614100", textGlowWidth: 12, textShadowColor: "#3d2b00", textShadowBlur: 10, textOutlineColor: "#d9a441", textOutlineWidth: 2, textBoxStyle: 'block', textTransform: "none", isBold: false, isItalic: false },
+    { id: 'p43', name: 'Pastel C', isPremium: true, fontFamily: 'Nunito', fontSize: 16, textAlign: 'center', textTransform: "none", textGradientColors: ["#ffe6ff", "#ffeedd"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textGlowColor: "#ffb3ff", textGlowWidth: 10, textShadowColor: "#ff99cc", textShadowBlur: 10, textOutlineColor: "#ffccff", textOutlineWidth: 3, textBoxStyle: 'block' },
+    { id: 'p44', name: 'Nebula', isPremium: true, fontFamily: 'Montserrat', fontSize: 16, textAlign: 'center', letterSpacing: 3, textGradientColors: ["#8e2de2", "#4a00e0"], textGlowColor: "#c799ff", textGlowWidth: 35, textShadowColor: "#1d0033", textShadowBlur: 18, text3DColor: "#330066", text3DOffsetX: 5, text3DOffsetY: 5 },
+    { id: 'p45', name: 'Sunset', isPremium: true, fontFamily: 'Raleway', fontSize: 16, textAlign: 'center', textTransform: "uppercase", textGradientColors: ["#ff9966", "#ff5e62"], textShadowColor: "#663300", textShadowBlur: 8, textGlowColor: "#940000", textGlowWidth: 10 },
+    { id: 'p46', name: 'Metal', isPremium: true, fontFamily: 'Jost', fontSize: 16, textAlign: 'center', textGradientColors: ["#eeeeee", "#bbbbbb", "#d5d5d5ff"], textShadowColor: "#222", textShadowBlur: 12, textGlowColor: "#ffffff", textGlowWidth: 10 },
+    { id: 'p47', name: 'Hellfire', isPremium: true, fontFamily: 'Urbanist', fontSize: 16, textAlign: 'center', textGradientColors: ["#ff1a1a", "#de0000ff"], textShadowColor: "#330000", textShadowBlur: 18, textGlowColor: "#ff3300", textGlowWidth: 5, textOutlineColor: "#4d0000", textOutlineWidth: 3 },
+    { id: 'p48', name: 'Matrix', isPremium: true, fontFamily: 'Bebas Neue', fontSize: 16, textAlign: 'center', letterSpacing: 3, textGradientColors: ["#00ff99", "#00ca86ff"], textShadowColor: "#003322", textShadowBlur: 15, textGlowColor: "#00996b", textGlowWidth: 8 },
+    { id: 'p50', name: 'Chalk', isPremium: true, fontFamily: 'Mulish', fontSize: 16, textAlign: 'left', letterSpacing: 1, textBackgroundColor: "#1e1e1e", textBackgroundOpacity: 1, textShadowColor: "#000", textShadowBlur: 6, textGlowColor: "#ffffff", textGlowWidth: 5, text3DColor: "#00000055", text3DOffsetX: 0, text3DOffsetY: 0, textBoxStyle: 'block' },
+    { id: 'p51', name: 'Royal', isPremium: true, fontFamily: 'Poppins', fontSize: 16, textAlign: 'justify', textGradientColors: ["#6aa3ffff", "#4d7fffff"], textShadowColor: "#002b93", textShadowBlur: 18, textGlowColor: "#74a6ff", textGlowWidth: 14, textOutlineColor: "#0c2a80", textOutlineWidth: 3, textSuperStrokeColor: "#00215e", textSuperStrokeWidth: 3 },
+    { id: 'p52', name: 'Lux Gold', isPremium: true, fontFamily: "Playfair Display", fontSize: 16, textAlign: "justify", verticalAlign: "center", textGradientColors: ["#ffe29e", "#f6cc84ff"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#4b3505", textShadowBlur: 15, textOutlineWidth: 0, textOutlineColor: "#f9a8d4", textGlowWidth: 1, textGlowColor: "#ffdd94", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 3, textSuperStrokeColor: "#2c1f08", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, },
+    { id: 'p53', name: 'Toon', isPremium: true, fontFamily: "Luckiest Guy", fontSize: 16, textAlign: "justify", verticalAlign: "center", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 0, textGradientColors: ["#5d5d5dff", "#353535ff", "#6d6d6dff"], textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 5.5, textOutlineColor: "#ffeb00", textGlowWidth: 10, textGlowColor: "#4d4d00", text3DOffsetX: 5, text3DOffsetY: 5, text3DColor: "#000000", textSuperStrokeWidth: 5, textSuperStrokeColor: "#000000", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, },
+    { id: 'p54', name: 'Rose', isPremium: true, fontFamily: "Amatic SC", fontSize: 16, textAlign: "justify", verticalAlign: "center", textColor: "#ffffff", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#b14a72", textShadowBlur: 10, textOutlineWidth: 2, textOutlineColor: "#ff8ada", textGlowWidth: 13, textGlowColor: "#fbbdff", text3DOffsetX: 1, text3DOffsetY: 2, text3DColor: "#d14700", textSuperStrokeWidth: 3, textSuperStrokeColor: "#910094", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, textGradientColors: ["#ffb7d9", "#ff89ae"] },
+    { id: 'p55', name: 'Cyan', isPremium: true, fontFamily: "Montserrat", fontSize: 16, textAlign: "justify", verticalAlign: "center", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#003c3f", textShadowBlur: 20, textOutlineWidth: 5, textOutlineColor: "#00e682", textGlowWidth: 0, textGlowColor: "#00faff", text3DOffsetX: 3, text3DOffsetY: 3, text3DColor: "#72bba3", textSuperStrokeWidth: 5, textSuperStrokeColor: "#004c4e", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#00a0a5", "#00a0a5"] },
+    { id: 'p56', name: 'Inferno', isPremium: true, fontFamily: 'Anton', fontSize: 16, textAlign: 'justify', textGradientColors: ["#ff6a00", "#ff0000"], textShadowColor: "#650000", textShadowBlur: 18, textGlowColor: "#ff4800", textGlowWidth: 14, textOutlineColor: "#7a0000", textOutlineWidth: 4, textSuperStrokeColor: "#3a0000", textSuperStrokeWidth: 4 },
+    { id: 'p59', name: 'Candy', isPremium: true, fontFamily: 'Fredoka', fontSize: 16, textAlign: 'justify', textGradientColors: ["#ff90d0", "#ff4fa6"], textShadowColor: "#b80062", textShadowBlur: 18, textGlowColor: "#ffbde6", textGlowWidth: 0, textOutlineColor: "#ff66b8", textOutlineWidth: 4, textSuperStrokeColor: "#7c0041", textSuperStrokeWidth: 4 },
+    { id: 'p60', name: 'Silver', isPremium: true, fontFamily: "Playfair Display", fontSize: 16, textAlign: "justify", verticalAlign: "center", textColor: "#000000", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 0, textShadowColor: "#0f1f38", textShadowBlur: 5, textOutlineWidth: 5, textOutlineColor: "#545454", textGlowWidth: 50, textGlowColor: "#ededed", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#0a0a0a", textSuperStrokeWidth: 3, textSuperStrokeColor: "#ffffff", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false, textGradientColors: ["#f8f8f8", "#c6c6c6"] },
+    { id: 'p71', name: 'Orange', isPremium: true, fontFamily: "Luckiest Guy", fontSize: 16, textAlign: "justify", verticalAlign: "center", textColor: "#512006", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#000000", textShadowBlur: 20, textOutlineWidth: 5, textOutlineColor: "#db8b00", textGlowWidth: 5, textGlowColor: "#bd6e00", text3DOffsetX: 4, text3DOffsetY: 5, text3DColor: "#d14700", textSuperStrokeWidth: 0, textSuperStrokeColor: "#ef4444", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false },
+    { id: 'p62', name: 'Lime', isPremium: true, fontFamily: 'Fredoka', fontSize: 16, textAlign: 'justify', textColor: "#bcff85", textShadowColor: "#478f00", textShadowBlur: 20, textGlowColor: "#c9ff8e", textGlowWidth: 2, textOutlineColor: "#80ff00", textOutlineWidth: 4, textSuperStrokeColor: "#335700", textSuperStrokeWidth: 4, text3DOffsetX: 4, text3DOffsetY: 4, text3DColor: '#3d6a00' },
+    { id: 'p63', name: 'Purple', isPremium: true, fontFamily: "Luckiest Guy", fontSize: 16, textAlign: "justify", verticalAlign: "center", textGradientColors: ["#e9ceff", "#b777ff"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 0, textShadowColor: "#000000", textShadowBlur: 0, textOutlineWidth: 10, textOutlineColor: "#630099", textGlowWidth: 13, textGlowColor: "#ff00d0", text3DOffsetX: 5, text3DOffsetY: 5, text3DColor: "#5a008e", textSuperStrokeWidth: 0, textSuperStrokeColor: "#3a005a", letterSpacing: 0, textTransform: "none", isBold: false, isItalic: false },
+    { id: 'p64', name: 'Aqua', isPremium: true, fontFamily: 'Fredoka', fontSize: 16, textAlign: 'justify', textColor: "#66fff5", textShadowColor: "#008099", textShadowBlur: 2, textGlowColor: "#91f2ff", textGlowWidth: 31, textOutlineColor: "#00e9ff", textOutlineWidth: 3, textSuperStrokeColor: "#005a66", textSuperStrokeWidth: 5, text3DOffsetX: 1, text3DOffsetY: 0, text3DColor: '#005a66' },
+    { id: 'p65', name: 'Night', isPremium: true, fontFamily: "Montserrat", fontSize: 16, textAlign: "justify", verticalAlign: "center", textColor: "#9497ff", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#0b2e57", textShadowBlur: 12, textOutlineWidth: 3.5, textOutlineColor: "#b2a8ff", textGlowWidth: 17, textGlowColor: "#0062ff", text3DOffsetX: 3, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 5, textSuperStrokeColor: "#5c00e6", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#9ad7ff", "#dff2ff"] },
+    { id: 'p66', name: 'Ruby', isPremium: true, fontFamily: "Nunito", fontSize: 16, textAlign: "justify", verticalAlign: "center", textGradientColors: ["#9B2A2A", "#AD1111", "#9B2A2A"], textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#6d0023", textShadowBlur: 14, textOutlineWidth: 7.5, textOutlineColor: "#ff2e2e", textGlowWidth: 12, textGlowColor: "#d97706", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textSuperStrokeWidth: 4, textSuperStrokeColor: "#482323", letterSpacing: 0, textTransform: "none", isItalic: false },
+    { id: 'p67', name: 'Emerald', isPremium: true, fontFamily: "Poppins", fontSize: 16, textAlign: "justify", verticalAlign: "center", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#004d20", textShadowBlur: 15, textOutlineWidth: 7.5, textOutlineColor: "#0c8d22", textGlowWidth: 9, text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", textGlowColor: "#70ff70", letterSpacing: 0, textTransform: "none", isItalic: false, textGradientColors: ["#6df7c0", "#59f7b8"] },
+    { id: 'p68', name: 'Violet', isPremium: true, fontFamily: "Oswald", fontSize: 16, textAlign: "justify", verticalAlign: "center", textColor: "#262626", textBackgroundColor: "#ffffff", textBackgroundOpacity: 0, textBoxStyle: "block", lineHeight: 1.4, textShadowOpacity: 1, textShadowColor: "#1e0060", textShadowBlur: 14, textOutlineWidth: 5.5, textOutlineColor: "#ff00d0", textGlowWidth: 1, textGlowColor: "#000000", text3DOffsetX: 0, text3DOffsetY: 0, text3DColor: "#000000", letterSpacing: 0, textTransform: "none", isItalic: false },
+    { id: 'p69', name: 'Liquid', isPremium: true, fontFamily: 'Montserrat', fontSize: 16, textAlign: 'justify', textGradientColors: ["#ffffff", "#d2e4ff", "#ffffff"], textShadowColor: "#3a3a3a", textShadowBlur: 12, textShadowOpacity: 1, textOutlineColor: "#2efff1", textOutlineWidth: 6, textSuperStrokeColor: "#000000", textSuperStrokeWidth: 3, textGlowWidth: 11, textGlowColor: "#72eeee" },
+    { id: 'p70', name: 'Nova', isPremium: true, fontFamily: 'Poppins', fontSize: 16, textAlign: 'justify', textGradientColors: ["#ffe6ff", "#cbbaff"], textShadowColor: "#2b0052", textShadowBlur: 16, textGlowColor: "#c793ff", textGlowWidth: 14, textOutlineColor: "#7a2eff", textOutlineWidth: 4, textSuperStrokeColor: "#1a0036", textSuperStrokeWidth: 4 },
 
 
     {
@@ -208,14 +213,14 @@ const PRESET_STYLES: PresetConfig[] = [
         name: 'Snow Night',
         isPremium: true,
         fontFamily: 'Merriweather',
-        fontSize: 22,
+        fontSize: 16,
         textAlign: 'center',
         verticalAlign: 'center',
         textGradientColors: ['#ffffff', '#e0f2fe'], // branco -> azul gelo
         textBackgroundColor: '#020617', // quase preto azulado
         textBackgroundOpacity: 0.75,
         textBoxStyle: 'block',
-        textShadowOpacity: 0.6,
+        textShadowOpacity: 1,
         textShadowColor: '#0f172a',
         textShadowBlur: 18,
         textGlowWidth: 8,
@@ -228,11 +233,11 @@ const PRESET_STYLES: PresetConfig[] = [
         name: 'Candy Cane',
         isPremium: true,
         fontFamily: 'Fredoka',
-        fontSize: 22,
+        fontSize: 16,
         textAlign: 'center',
         verticalAlign: 'center',
         textGradientColors: ['#ffffff', '#fecaca', '#f97373'], // tipo pau de açúcar
-        textShadowOpacity: 0.7,
+        textShadowOpacity: 1,
         textShadowColor: '#7f1d1d',
         textShadowBlur: 12,
         textOutlineWidth: 3,
@@ -247,14 +252,14 @@ const PRESET_STYLES: PresetConfig[] = [
         name: 'Evergreen',
         isPremium: true,
         fontFamily: 'Cinzel',
-        fontSize: 22,
+        fontSize: 16,
         textAlign: 'justify',
         verticalAlign: 'center',
         textGradientColors: ['#bbf7d0', '#4ade80'], // verdes suaves
         textBackgroundColor: '#022c22',
         textBackgroundOpacity: 0.85,
         textBoxStyle: 'block',
-        textShadowOpacity: 0.7,
+        textShadowOpacity: 1,
         textShadowColor: '#022c22',
         textShadowBlur: 16,
         textOutlineWidth: 2,
@@ -266,11 +271,11 @@ const PRESET_STYLES: PresetConfig[] = [
         name: 'Golden Noel',
         isPremium: true,
         fontFamily: 'Playfair Display',
-        fontSize: 22,
+        fontSize: 16,
         textAlign: 'center',
         verticalAlign: 'center',
         textGradientColors: ['#fef9c3', '#facc15', '#f97316'], // dourado quente
-        textShadowOpacity: 0.9,
+        textShadowOpacity: 1,
         textShadowColor: '#451a03',
         textShadowBlur: 18,
         textGlowWidth: 12,
@@ -286,14 +291,14 @@ const PRESET_STYLES: PresetConfig[] = [
         name: 'Gift Wrap',
         isPremium: true,
         fontFamily: 'Montserrat',
-        fontSize: 22,
+        fontSize: 16,
         textAlign: 'justify',
         verticalAlign: 'center',
         textColor: '#ffffff',
         boxGradientColors: ['#166534', '#14532d', '#15803d'], // verde presente
         textBackgroundOpacity: 0.9,
         textBoxStyle: 'block',
-        textShadowOpacity: 0.6,
+        textShadowOpacity: 1,
         textShadowColor: '#022c22',
         textShadowBlur: 14,
         textOutlineWidth: 2,
@@ -305,14 +310,14 @@ const PRESET_STYLES: PresetConfig[] = [
         name: 'Holy Night',
         isPremium: true,
         fontFamily: 'Raleway',
-        fontSize: 22,
+        fontSize: 16,
         textAlign: 'center',
         verticalAlign: 'center',
         textColor: '#e5e7eb',
         textBackgroundColor: '#020617',
         textBackgroundOpacity: 0.7,
         textBoxStyle: 'highlight',
-        textShadowOpacity: 0.8,
+        textShadowOpacity: 1,
         textShadowColor: '#0f172a',
         textShadowBlur: 20,
         textGlowWidth: 6,
@@ -325,14 +330,14 @@ const PRESET_STYLES: PresetConfig[] = [
         name: 'Frost',
         isPremium: true,
         fontFamily: 'Nunito',
-        fontSize: 22,
+        fontSize: 16,
         textAlign: 'justify',
         verticalAlign: 'center',
         textGradientColors: ['#ffffff', '#e5e7eb', '#bae6fd'],
         textBackgroundColor: '#0f172a',
         textBackgroundOpacity: 0.5,
         textBoxStyle: 'block',
-        textShadowOpacity: 0.6,
+        textShadowOpacity: 1,
         textShadowColor: '#020617',
         textShadowBlur: 16,
         textGlowWidth: 15,
@@ -344,11 +349,11 @@ const PRESET_STYLES: PresetConfig[] = [
         name: 'Elf',
         isPremium: true,
         fontFamily: 'Fredoka',
-        fontSize: 22,
+        fontSize: 16,
         textAlign: 'center',
         verticalAlign: 'center',
         textGradientColors: ['#22c55e', '#a3e635'], // verde elfo
-        textShadowOpacity: 0.9,
+        textShadowOpacity: 1,
         textShadowColor: '#14532d',
         textShadowBlur: 14,
         textOutlineWidth: 4,
@@ -358,11 +363,11 @@ const PRESET_STYLES: PresetConfig[] = [
         letterSpacing: 1.5
     },
 
-    { id: 'p84', name: 'Elf', isPremium: true, fontFamily: 'Fredoka', fontSize: 22, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: "#166534", textBackgroundOpacity: 0.9, textBoxStyle: 'block', textOutlineColor: "#fca5a5", textOutlineWidth: 0, textShadowColor: "#000000", textShadowBlur: 5 },
-    { id: 'p85', name: 'Candy', isPremium: true, fontFamily: 'Pacifico', fontSize: 22, textAlign: 'center', textGradientColors: ["#ff0000", "#ffffff", "#ff0000"], textOutlineColor: "#ffffff", textOutlineWidth: 3, textShadowColor: "#cc0000", textShadowBlur: 8, textGlowColor: "#ffb3b3", textGlowWidth: 5 },
-    { id: 'p87', name: 'Pine', isPremium: true, fontFamily: 'Anton', fontSize: 22, textAlign: 'center', textGradientColors: ["#2d6a4f", "#1b4332"], textOutlineColor: "#d8f3dc", textOutlineWidth: 2, textShadowColor: "#000000", textShadowBlur: 15, textGlowColor: "#40916c", textGlowWidth: 10 },
+    { id: 'p84', name: 'Elf', isPremium: true, fontFamily: 'Fredoka', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: "#166534", textBackgroundOpacity: 0.9, textBoxStyle: 'block', textOutlineColor: "#fca5a5", textOutlineWidth: 0, textShadowColor: "#000000", textShadowBlur: 5 },
+    { id: 'p85', name: 'Candy', isPremium: true, fontFamily: 'Pacifico', fontSize: 16, textAlign: 'center', textGradientColors: ["#ff0000", "#ffffff", "#ff0000"], textOutlineColor: "#ffffff", textOutlineWidth: 3, textShadowColor: "#cc0000", textShadowBlur: 8, textGlowColor: "#ffb3b3", textGlowWidth: 5 },
+    { id: 'p87', name: 'Pine', isPremium: true, fontFamily: 'Anton', fontSize: 16, textAlign: 'center', textGradientColors: ["#2d6a4f", "#1b4332"], textOutlineColor: "#d8f3dc", textOutlineWidth: 2, textShadowColor: "#000000", textShadowBlur: 15, textGlowColor: "#40916c", textGlowWidth: 10 },
 
-    { id: 'p91', name: 'Sleigh', isPremium: true, fontFamily: 'Oswald', fontSize: 22, textAlign: 'justify', textGradientColors: ["#dc2626", "#991b1b"], textOutlineColor: "#fbbf24", textOutlineWidth: 2, textShadowColor: "#000000", textShadowBlur: 15, text3DOffsetX: 4, text3DOffsetY: 4, text3DColor: "#450a0a" },
+    { id: 'p91', name: 'Sleigh', isPremium: true, fontFamily: 'Oswald', fontSize: 16, textAlign: 'justify', textGradientColors: ["#dc2626", "#991b1b"], textOutlineColor: "#fbbf24", textOutlineWidth: 2, textShadowColor: "#000000", textShadowBlur: 15, text3DOffsetX: 4, text3DOffsetY: 4, text3DColor: "#450a0a" },
 ];
 
 // Helper to render visual preview for style presets
@@ -504,7 +509,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
     const [config, setConfig] = useState<EditorConfig>({
         text: initialPhrase,
         templateId: 't1',
-        fontSize: 22,
+        fontSize: 16,
         textAlign: 'center',
         verticalAlign: 'center',
         fontFamily: 'Inter',
@@ -533,12 +538,12 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         textSuperStrokeColor: '#ffffff',
         textureType: 'none',
         textureOpacity: 0.5,
-
-
+        breakMode: 'balanced',
     });
     const [previewRatio, setPreviewRatio] = useState(1);
     const [activeTool, setActiveTool] = useState<string>('templates'); // Default to templates tab
-    const [templateCategory, setTemplateCategory] = useState<string>('PassagemDeAno'); // Default to New Year category
+    const [magicSubTab, setMagicSubTab] = useState<'layout' | 'highlights'>('layout');
+    const [templateCategory, setTemplateCategory] = useState<string>('Diversos'); // Default to Diversos category
     const [isGenerating, setIsGenerating] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -551,6 +556,26 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
     const [showRewardedModal, setShowRewardedModal] = useState(false);
     const [rewardedModalType, setRewardedModalType] = useState<'template' | 'preset'>('template');
     const [rewardedTargetId, setRewardedTargetId] = useState<string>('');
+    const [smartPresetIndex, setSmartPresetIndex] = useState(0);
+    const [palette, setPalette] = useState<string[]>([]);
+
+    // Effects for Smart Palette
+    useEffect(() => {
+        const template = getCurrentTemplate();
+        const imageUrl = template?.value;
+        if (imageUrl && imageUrl.startsWith('http')) {
+            extractPaletteFromImage(imageUrl).then(setPalette);
+        } else if (customImage) {
+            extractPaletteFromImage(customImage).then(setPalette);
+        }
+    }, [config.templateId, customImage]);
+
+    useEffect(() => {
+        if (palette.length > 0) {
+            handleRebuildPlan();
+        }
+    }, [palette]);
+
 
 
     // Export & Share Logic
@@ -566,16 +591,55 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
     const t = UI_TRANSLATIONS[language];
 
     // Set default template
+    const getCurrentTemplate = () => {
+        if (config.templateId === 'custom' && customImage) {
+            return {
+                id: 'custom', name: 'Custom', category: 'Minimal',
+                backgroundType: 'image', value: customImage,
+                textColor: config.textColor, fontFamily: config.fontFamily,
+                overlayOpacity: 0.2
+            } as Template;
+        }
+        if (!allTemplates || allTemplates.length === 0) {
+            return {
+                id: 'placeholder', name: 'Loading...', category: 'Diversos',
+                backgroundType: 'solid', value: '#1e1e1e', textColor: '#ffffff',
+                fontFamily: 'Inter', overlayOpacity: 0, isPremium: false
+            } as unknown as Template;
+        }
+        return allTemplates.find(t => t.id === config.templateId) || allTemplates[0];
+    };
+
     useEffect(() => {
         if (allTemplates.length > 0 && config.templateId === 't1') {
-            const defaultTemplate = allTemplates.find(t => t.name === 'paper style template (7)');
+            const defaultTemplate = allTemplates.find(t => t.category === 'Diversos');
             if (defaultTemplate) {
-                setConfig(prev => ({ ...prev, templateId: defaultTemplate.id }));
+                handleTemplateSelect(defaultTemplate);
             }
         }
     }, [allTemplates]);
 
+    // Apply Text Plan on initial phrase
+    useEffect(() => {
+        if (initialPhrase) {
+            // Rebuild with possible palette aware logic
+            handleRebuildPlan(initialPhrase);
+        }
+    }, [initialPhrase, language]);
+
+
     // Rewarded Ad Handler
+    const handleTemplateSelect = (template: Template) => {
+        setConfig(prev => ({ ...prev, templateId: template.id }));
+        setPreviewFitMode('cover');
+        setShowTemplateModal(false);
+        setActiveTool('styles');
+
+        // Apply Smart Recommendations
+        setSmartPresetIndex(0);
+        applySmartSuggestion(template, 0);
+    };
+
     const handleWatchRewardedAd = async () => {
         setShowRewardedModal(false);
         setShowPremiumModal(false);
@@ -584,13 +648,17 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         if (rewarded) {
             if (rewardedModalType === 'template') {
                 dailyUnlockService.unlockTemplate(rewardedTargetId);
-                setConfig({ ...config, templateId: rewardedTargetId });
-                setPreviewFitMode('cover'); // Reset para cover
-                setShowTemplateModal(false);
+                const template = allTemplates.find(t => t.id === rewardedTargetId);
+                if (template) {
+                    handleTemplateSelect(template);
+                } else {
+                    setConfig({ ...config, templateId: rewardedTargetId });
+                }
                 // Show success feedback
                 setShowSaveSuccess(true);
                 setTimeout(() => setShowSaveSuccess(false), 3000);
             } else {
+
                 const preset = PRESET_STYLES.find((p: PresetConfig) => p.id === rewardedTargetId);
                 if (preset) {
                     dailyUnlockService.unlockPreset(rewardedTargetId);
@@ -606,53 +674,92 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         }
     };
 
+    const matchSmartData = (template: Template) => {
+        // 1. Prepare template filename: remove path, query, extension, _free, and lowercase
+        const urlParts = template.value.split('/');
+        const rawFileName = decodeURIComponent(urlParts.pop()?.split('?')[0] || '');
+        const templateBaseName = rawFileName
+            .replace(/\.[^/.]+$/, "") // Remove extension (e.g. .webp, .png)
+            .replace('_free', '')      // Remove _free suffix
+            .toLowerCase()
+            .trim();
+
+        const templateCategory = template.category.toLowerCase();
+
+        return TEMPLATES_SMART_DATA.find(item => {
+            const itemParts = item.imagePath.split('/');
+            const itemFileName = itemParts.pop() || '';
+            const itemCategory = itemParts.pop() || '';
+
+            // 2. Prepare JSON filename: remove extension, _free, lowercase
+            const itemBaseName = itemFileName
+                .replace(/\.[^/.]+$/, "")
+                .replace('_free', '')
+                .toLowerCase()
+                .trim();
+
+            // 3. Compare: Category matches AND Filename matches (base name only)
+            const categoryMatch = itemCategory.toLowerCase() === templateCategory;
+            const nameMatch = itemBaseName === templateBaseName;
+
+            return categoryMatch && nameMatch;
+        });
+    };
+
+
+    const applySmartSuggestion = (template: Template, index: number) => {
+        const smartMatch = matchSmartData(template);
+
+        let presetName = '';
+        let safeZone = 'CENTER';
+        let brightness = 100;
+        let noise = 0;
+
+        if (smartMatch) {
+            if (index === 0) presetName = smartMatch.smartData.recommendedPreset;
+            else if (index === 1) presetName = smartMatch.smartData.alternativePresets[0];
+            else if (index === 2) presetName = smartMatch.smartData.alternativePresets[1];
+
+            safeZone = smartMatch.smartData.safeZone || 'CENTER';
+            brightness = smartMatch.smartData.brightness ?? 100;
+            noise = smartMatch.smartData.noise ?? 0;
+        } else {
+            // Fallback presets for templates without smart data
+            const fallbacks = ['Clean', 'Classic', 'Ginger'];
+            presetName = fallbacks[index % fallbacks.length];
+        }
+
+        if (!presetName) return;
+
+        const preset = PRESET_STYLES.find(p => p.name.toLowerCase() === presetName.toLowerCase());
+        if (preset) {
+            applyPresetConfig({
+                ...preset,
+                verticalAlign: safeZone.toLowerCase() as any,
+                brightness: brightness,
+                noise: noise
+            });
+        }
+    };
+
+
+
     const handleOpenRewardedModal = () => {
         setShowPremiumModal(false);
         setShowRewardedModal(true);
     };
 
 
-    // ... (Functions: getCurrentTemplate, useEffect, applyPreset, handleToolClick...)
-    const getCurrentTemplate = () => {
-        if (config.templateId === 'custom' && customImage) {
-            return {
-                id: 'custom',
-                name: 'Custom',
-                category: 'Minimal',
-                backgroundType: 'image',
-                value: customImage,
-                textColor: config.textColor,
-                fontFamily: config.fontFamily,
-                overlayOpacity: 0.2
-            } as Template;
-        }
 
-        // 2. PROTEÇÃO ANTI-ERRO (Isso corrige o seu bug)
-        // Se a lista ainda estiver vazia ou indefinida, retorna um template "fantasma" seguro
-        if (!allTemplates || allTemplates.length === 0) {
-            return {
-                id: 'placeholder',
-                name: 'Loading...',
-                category: 'Diversos',
-                backgroundType: 'solid',
-                value: '#1e1e1e',
-                textColor: '#ffffff',
-                fontFamily: 'Inter',
-                overlayOpacity: 0,
-                isPremium: false
-            } as unknown as Template;
-        }
-
-        // 3. Caso Normal: Busca o template na lista
-        return allTemplates.find(t => t.id === config.templateId) || allTemplates[0];
-    };
 
     const categories = ['All', ...Array.from(new Set(allTemplates.map(t => t.category))).sort((a, b) => {
+        if (a === 'Diversos') return -1;
+        if (b === 'Diversos') return 1;
         if (a === 'PassagemDeAno') return -1;
         if (b === 'PassagemDeAno') return 1;
         if (a === 'Natal') return -1;
         if (b === 'Natal') return 1;
-        return 0;
+        return a.localeCompare(b);
     })];
     const filteredTemplates = templateCategory === 'All'
         ? allTemplates
@@ -763,8 +870,11 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             textTransform: 'none',
             lineHeight: 1.4,
             isBold: false,
-            isItalic: false
+            isItalic: false,
+            brightness: 100, // Default baseline (100% or calibrated)
+            noise: 0
         };
+
 
         setConfig(prev => ({
             ...prev,
@@ -772,9 +882,13 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             ...preset,
             textAlign: 'center', // Always center aligned as requested
             textGradientColors: preset.textGradientColors || undefined,
-            boxGradientColors: preset.boxGradientColors || undefined
+            boxGradientColors: preset.boxGradientColors || undefined,
+            verticalAlign: preset.verticalAlign || prev.verticalAlign, // Keep previous if not in preset
+            brightness: preset.brightness ?? prev.brightness ?? 100,
+            noise: preset.noise ?? prev.noise ?? 0
         }));
     };
+
 
     const handleToolClick = (toolId: string) => {
         if (toolId === 'templates') {
@@ -782,12 +896,113 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             return;
         }
 
-        const lockedTools = ['stroke', 'box', 'glow', '3d', 'textures'];
+        const lockedTools = ['stroke', 'box', 'glow', '3d', 'textures', 'magic'];
         if (lockedTools.includes(toolId) && !isPremium) {
             setShowPremiumModal(true);
         } else {
             setActiveTool(toolId);
         }
+    };
+
+    function handleRebuildPlan(newText?: string, mode?: 'balanced' | 'compact' | 'impact') {
+        const textToProcess = (newText !== undefined ? newText : config.text).replace(/\n/g, ' '); // Clean existing breaks to allow fresh layout
+        const targetMode = mode || config.breakMode || 'balanced';
+
+        // Tentar preservar a cor atual do extraBold se existir
+        const currentExtraBoldColor = config.textRuns?.find(r => r.weight === 'extraBold')?.color;
+
+        // Choose smart color
+        const isNote = config.templateId.includes('paper') || config.templateId.includes('note');
+        const candidates = [...palette, config.textColor, config.textBackgroundColor, config.textSuperStrokeColor];
+        const smartColor = chooseSmartColor(candidates, [config.textBackgroundColor], config.textColor, isNote);
+
+        const finalSecondaryColor = currentExtraBoldColor || smartColor;
+
+        const plan = buildTextPlan({
+            text: textToProcess,
+            lang: language,
+            breakMode: targetMode,
+            forcedHighlights: config.disableSmartHighlights ? [] : config.highlights,
+            secondaryColor: finalSecondaryColor
+        });
+
+        setConfig(prev => ({
+            ...prev,
+            text: plan.textBroken,
+            textRuns: plan.runs,
+            highlights: plan.highlights,
+            breakMode: plan.breakMode
+        }));
+    };
+
+    function toggleHighlight(word: string) {
+        const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, '');
+        const targetNorm = norm(word);
+
+        const current = config.highlights || [];
+        const exists = current.find(h => norm(h) === targetNorm);
+
+        let next: string[];
+        if (exists) {
+            // Remove todas as variantes da palavra selecionada
+            next = current.filter(h => norm(h) !== targetNorm);
+        } else {
+            next = [...current, word];
+        }
+
+        // Tentar preservar a cor atual do extraBold se existir
+        const currentExtraBoldColor = config.textRuns?.find(r => r.weight === 'extraBold')?.color;
+
+        // Choose smart color as fallback
+        const isNote = config.templateId.includes('paper') || config.templateId.includes('note');
+        const candidates = [...palette, config.textColor, config.textBackgroundColor, config.textSuperStrokeColor];
+        const smartColor = chooseSmartColor(candidates, [config.textBackgroundColor], config.textColor, isNote);
+
+        const finalSecondaryColor = currentExtraBoldColor || smartColor;
+
+        const plan = buildTextPlan({
+            text: config.text.replace(/\n/g, ' '),
+            lang: language,
+            breakMode: config.breakMode || 'balanced',
+            forcedHighlights: next,
+            secondaryColor: finalSecondaryColor
+        });
+
+        setConfig({
+            ...config,
+            highlights: plan.highlights,
+            textRuns: plan.runs,
+            disableSmartHighlights: true
+        });
+    }
+
+    const changeExtraBoldColor = (color: string) => {
+        setConfig(prev => ({
+            ...prev,
+            textRuns: prev.textRuns?.map(run =>
+                run.weight === 'extraBold' ? { ...run, color } : run
+            )
+        }));
+    };
+
+    const clearExtraBold = () => {
+        const isTurningOff = (config.highlights && config.highlights.length > 0);
+
+        const nextHighlights = isTurningOff ? [] : undefined; // undefined triggers AUTO again if we decide to re-enable
+
+        const plan = buildTextPlan({
+            text: config.text.replace(/\n/g, ' '),
+            lang: language,
+            breakMode: config.breakMode || 'balanced',
+            forcedHighlights: nextHighlights
+        });
+
+        setConfig(prev => ({
+            ...prev,
+            highlights: plan.highlights,
+            textRuns: plan.runs,
+            disableSmartHighlights: isTurningOff
+        }));
     };
 
     const handleDownload = async () => {
@@ -1153,10 +1368,10 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         if (!config.textureType || config.textureType === 'none' || !config.textureOpacity) return null;
 
         const textureUrls: Record<string, string> = {
-            'grain': 'none', // Grain is procedural CSS
-            'paper': 'https://www.transparenttextures.com/patterns/old-mathematics.png',
+            'grain': 'none',
+            'paper': 'https://images.unsplash.com/photo-1586075010471-9799292db3b8?auto=format&fit=crop&q=80&w=1000',
             'leak': 'https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=1000&auto=format&fit=crop',
-            'dust': 'https://www.transparenttextures.com/patterns/p6-polka.png'
+            'dust': 'https://www.transparenttextures.com/patterns/dust.png'
         };
 
         if (config.textureType === 'grain') {
@@ -1171,12 +1386,13 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         }
 
         return (
-            <div className="absolute inset-0 z-[5] pointer-events-none mix-blend-screen"
+            <div className="absolute inset-0 z-[5] pointer-events-none"
                 style={{
                     opacity: config.textureOpacity,
                     backgroundImage: `url(${textureUrls[config.textureType]})`,
-                    backgroundSize: config.textureType === 'paper' ? 'auto' : 'cover',
-                    mixBlendMode: config.textureType === 'paper' ? 'multiply' : 'screen'
+                    backgroundSize: 'cover',
+                    mixBlendMode: config.textureType === 'paper' ? 'multiply' : 'screen',
+                    filter: config.textureType === 'dust' ? 'brightness(1.2) contrast(1.1)' : 'none'
                 }}
             />
         );
@@ -1186,15 +1402,19 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         const styles = getPreviewStyles();
         const isJustify = config.textAlign === 'justify';
 
-        const sanitizedText = config.text.replace(/<br\s*\/?>\s+/gi, '<br>');
-        const lines = sanitizedText.split('<br>');
+        const sanitizedText = config.text.replace(/<br\s*\/?>\s+/gi, '\n');
+        const lines = sanitizedText.split('\n');
+
+        // Debug logs removed
+
+        const linesOfRuns = config.textRuns ? splitRunsIntoLines(config.textRuns) : null;
 
         const bgStyle: React.CSSProperties = {
             ...styles,
             position: 'relative',
             zIndex: 10,
             backgroundColor: config.textBackgroundOpacity > 0 ? `rgba(${hexToRgba(config.textBackgroundColor).r}, ${hexToRgba(config.textBackgroundColor).g}, ${hexToRgba(config.textBackgroundColor).b}, ${config.textBackgroundOpacity})` : 'transparent',
-            padding: config.textBoxStyle === 'highlight' ? '0.15em 0' : '0.20em 0',
+            padding: config.textBoxStyle === 'highlight' ? '0.15em 0.4em' : '0.20em 0.4em',
             borderRadius: config.textBackgroundOpacity > 0 ? `${config.fontSize * 0.24}px` : '0',
             // Blur removed as requested
             border: 'none',
@@ -1239,7 +1459,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                 gap: config.textBoxStyle === 'highlight' ? '-0.1em' : '4px'
             }}>
                 <style>{`
-                    .preview-rich-text b {
+                    .preview-rich-text b, .preview-rich-text .extra-bold {
                         text-transform: uppercase !important;
                         font-weight: 900 !important;
                     }
@@ -1255,34 +1475,92 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                 {config.textBoxStyle === 'block' ? (
                     /* UMA ÚNICA CAIXA PARA TUDO */
                     <div style={{ ...bgStyle, position: 'relative' }}>
-                        {config.textSuperStrokeWidth > 0 && lines.map((line, idx) => (
-                            <div key={`s-${idx}`} style={{ ...superStrokeStyle, position: 'absolute', top: `${idx * config.lineHeight}em`, left: 0 }} dangerouslySetInnerHTML={{ __html: line }} />
-                        ))}
-                        {lines.map((line, idx) => (
-                            <div key={idx} dangerouslySetInnerHTML={{ __html: line }} />
-                        ))}
+                        {config.textSuperStrokeWidth > 0 && (
+                            <div style={{ ...superStrokeStyle, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                                {config.textRuns ? (
+                                    <div style={{ whiteSpace: 'pre-line' }}>
+                                        {config.textRuns.map((run, ri) => (
+                                            <span key={ri} className={run.weight === 'extraBold' ? 'extra-bold' : ''} style={run.color ? { color: run.color } : undefined}>
+                                                {run.text}
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    lines.map((line, idx) => (
+                                        <div key={`s-${idx}`} dangerouslySetInnerHTML={{ __html: line }} />
+                                    ))
+                                )}
+                            </div>
+                        )}
+                        {config.textRuns ? (
+                            <div style={{ whiteSpace: 'pre-line' }}>
+                                {config.textRuns.map((run, ri) => (
+                                    <span key={ri} className={run.weight === 'extraBold' ? 'extra-bold' : ''} style={run.color ? { color: run.color, WebkitTextStrokeColor: config.textOutlineWidth > 0 ? run.color : undefined } : undefined}>
+                                        {run.text}
+                                    </span>
+                                ))}
+                            </div>
+                        ) : (
+                            lines.map((line, idx) => (
+                                <div key={idx} dangerouslySetInnerHTML={{ __html: line }} />
+                            ))
+                        )}
                     </div>
                 ) : (
                     /* CAIXA POR LINHA (HIGHLIGHT) */
-                    lines.map((line, idx) => (
-                        <div key={idx} style={{ position: 'relative', width: isJustify ? '100%' : 'fit-content' }}>
-                            {config.textSuperStrokeWidth > 0 && (
-                                <div style={superStrokeStyle} dangerouslySetInnerHTML={{ __html: line }} />
-                            )}
-                            <div style={bgStyle}>
-                                {config.textGradientColors && config.boxGradientColors ? (
-                                    <span style={{
-                                        backgroundImage: `linear-gradient(to bottom, ${config.textGradientColors.join(', ')})`,
-                                        WebkitBackgroundClip: 'text',
-                                        backgroundClip: 'text',
-                                        color: 'transparent'
-                                    }} dangerouslySetInnerHTML={{ __html: line }} />
-                                ) : (
-                                    <div dangerouslySetInnerHTML={{ __html: line }} />
+                    lines.map((line, idx) => {
+                        const currentLineRuns = linesOfRuns ? linesOfRuns[idx] : null;
+
+                        return (
+                            <div key={idx} style={{ position: 'relative', width: isJustify ? '100%' : 'fit-content' }}>
+                                {config.textSuperStrokeWidth > 0 && (
+                                    <div style={superStrokeStyle}>
+                                        {currentLineRuns ? (
+                                            currentLineRuns.map((run, ri) => (
+                                                <span key={ri} className={run.weight === 'extraBold' ? 'extra-bold' : ''} style={run.color ? { color: run.color, WebkitTextStrokeColor: config.textOutlineWidth > 0 ? run.color : undefined } : undefined}>
+                                                    {run.text}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span dangerouslySetInnerHTML={{ __html: line }} />
+                                        )}
+                                    </div>
                                 )}
+                                <div style={bgStyle}>
+                                    {config.textGradientColors && config.boxGradientColors ? (
+                                        <span style={{
+                                            backgroundImage: `linear-gradient(to bottom, ${config.textGradientColors.join(', ')})`,
+                                            WebkitBackgroundClip: 'text',
+                                            backgroundClip: 'text',
+                                            color: 'transparent'
+                                        }}>
+                                            {currentLineRuns ? (
+                                                currentLineRuns.map((run, ri) => (
+                                                    <span key={ri} className={run.weight === 'extraBold' ? 'extra-bold' : ''} style={run.color ? { color: run.color, WebkitTextStrokeColor: config.textOutlineWidth > 0 ? run.color : undefined } : undefined}>
+                                                        {run.text}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span dangerouslySetInnerHTML={{ __html: line }} />
+                                            )}
+                                        </span>
+                                    ) : (
+                                        <>
+                                            {currentLineRuns ? (
+                                                currentLineRuns.map((run, ri) => (
+                                                    <span key={ri} className={run.weight === 'extraBold' ? 'extra-bold' : ''} style={run.color ? { color: run.color, WebkitTextStrokeColor: config.textOutlineWidth > 0 ? run.color : undefined } : undefined}>
+                                                        {run.text}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <div dangerouslySetInnerHTML={{ __html: line }} />
+                                            )}
+                                        </>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
         );
@@ -1322,21 +1600,36 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                         {getCurrentTemplate().backgroundType === 'image' ? (
                             <img
                                 src={previewUrl || getCurrentTemplate().value}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover transition-all duration-500"
+                                style={{
+                                    filter: config.brightness ? `brightness(${config.brightness / 128})` : 'none'
+                                }}
                                 alt="bg"
                             />
                         ) : getCurrentTemplate().backgroundType === 'gradient' ? (
                             <div className="w-full h-full" style={{ background: getCurrentTemplate().value }}>
-                                {previewUrl && <img src={previewUrl} className="w-full h-full object-cover absolute inset-0" alt="preview" />}
+                                {previewUrl && <img src={previewUrl} className="w-full h-full object-cover absolute inset-0" style={{ filter: config.brightness ? `brightness(${config.brightness / 128})` : 'none' }} alt="preview" />}
                             </div>
                         ) : (
                             <div className="w-full h-full" style={{ backgroundColor: getCurrentTemplate().value }}>
-                                {previewUrl && <img src={previewUrl} className="w-full h-full object-cover absolute inset-0" alt="preview" />}
+                                {previewUrl && <img src={previewUrl} className="w-full h-full object-cover absolute inset-0" style={{ filter: config.brightness ? `brightness(${config.brightness / 128})` : 'none' }} alt="preview" />}
                             </div>
                         )}
                         {!previewUrl && getCurrentTemplate().backgroundType === 'image' && <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${getCurrentTemplate().overlayOpacity || 0})` }}></div>}
+
+                        {/* Noise Overlay from Smart Data */}
+                        {config.noise && config.noise > 0 && (
+                            <div className="absolute inset-0 z-[4] pointer-events-none opacity-40 mix-blend-overlay"
+                                style={{
+                                    opacity: config.noise / 255,
+                                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+                                }}
+                            />
+                        )}
+
                         {renderTextureOverlay()}
                     </div>
+
 
                     {previewUrl ? (
                         <img src={previewUrl} className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none" alt="preview" />
@@ -1432,7 +1725,24 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
 
                     {activeTool === 'styles' && (
                         <div className="flex flex-col gap-1 h-full justify-center">
-                            <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar px-1">
+                            <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar px-1 items-center">
+                                {/* Smart Cycle Button */}
+                                <button
+                                    onClick={() => {
+                                        const template = getCurrentTemplate();
+                                        const nextIndex = (smartPresetIndex + 1) % 3;
+                                        setSmartPresetIndex(nextIndex);
+                                        applySmartSuggestion(template, nextIndex);
+                                    }}
+                                    className="flex flex-col items-center gap-1 group flex-shrink-0 mr-2"
+                                >
+                                    <div className="w-14 h-14 bg-gradient-to-br from-neon-pulse to-neon-mint rounded-lg flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+                                        <Sparkles className="w-8 h-8 text-dark-carbon" />
+                                    </div>
+                                    <span className="text-[9px] text-neon-pulse font-black uppercase tracking-tighter">{(t as any).smartSuggestion} {smartPresetIndex + 1}</span>
+                                </button>
+
+                                <div className="w-[1px] h-10 bg-dark-steel mr-1" />
 
                                 {PRESET_STYLES.map(preset => (
                                     <button
@@ -1447,6 +1757,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                             </div>
                         </div>
                     )}
+
 
                     {activeTool === 'effects' && (
                         <div className="grid grid-cols-2 gap-4 h-full relative items-center px-1">
@@ -1687,14 +1998,104 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                             </div>
                         </div>
                     )}
+                    {activeTool === 'magic' && (
+                        <div className="flex h-full w-full items-center overflow-hidden">
+                            {/* Sub-Nav */}
+                            <div className="flex flex-col border-r border-white/5 py-1 px-1.5 gap-1.5 justify-center h-full min-w-[75px] bg-dark-carbon/20">
+                                <button
+                                    onClick={() => setMagicSubTab('layout')}
+                                    className={`flex flex-col items-center py-1.5 rounded-lg text-[8px] font-bold uppercase transition-all ${magicSubTab === 'layout' ? 'bg-neon-pulse text-dark-carbon' : 'text-text-dim hover:text-white'}`}
+                                >
+                                    <Layout className="w-3.5 h-3.5 mb-1" />
+                                    Layout
+                                </button>
+                                <button onClick={() => setMagicSubTab('highlights')} className={`py-1.5 rounded-lg text-[8px] font-bold uppercase transition-all flex flex-col items-center gap-1 ${magicSubTab === 'highlights' ? 'bg-white/10 text-white shadow-[0_0_10px_rgba(255,255,255,0.05)]' : 'text-text-dim hover:text-white/60'}`}>
+                                    <Zap className="w-3.5 h-3.5" />
+                                    Keyword
+                                </button>
+                            </div>
 
+                            <div className="flex-1 h-full flex flex-col justify-center px-3 py-1">
+                                {magicSubTab === 'layout' ? (
+                                    <div className="flex flex-col gap-2">
+                                        <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider opacity-60">{(t as any).lineDirection}</span>
+                                        <div className="flex gap-2">
+                                            {(['balanced', 'compact', 'impact'] as const).map(mode => (
+                                                <button
+                                                    key={mode}
+                                                    onClick={() => handleRebuildPlan(undefined, mode)}
+                                                    className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all flex-1 ${config.breakMode === mode ? 'bg-neon-pulse border-neon-pulse text-dark-carbon' : 'bg-dark-steel border-dark-steel text-text-secondary'}`}
+                                                >
+                                                    {(t as any)[`layout${mode.charAt(0).toUpperCase() + mode.slice(1)}`]}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-1.5 h-full justify-center">
+                                        <div className="flex items-center justify-between gap-1">
+                                            <div className="flex items-center gap-1.5 bg-dark-steel/30 px-2 py-1.5 rounded-lg border border-white/5 flex-grow overflow-hidden">
+                                                <input type="color" value={config.textRuns?.find(r => r.weight === 'extraBold')?.color || config.textColor} onChange={(e) => changeExtraBoldColor(e.target.value)} className="w-5 h-5 rounded-full border-0 p-0 overflow-hidden cursor-pointer" />
+                                                <div className="flex gap-1 overflow-x-auto no-scrollbar">
+                                                    {palette.slice(0, 3).map(c => (
+                                                        <button key={c} onClick={() => changeExtraBoldColor(c)} className="w-4 h-4 rounded-full border border-white/10 flex-shrink-0" style={{ backgroundColor: c }} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <button onClick={clearExtraBold} className={`px-3 py-2 rounded-lg text-[9px] font-bold border transition-all ${config.disableSmartHighlights ? 'bg-neon-pulse/20 border-neon-pulse/50 text-neon-pulse' : 'bg-dark-steel border-dark-steel text-text-dim'}`}>
+                                                {config.disableSmartHighlights ? (t as any).manual : (t as any).auto}
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1 overflow-y-auto no-scrollbar max-h-[38px] pb-1">
+                                            {(() => {
+                                                const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, '');
+                                                const currentHighlights = config.highlights || [];
+                                                const activeColor = config.textRuns?.find(r => r.weight === 'extraBold')?.color || '#f700ff';
 
+                                                const isDark = (color: string) => {
+                                                    const c = color.startsWith('#') ? color.substring(1) : color;
+                                                    if (c.length !== 6) return true;
+                                                    const rgb = parseInt(c, 16);
+                                                    const r = (rgb >> 16) & 0xff;
+                                                    const g = (rgb >> 8) & 0xff;
+                                                    const b = (rgb >> 0) & 0xff;
+                                                    const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                                                    return luma < 128;
+                                                };
+
+                                                return config.text.replace(/\n/g, ' ').split(/\s+/).filter(w => w.length >= 2).map((word, i) => {
+                                                    const isHighlighted = currentHighlights.some(h => norm(h) === norm(word));
+                                                    return (
+                                                        <button
+                                                            key={`${word}-${i}`}
+                                                            onClick={() => toggleHighlight(word)}
+                                                            className={`px-2 py-0.5 rounded text-[9px] transition-all border ${isHighlighted
+                                                                ? 'border-transparent font-bold'
+                                                                : 'bg-dark-steel/40 border-dark-steel/50 text-text-dim'
+                                                                }`}
+                                                            style={isHighlighted ? {
+                                                                backgroundColor: activeColor,
+                                                                color: isDark(activeColor) ? '#ffffff' : '#000000'
+                                                            } : {}}
+                                                        >
+                                                            {word.replace(/[^\p{L}\p{N}]+$/gu, '')}
+                                                        </button>
+                                                    );
+                                                });
+                                            })()}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex overflow-x-auto no-scrollbar py-3 px-2 gap-1 bg-dark-carbon">
                     {[
                         { id: 'templates', icon: Layout, label: t.toolTemplates },
                         { id: 'styles', icon: Sparkles, label: t.toolStyles },
+                        { id: 'magic', icon: Zap, label: (t as any).toolMagic, isLocked: true },
                         { id: 'font', icon: Type, label: t.toolFont },
                         { id: 'size', icon: Plus, label: t.toolSize },
                         { id: 'stroke', icon: PenTool, label: t.toolStroke, isLocked: true },
@@ -1924,10 +2325,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                                                 if ((template as any).isPremium === true && !isPremium) {
                                                     // Verifica se já está desbloqueado hoje
                                                     if (dailyUnlockService.isTemplateUnlocked(template.id)) {
-                                                        setConfig({ ...config, templateId: template.id });
-                                                        setPreviewFitMode('cover'); // Reset para cover
-                                                        setShowTemplateModal(false);
-                                                        setActiveTool('styles'); // Switch to styles tab automatically
+                                                        handleTemplateSelect(template);
                                                         return;
                                                     }
 
@@ -1938,10 +2336,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                                                     return;
                                                 }
 
-                                                setConfig({ ...config, templateId: template.id }); // aplica template
-                                                setPreviewFitMode('cover'); // Reset para cover
-                                                setShowTemplateModal(false);
-                                                setActiveTool('styles'); // Switch to styles tab automatically
+                                                handleTemplateSelect(template);
                                             }}
                                             className={`relative w-full h-40 sm:h-44 md:h-48 rounded-xl overflow-hidden border-2 transition-all group ${config.templateId === template.id
                                                 ? 'border-neon-pulse shadow-[0_0_15px_rgba(0,255,114,0.3)]'
@@ -2122,7 +2517,10 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                                 placeholder={t.writePhrase}
                             />
                             <button
-                                onClick={() => setIsEditingText(false)}
+                                onClick={() => {
+                                    handleRebuildPlan();
+                                    setIsEditingText(false);
+                                }}
                                 className="w-full bg-neon-pulse text-dark-carbon font-bold py-3 rounded-xl hover:bg-neon-mint transition-colors shadow-lg shadow-neon-pulse/20"
                             >
                                 {t.done}
@@ -2191,6 +2589,6 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                     />
                 )
             }
-        </div >
+        </div>
     );
 };
