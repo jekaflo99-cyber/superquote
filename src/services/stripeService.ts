@@ -41,7 +41,7 @@ const loadStripeJs = async () => {
  */
 const detectCurrency = (): 'eur' | 'brl' | 'usd' => {
   if (typeof navigator === 'undefined') return 'eur';
-  
+
   try {
     const locale = navigator.language || 'en-US';
     // Se locale é pt-BR ou começa com 'pt' e não é PT, é Brasil
@@ -72,7 +72,7 @@ const detectCurrency = (): 'eur' | 'brl' | 'usd' => {
 };
 
 export interface SubscriptionPlan {
-  id: 'weekly' | 'monthly' | 'yearly' | 'holidayPass';
+  id: 'weekly' | 'monthly' | 'yearly';
   name: string;
   price: number;
   billingPeriod: string;
@@ -95,15 +95,9 @@ export const PLANS: SubscriptionPlan[] = [
   {
     id: 'yearly',
     name: 'Anual',
-    price: 29.99,
+    price: 19.99,
     billingPeriod: '/ano',
-    savings: 'Poupa 50%',
-  },
-  {
-    id: 'holidayPass',
-    name: 'Acesso Total Festas',
-    price: 1.99,
-    billingPeriod: '/único',
+    savings: 'Poupa 60%',
   },
 ];
 
@@ -111,7 +105,7 @@ export class StripeService {
   /**
    * Inicia o checkout Stripe
    */
-  static async startCheckout(planId: 'weekly' | 'monthly' | 'yearly' | 'holidayPass', email: string, currencyOverride?: 'eur' | 'brl' | 'usd', userId?: string) {
+  static async startCheckout(planId: 'weekly' | 'monthly' | 'yearly', email: string, currencyOverride?: 'eur' | 'brl' | 'usd', userId?: string) {
     try {
       if (!email) {
         throw new Error('Email is required');

@@ -803,7 +803,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             // setPreviewRatio(w / h); 
 
             // 2. Gera a imagem com as dimensões corretas
-            const sanitizedConfig = { ...config, text: config.text.replace(/<br\s*\/?>\s+/gi, '<br>') };
+            const sanitizedConfig = { ...config, text: config.text.replace(/<br\s*\/?>/gi, '<br>') };
             const blob = await generateImage(sanitizedConfig, template, w, h, isPremium, true);
 
             if (blob && active) {
@@ -1020,7 +1020,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         setShowPremiumModal(false);
     };
 
-    const handlePurchase = async (plan: 'yearly' | 'monthly' | 'weekly' | 'holidayPass') => {
+    const handlePurchase = async (plan: 'yearly' | 'monthly' | 'weekly') => {
         try {
             console.log('Purchasing plan:', plan);
 
@@ -1106,7 +1106,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         setIsGenerating(true);
         const template = getCurrentTemplate();
         const { w, h } = getExportDimensions(format);
-        const sanitizedConfig = { ...config, text: config.text.replace(/<br\s*\/?>\s+/gi, '<br>') };
+        const sanitizedConfig = { ...config, text: config.text.replace(/<br\s*\/?>/gi, '<br>') };
         const blob = await generateImage(sanitizedConfig, template, w, h, isPremium, false);
         if (blob) {
             try {
@@ -1212,7 +1212,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         const template = getCurrentTemplate();
         const { w, h } = getExportDimensions(format);
 
-        const sanitizedConfig = { ...config, text: config.text.replace(/<br\s*\/?>\s+/gi, '<br>') };
+        const sanitizedConfig = { ...config, text: config.text.replace(/<br\s*\/?>/gi, '<br>') };
         const blob = await generateImage(sanitizedConfig, template, w, h, isPremium, false);
         if (blob) {
             const url = URL.createObjectURL(blob);
@@ -1330,21 +1330,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         }
     };
 
-    const getPreviewStyles = () => {
-        const isGradient = config.textGradientColors && config.textGradientColors.length >= 2;
-
-        const shadows = [];
-        if (config.textGlowWidth > 0) {
-            shadows.push(`0 0 ${config.textGlowWidth}px ${config.textGlowColor}`);
-            shadows.push(`0 0 ${config.textGlowWidth * 1.5}px ${config.textGlowColor}`);
-        }
-
-        if (config.textShadowOpacity > 0) {
-            shadows.push(`${config.textShadowColor} 4px 4px ${config.textShadowBlur || 5}px`);
-        } else if (config.text3DOffsetX !== 0 || config.text3DOffsetY !== 0) {
-            shadows.push(`${config.text3DOffsetX}px ${config.text3DOffsetY}px 0px ${config.text3DColor}`);
-        }
-
+    const getBaseFontStyles = () => {
         return {
             fontFamily: config.fontFamily,
             fontSize: `${config.fontSize}px`,
@@ -1354,13 +1340,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             lineHeight: config.lineHeight,
             letterSpacing: `${config.letterSpacing}px`,
             textTransform: config.textTransform,
-            color: isGradient ? 'transparent' : config.textColor,
-            backgroundImage: isGradient ? `linear-gradient(to bottom, ${config.textGradientColors?.join(', ')})` : 'none',
-            WebkitBackgroundClip: isGradient ? 'text' : 'border-box',
-            backgroundClip: isGradient ? 'text' : 'border-box',
-            WebkitTextStroke: config.textOutlineWidth > 0 ? `${config.textOutlineWidth * 0.2}px ${config.textOutlineColor}` : '0px transparent',
-            textShadow: shadows.join(', '),
-            whiteSpace: 'pre-wrap',
+            whiteSpace: 'pre-wrap' as const,
         };
     };
 
@@ -1399,24 +1379,21 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
     };
 
     const renderTextWithBackground = () => {
-        const styles = getPreviewStyles();
+        const fontStyles = getBaseFontStyles();
         const isJustify = config.textAlign === 'justify';
+        const isTextGradient = config.textGradientColors && config.textGradientColors.length >= 2;
 
-        const sanitizedText = config.text.replace(/<br\s*\/?>\s+/gi, '\n');
+        const sanitizedText = config.text.replace(/<br\s*\/?>/gi, '\n');
         const lines = sanitizedText.split('\n');
-
-        // Debug logs removed
-
         const linesOfRuns = config.textRuns ? splitRunsIntoLines(config.textRuns) : null;
 
         const bgStyle: React.CSSProperties = {
-            ...styles,
+            ...fontStyles,
             position: 'relative',
             zIndex: 10,
             backgroundColor: config.textBackgroundOpacity > 0 ? `rgba(${hexToRgba(config.textBackgroundColor).r}, ${hexToRgba(config.textBackgroundColor).g}, ${hexToRgba(config.textBackgroundColor).b}, ${config.textBackgroundOpacity})` : 'transparent',
             padding: config.textBoxStyle === 'highlight' ? '0.15em 0.4em' : '0.20em 0.4em',
             borderRadius: config.textBackgroundOpacity > 0 ? `${config.fontSize * 0.24}px` : '0',
-            // Blur removed as requested
             border: 'none',
             width: isJustify ? '100%' : 'fit-content',
             display: isJustify ? 'block' : 'inline-block',
@@ -1426,16 +1403,66 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
 
         if (config.boxGradientColors && config.boxGradientColors.length >= 2 && config.textBackgroundOpacity > 0) {
             bgStyle.backgroundImage = `linear-gradient(to bottom, ${config.boxGradientColors.join(', ')})`;
-            if (config.textGradientColors) {
-                delete bgStyle.backgroundImage;
-                delete bgStyle.WebkitBackgroundClip;
-                delete bgStyle.backgroundClip;
-                delete bgStyle.color;
-            }
         }
 
+        const shadows: string[] = [];
+        if (config.textGlowWidth > 0) {
+            shadows.push(`0 0 ${config.textGlowWidth}px ${config.textGlowColor}`);
+            shadows.push(`0 0 ${config.textGlowWidth * 1.5}px ${config.textGlowColor}`);
+        }
+        if (config.textShadowOpacity > 0) {
+            shadows.push(`${config.textShadowColor} 4px 4px ${config.textShadowBlur || 5}px`);
+        } else if (config.text3DOffsetX !== 0 || config.text3DOffsetY !== 0) {
+            shadows.push(`${config.text3DOffsetX}px ${config.text3DOffsetY}px 0px ${config.text3DColor}`);
+        }
+
+        const getTextEffectsStyle = (itemColor?: string): React.CSSProperties => {
+            const finalColor = itemColor || config.textColor;
+            const outline = config.textOutlineWidth > 0 ? `${config.textOutlineWidth * 0.2}px ${config.textOutlineColor}` : undefined;
+
+            const base: React.CSSProperties = {
+                color: isTextGradient ? 'transparent' : finalColor,
+                textShadow: shadows.join(', '),
+                WebkitTextStroke: outline,
+                display: isJustify ? 'block' : 'inline-block',
+                width: isJustify ? '100%' : 'auto'
+            };
+
+            if (isTextGradient) {
+                base.backgroundImage = `linear-gradient(to bottom, ${config.textGradientColors?.join(', ')})`;
+                base.WebkitBackgroundClip = 'text';
+                base.backgroundClip = 'text';
+            }
+
+            return base;
+        };
+
+        const renderInnerContent = (contentLines: string[], runs: any[][] | null, lineIndex?: number) => {
+            const currentRuns = (runs && lineIndex !== undefined) ? runs[lineIndex] : (runs && lineIndex === undefined ? config.textRuns : null);
+
+            return (
+                <div style={getTextEffectsStyle()}>
+                    {currentRuns ? (
+                        currentRuns.map((run, ri) => (
+                            <span
+                                key={ri}
+                                className={run.weight === 'extraBold' ? 'extra-bold' : ''}
+                                style={run.color ? { color: isTextGradient ? 'transparent' : run.color, WebkitTextStrokeColor: config.textOutlineWidth > 0 ? run.color : undefined } : undefined}
+                            >
+                                {run.text}
+                            </span>
+                        ))
+                    ) : (
+                        contentLines.map((line, idx) => (
+                            <div key={idx} dangerouslySetInnerHTML={{ __html: line }} />
+                        ))
+                    )}
+                </div>
+            );
+        };
+
         const superStrokeStyle: React.CSSProperties = {
-            ...styles,
+            ...fontStyles,
             textShadow: getStrokeShadow(config.textSuperStrokeWidth * 0.6, config.textSuperStrokeColor),
             color: 'transparent',
             padding: bgStyle.padding,
@@ -1473,90 +1500,25 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                 `}</style>
 
                 {config.textBoxStyle === 'block' ? (
-                    /* UMA ÚNICA CAIXA PARA TUDO */
-                    <div style={{ ...bgStyle, position: 'relative' }}>
+                    <div style={{ ...bgStyle }}>
                         {config.textSuperStrokeWidth > 0 && (
-                            <div style={{ ...superStrokeStyle, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-                                {config.textRuns ? (
-                                    <div style={{ whiteSpace: 'pre-line' }}>
-                                        {config.textRuns.map((run, ri) => (
-                                            <span key={ri} className={run.weight === 'extraBold' ? 'extra-bold' : ''} style={run.color ? { color: run.color } : undefined}>
-                                                {run.text}
-                                            </span>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    lines.map((line, idx) => (
-                                        <div key={`s-${idx}`} dangerouslySetInnerHTML={{ __html: line }} />
-                                    ))
-                                )}
+                            <div style={superStrokeStyle}>
+                                {renderInnerContent(lines, null)}
                             </div>
                         )}
-                        {config.textRuns ? (
-                            <div style={{ whiteSpace: 'pre-line' }}>
-                                {config.textRuns.map((run, ri) => (
-                                    <span key={ri} className={run.weight === 'extraBold' ? 'extra-bold' : ''} style={run.color ? { color: run.color, WebkitTextStrokeColor: config.textOutlineWidth > 0 ? run.color : undefined } : undefined}>
-                                        {run.text}
-                                    </span>
-                                ))}
-                            </div>
-                        ) : (
-                            lines.map((line, idx) => (
-                                <div key={idx} dangerouslySetInnerHTML={{ __html: line }} />
-                            ))
-                        )}
+                        {renderInnerContent(lines, null)}
                     </div>
                 ) : (
-                    /* CAIXA POR LINHA (HIGHLIGHT) */
                     lines.map((line, idx) => {
-                        const currentLineRuns = linesOfRuns ? linesOfRuns[idx] : null;
-
                         return (
                             <div key={idx} style={{ position: 'relative', width: isJustify ? '100%' : 'fit-content' }}>
                                 {config.textSuperStrokeWidth > 0 && (
                                     <div style={superStrokeStyle}>
-                                        {currentLineRuns ? (
-                                            currentLineRuns.map((run, ri) => (
-                                                <span key={ri} className={run.weight === 'extraBold' ? 'extra-bold' : ''} style={run.color ? { color: run.color, WebkitTextStrokeColor: config.textOutlineWidth > 0 ? run.color : undefined } : undefined}>
-                                                    {run.text}
-                                                </span>
-                                            ))
-                                        ) : (
-                                            <span dangerouslySetInnerHTML={{ __html: line }} />
-                                        )}
+                                        {renderInnerContent([line], linesOfRuns, idx)}
                                     </div>
                                 )}
                                 <div style={bgStyle}>
-                                    {config.textGradientColors && config.boxGradientColors ? (
-                                        <span style={{
-                                            backgroundImage: `linear-gradient(to bottom, ${config.textGradientColors.join(', ')})`,
-                                            WebkitBackgroundClip: 'text',
-                                            backgroundClip: 'text',
-                                            color: 'transparent'
-                                        }}>
-                                            {currentLineRuns ? (
-                                                currentLineRuns.map((run, ri) => (
-                                                    <span key={ri} className={run.weight === 'extraBold' ? 'extra-bold' : ''} style={run.color ? { color: run.color, WebkitTextStrokeColor: config.textOutlineWidth > 0 ? run.color : undefined } : undefined}>
-                                                        {run.text}
-                                                    </span>
-                                                ))
-                                            ) : (
-                                                <span dangerouslySetInnerHTML={{ __html: line }} />
-                                            )}
-                                        </span>
-                                    ) : (
-                                        <>
-                                            {currentLineRuns ? (
-                                                currentLineRuns.map((run, ri) => (
-                                                    <span key={ri} className={run.weight === 'extraBold' ? 'extra-bold' : ''} style={run.color ? { color: run.color, WebkitTextStrokeColor: config.textOutlineWidth > 0 ? run.color : undefined } : undefined}>
-                                                        {run.text}
-                                                    </span>
-                                                ))
-                                            ) : (
-                                                <div dangerouslySetInnerHTML={{ __html: line }} />
-                                            )}
-                                        </>
-                                    )}
+                                    {renderInnerContent([line], linesOfRuns, idx)}
                                 </div>
                             </div>
                         );
@@ -1565,7 +1527,6 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             </div>
         );
     };
-
 
     return (
         <div className="flex flex-col h-full bg-dark-carbon text-text-primary relative animate-fade-up">

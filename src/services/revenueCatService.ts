@@ -1,9 +1,7 @@
 import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
 import type { PurchasesOfferings, PurchasesPackage } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
-import { remoteConfig } from './firebase';
-// @ts-ignore
-import { getValue } from 'firebase/remote-config';
+// remoteConfig and getValue removed as holiday campaign logic was deleted
 
 export interface SubscriptionPlan {
     identifier: string;
@@ -53,7 +51,7 @@ class RevenueCatService {
         if (this.isInitialized) return;
 
         try {
-            const apiKey = Capacitor.getPlatform() === 'android' 
+            const apiKey = Capacitor.getPlatform() === 'android'
                 ? 'goog_MTmdWVjxUKLTWulVBpGxkYcZKZJ'
                 : 'appl_YOUR_IOS_API_KEY';
 
@@ -85,7 +83,7 @@ class RevenueCatService {
                 try {
                     const res = await fetch(`/api/subscription-status?email=${encodeURIComponent(email)}`);
                     const data = await res.json();
-                    
+
                     this.isPremium = data.isPremium === true;
                     console.log('Web Premium Status for', email, ':', this.isPremium);
                     return this.isPremium;
@@ -103,35 +101,14 @@ class RevenueCatService {
             }
 
             const customerInfo = await Purchases.getCustomerInfo();
-            
+
             const entitlements = customerInfo.customerInfo.entitlements;
             const proEntitlement = entitlements.active['SuperQuote Pro'];
-            
-            // Lógica da Campanha de Natal com Remote Config
-            const activeSubscriptions = customerInfo.customerInfo.activeSubscriptions;
-            const CAMPAIGN_PRODUCT_ID = 'prode72d24dd2d';
 
-            if (activeSubscriptions.includes(CAMPAIGN_PRODUCT_ID)) {
-                try {
-                    const isCampaignActive = getValue(remoteConfig, 'is_holiday_campaign_active').asBoolean();
-                    
-                    if (!isCampaignActive) {
-                        console.log('Holiday Campaign expired (Remote Config says FALSE)');
-                    } else {
-                        console.log('Holiday Campaign Active & User has Pass');
-                        this.isPremium = true;
-                        return true;
-                    }
-                } catch (rcError) {
-                    console.warn('RemoteConfig error:', rcError);
-                }
-            }
-            
+            // Lógica antiga da Campanha (removida)
+
             this.isPremium = proEntitlement !== undefined;
-
             console.log('Premium status:', this.isPremium);
-            console.log('Active entitlements:', Object.keys(entitlements.active));
-
             return this.isPremium;
         } catch (error) {
             console.error('Error checking subscription status:', error);
@@ -143,36 +120,28 @@ class RevenueCatService {
         yearly: SubscriptionPlan | null;
         monthly: SubscriptionPlan | null;
         weekly: SubscriptionPlan | null;
-        holidayPass: SubscriptionPlan | null;
     }> {
         // ============================================
         // MODO WEB (PWA) - Retorna preços fixos
         // ============================================
         if (!Capacitor.isNativePlatform()) {
-            // Na Web, retornamos valores fixos (preços do Stripe)
-            // Estes valores são apenas para exibição, o preço real vem do Stripe
             return {
-                yearly: { 
-                    identifier: 'yearly', 
-                    title: 'Anual', 
-                    price: '29,99€', 
-                    pricePerMonth: '2,50€', 
-                    trialDays: 0 
+                yearly: {
+                    identifier: 'yearly',
+                    title: 'Anual',
+                    price: '19,99€',
+                    pricePerMonth: '1,66€',
+                    trialDays: 7
                 },
-                monthly: { 
-                    identifier: 'monthly', 
-                    title: 'Mensal', 
-                    price: '4,99€' 
+                monthly: {
+                    identifier: 'monthly',
+                    title: 'Mensal',
+                    price: '4,99€'
                 },
-                weekly: { 
-                    identifier: 'weekly', 
-                    title: 'Semanal', 
-                    price: '1,99€' 
-                },
-                holidayPass: { 
-                    identifier: 'holidayPass', 
-                    title: 'Passe Festas', 
-                    price: '1,99€' 
+                weekly: {
+                    identifier: 'weekly',
+                    title: 'Semanal',
+                    price: '1,99€'
                 }
             };
         }
@@ -191,22 +160,19 @@ class RevenueCatService {
             const currentOffering = offerings.current;
             if (!currentOffering) {
                 console.log('No offerings available');
-                return { yearly: null, monthly: null, weekly: null, holidayPass: null };
+                return { yearly: null, monthly: null, weekly: null };
             }
 
             const packages = currentOffering.availablePackages;
-            
-            const yearly = packages.find((pkg: PurchasesPackage) => 
+
+            const yearly = packages.find((pkg: PurchasesPackage) =>
                 pkg.identifier === 'yearly' || pkg.packageType === 'ANNUAL'
             );
-            const monthly = packages.find((pkg: PurchasesPackage) => 
+            const monthly = packages.find((pkg: PurchasesPackage) =>
                 pkg.identifier === 'monthly' || pkg.packageType === 'MONTHLY'
             );
-            const weekly = packages.find((pkg: PurchasesPackage) => 
+            const weekly = packages.find((pkg: PurchasesPackage) =>
                 pkg.identifier === 'weekly' || pkg.packageType === 'WEEKLY'
-            );
-            const holidayPass = packages.find((pkg: PurchasesPackage) => 
-                pkg.identifier === 'holiday_pass_2025'
             );
 
             return {
@@ -215,7 +181,7 @@ class RevenueCatService {
                     title: yearly.product.title,
                     price: yearly.product.priceString,
                     pricePerMonth: this.calculateMonthlyPrice(yearly.product.price, 12),
-                    trialDays: yearly.product.introPrice?.period === 'P1W' ? 7 : undefined
+                    trialDays: yearly.product.introPrice ? 7 : undefined
                 } : null,
                 monthly: monthly ? {
                     identifier: monthly.identifier,
@@ -226,16 +192,11 @@ class RevenueCatService {
                     identifier: weekly.identifier,
                     title: weekly.product.title,
                     price: weekly.product.priceString
-                } : null,
-                holidayPass: holidayPass ? {
-                    identifier: holidayPass.identifier,
-                    title: holidayPass.product.title,
-                    price: holidayPass.product.priceString
                 } : null
             };
         } catch (error) {
             console.error('Error getting offerings:', error);
-            return { yearly: null, monthly: null, weekly: null, holidayPass: null };
+            return { yearly: null, monthly: null, weekly: null };
         }
     }
 
@@ -244,116 +205,61 @@ class RevenueCatService {
         return monthlyPrice.toFixed(2) + '€';
     }
 
-    async purchasePackage(planType: 'yearly' | 'monthly' | 'weekly' | 'holidayPass'): Promise<boolean> {
+    async purchasePackage(planType: 'yearly' | 'monthly' | 'weekly'): Promise<boolean> {
         try {
-            // ============================================
-            // MODO WEB (PWA) - Redireciona para Stripe
-            // ============================================
             if (!Capacitor.isNativePlatform()) {
                 const email = this.getWebUserEmail();
-                if (!email) {
-                    console.error("Web: No email set, cannot purchase");
-                    return false;
-                }
-
-                // Importa e usa o StripeService diretamente
+                if (!email) return false;
                 const { default: StripeService } = await import('./stripeService');
                 await StripeService.startCheckout(planType, email);
-                return true; // O redirect vai acontecer
+                return true;
             }
 
-            // ============================================
-            // MODO NATIVO (iOS / Android)
-            // ============================================
-            if (!this.isInitialized) {
-                await this.initialize();
-            }
+            if (!this.isInitialized) await this.initialize();
 
-            if (!this.offerings?.current) {
-                console.error('No offerings available');
-                return false;
-            }
+            if (!this.offerings?.current) return false;
 
             const packages = this.offerings.current.availablePackages;
             let selectedPackage: PurchasesPackage | undefined;
 
             if (planType === 'yearly') {
-                selectedPackage = packages.find((pkg: PurchasesPackage) => 
+                selectedPackage = packages.find((pkg: PurchasesPackage) =>
                     pkg.identifier === 'yearly' || pkg.packageType === 'ANNUAL'
                 );
             } else if (planType === 'monthly') {
-                selectedPackage = packages.find((pkg: PurchasesPackage) => 
+                selectedPackage = packages.find((pkg: PurchasesPackage) =>
                     pkg.identifier === 'monthly' || pkg.packageType === 'MONTHLY'
                 );
             } else if (planType === 'weekly') {
-                selectedPackage = packages.find((pkg: PurchasesPackage) => 
+                selectedPackage = packages.find((pkg: PurchasesPackage) =>
                     pkg.identifier === 'weekly' || pkg.packageType === 'WEEKLY'
                 );
-            } else if (planType === 'holidayPass') {
-                selectedPackage = packages.find((pkg: PurchasesPackage) => 
-                    pkg.identifier === 'holiday_pass_2025'
-                );
             }
 
-            if (!selectedPackage) {
-                console.error('Package not found for plan:', planType);
-                return false;
-            }
+            if (!selectedPackage) return false;
 
-            console.log('Purchasing package:', selectedPackage.identifier);
-
-            const purchaseResult = await Purchases.purchasePackage({
-                aPackage: selectedPackage
-            });
-
-            console.log('Purchase successful:', purchaseResult);
-
+            await Purchases.purchasePackage({ aPackage: selectedPackage });
             await this.checkSubscriptionStatus();
-
             return true;
         } catch (error: any) {
-            console.error('Error purchasing package:', error);
-            
-            if (error.code === '1' || error.message?.includes('cancel')) {
-                console.log('User cancelled purchase');
-                return false;
-            }
-
+            if (error.code === '1' || error.message?.includes('cancel')) return false;
             throw error;
         }
     }
 
     async restorePurchases(email?: string): Promise<boolean> {
-        // ============================================
-        // MODO WEB (PWA) - Verifica status via API
-        // ============================================
         if (!Capacitor.isNativePlatform()) {
-            if (email) {
-                this.setWebUserEmail(email);
-            }
+            if (email) this.setWebUserEmail(email);
             return this.checkSubscriptionStatus();
         }
 
-        // ============================================
-        // MODO NATIVO (iOS / Android)
-        // ============================================
         try {
-            if (!this.isInitialized) {
-                await this.initialize();
-            }
-
-            console.log('Restoring purchases...');
+            if (!this.isInitialized) await this.initialize();
             const customerInfo = await Purchases.restorePurchases();
-
-            const entitlements = customerInfo.customerInfo.entitlements;
-            const proEntitlement = entitlements.active['SuperQuote Pro'];
+            const proEntitlement = customerInfo.customerInfo.entitlements.active['SuperQuote Pro'];
             this.isPremium = proEntitlement !== undefined;
-
-            console.log('Purchases restored. Premium:', this.isPremium);
-
             return this.isPremium;
         } catch (error) {
-            console.error('Error restoring purchases:', error);
             return false;
         }
     }
@@ -363,44 +269,28 @@ class RevenueCatService {
     }
 
     async setUserId(userId: string): Promise<void> {
-        // Na Web, o userId é o email
         if (!Capacitor.isNativePlatform()) {
             this.setWebUserEmail(userId);
             return;
         }
-
         try {
-            if (!this.isInitialized) {
-                await this.initialize();
-            }
-
+            if (!this.isInitialized) await this.initialize();
             await Purchases.logIn({ appUserID: userId });
-            console.log('User ID set:', userId);
-        } catch (error) {
-            console.error('Error setting user ID:', error);
-        }
+        } catch (error) { }
     }
 
     async logout(): Promise<void> {
-        // Na Web, limpa o email
         if (!Capacitor.isNativePlatform()) {
             localStorage.removeItem('userEmail');
             this.webUserEmail = null;
             this.isPremium = false;
             return;
         }
-
         try {
-            if (!this.isInitialized) {
-                await this.initialize();
-            }
-
+            if (!this.isInitialized) await this.initialize();
             await Purchases.logOut();
             this.isPremium = false;
-            console.log('User logged out');
-        } catch (error) {
-            console.error('Error logging out:', error);
-        }
+        } catch (error) { }
     }
 }
 

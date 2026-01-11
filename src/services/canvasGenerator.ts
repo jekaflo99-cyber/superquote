@@ -14,6 +14,15 @@ export const generateImage = async (
     isPremium: boolean,
     excludeText: boolean = false
 ): Promise<Blob | null> => {
+    // 0. Wait for fonts to be ready
+    try {
+        if ((document as any).fonts && (document as any).fonts.ready) {
+            await (document as any).fonts.ready;
+        }
+    } catch (e) {
+        console.warn("Font loading wait failed", e);
+    }
+
     // Base reference width is 1080px.
     // We calculate a scale multiplier for higher resolutions (e.g. 2048px).
     const baseWidth = 1080;
@@ -180,12 +189,12 @@ export const generateImage = async (
     }
 
     // 2. Configure Text Font & Style
-    const baseScaleFactor = 3.6;
+    const baseScaleFactor = 3.2;
     // We remove the formatBoost to ensure the export is identical to the editor preview.
     const scaleFactor = baseScaleFactor * resolutionMultiplier;
     const fontSize = config.fontSize * scaleFactor;
 
-    const fontWeight = config.isBold ? 'bold' : 'normal';
+    const fontWeight = config.isBold ? '900' : 'normal';
     const fontStyle = config.isItalic ? 'italic' : 'normal';
     ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${config.fontFamily}`;
     ctx.textBaseline = 'middle';
@@ -212,7 +221,12 @@ export const generateImage = async (
             lineRuns.forEach(run => {
                 ctx.font = `${fontStyle} ${run.weight === 'extraBold' ? '900' : fontWeight} ${fontSize}px ${config.fontFamily}`;
                 if (config.letterSpacing) (ctx as any).letterSpacing = `${config.letterSpacing * scaleFactor}px`;
-                const textToMeasure = (run.weight === 'extraBold' || config.textTransform === 'uppercase') ? run.text.toUpperCase() : run.text;
+                let textToMeasure = run.text;
+                if (config.textTransform === 'uppercase' || config.isBold || run.weight === 'extraBold') {
+                    textToMeasure = textToMeasure.toUpperCase();
+                } else if (config.textTransform === 'lowercase') {
+                    textToMeasure = textToMeasure.toLowerCase();
+                }
                 totalWidth += ctx.measureText(textToMeasure).width;
             });
             ctx.restore();
@@ -221,14 +235,31 @@ export const generateImage = async (
         return ctx.measureText(richText).width;
     };
 
-    // Text Transform & Base Text
-    let textToDraw = config.text
-        .replace(/<br\s*\/?>\s*/gi, '\n')
-        .split('\n')
-        .map(line => line.trim())
-        .join('\n');
-    if (config.textTransform === 'uppercase') textToDraw = textToDraw.toUpperCase();
-    if (config.textTransform === 'lowercase') textToDraw = textToDraw.toLowerCase();
+    // 2. Preparation & Normalization
+    // Determine global transforms
+    const isGlobalUpper = config.textTransform === 'uppercase';
+    const isGlobalLower = config.textTransform === 'lowercase';
+
+    // Normalize Runs (or create default run from base text)
+    let finalRuns: TextRun[] = [];
+    if (config.textRuns && config.textRuns.length > 0) {
+        finalRuns = config.textRuns.map(run => {
+            let t = run.text;
+            // AA Effect: Bold text is always uppercase in this app
+            if (isGlobalUpper || config.isBold || run.weight === 'extraBold') {
+                t = t.toUpperCase();
+            } else if (isGlobalLower) {
+                t = t.toLowerCase();
+            }
+            return { ...run, text: t };
+        });
+    } else {
+        // Fallback for raw text (might contain <b> tags)
+        let t = config.text.replace(/\t/g, ' ').replace(/<br\s*\/?>/gi, '\n');
+        if (isGlobalUpper || config.isBold) t = t.toUpperCase();
+        if (isGlobalLower) t = t.toLowerCase();
+        finalRuns = [{ text: t, weight: 'regular' }];
+    }
 
     // Letter Spacing
     if (config.letterSpacing) {
@@ -240,16 +271,14 @@ export const generateImage = async (
     // 3. Text Wrapping (Pixel-based to match Browser)
     const maxWidth = width - (horizontalPadding * 2);
 
-    let lines: string[] = [];
-    let linesOfRuns: TextRun[][] | undefined = undefined;
-
     const wrapRunsByWidth = (runs: TextRun[], maxW: number): TextRun[][] => {
         const result: TextRun[][] = [];
         let currentLine: TextRun[] = [];
-        let currentLineWidth = 0;
+        let currentWidth = 0;
 
         const words: { text: string, weight?: "regular" | "extraBold", color?: string }[] = [];
         runs.forEach(run => {
+            // Split by space OR newline (keep delimiters)
             const parts = run.text.split(/(\s+|\n)/);
             parts.forEach(p => {
                 if (p === "") return;
@@ -258,60 +287,58 @@ export const generateImage = async (
         });
 
         words.forEach(wordObj => {
-            if (wordObj.text === '\n') {
+            if (wordObj.text === "\n") {
                 result.push(currentLine);
                 currentLine = [];
-                currentLineWidth = 0;
+                currentWidth = 0;
                 return;
             }
 
             ctx.save();
-            ctx.font = `${fontStyle} ${wordObj.weight === 'extraBold' ? '900' : fontWeight} ${fontSize}px ${config.fontFamily}`;
-            const wordToMeasure = (wordObj.weight === 'extraBold' || config.textTransform === 'uppercase') ? wordObj.text.toUpperCase() : wordObj.text;
-            const wordWidth = ctx.measureText(wordToMeasure).width;
+            ctx.font = `${config.isItalic ? 'italic' : 'normal'} ${wordObj.weight === 'extraBold' ? '900' : fontWeight} ${fontSize}px ${config.fontFamily}`;
+            if (config.letterSpacing) (ctx as any).letterSpacing = `${config.letterSpacing * scaleFactor}px`;
+
+            // Text is already transformed in finalRuns
+            const wordWidth = ctx.measureText(wordObj.text).width;
             ctx.restore();
 
-            if (currentLineWidth + wordWidth > maxW && currentLine.length > 0 && wordObj.text.trim() !== "") {
+            if (currentWidth + wordWidth > maxW && currentLine.length > 0) {
                 result.push(currentLine);
                 currentLine = [];
-                currentLineWidth = 0;
-
-                if (wordObj.text.startsWith(' ')) {
-                    wordObj.text = wordObj.text.trimStart();
-                }
+                currentWidth = 0;
             }
 
+            // Merge with previous run if styles are identical
             const lastRun = currentLine[currentLine.length - 1];
             if (lastRun && lastRun.weight === wordObj.weight && lastRun.color === wordObj.color) {
                 lastRun.text += wordObj.text;
             } else {
                 currentLine.push({ text: wordObj.text, weight: (wordObj.weight as any) || 'regular', color: wordObj.color });
             }
-
-            // Re-measure after possible trim and push
-            ctx.save();
-            ctx.font = `${fontStyle} ${wordObj.weight === 'extraBold' ? '900' : fontWeight} ${fontSize}px ${config.fontFamily}`;
-            const finalW = (wordObj.weight === 'extraBold' || config.textTransform === 'uppercase') ? wordObj.text.toUpperCase() : wordObj.text;
-            currentLineWidth += ctx.measureText(finalW).width;
-            ctx.restore();
+            currentWidth += wordWidth;
         });
 
         if (currentLine.length > 0) result.push(currentLine);
         return result;
     };
 
-    if (config.textRuns && config.textRuns.length > 0) {
-        linesOfRuns = wrapRunsByWidth(config.textRuns, maxWidth);
-    } else {
-        linesOfRuns = wrapRunsByWidth([{ text: textToDraw, weight: 'regular' }], maxWidth);
-    }
-    lines = linesOfRuns.map(l => l.map(r => r.text).join(''));
+    const linesOfRuns = wrapRunsByWidth(finalRuns, maxWidth);
+    const lines = linesOfRuns.map(l => l.map(r => r.text).join(''));
 
     // Create a map to know which lines are NOT the last in their paragraph (for justify)
     const isNotLastLineMap = new Set<number>();
     let totalLineIdx = 0;
-    textToDraw.split('\n').forEach(para => {
-        const pWrapped = wrapRunsByWidth([{ text: para, weight: 'regular' }], maxWidth);
+    // We use the transformed runs to identify paragraph ends
+    const rawParagraphs = finalRuns.map(r => r.text).join('').split('\n');
+
+    rawParagraphs.forEach(para => {
+        // Build runs for this paragraph only to see how many lines it takes
+        // We must apply the same transform here!
+        let t = para;
+        if (isGlobalUpper || config.isBold) t = t.toUpperCase();
+        if (isGlobalLower) t = t.toLowerCase();
+
+        const pWrapped = wrapRunsByWidth([{ text: t, weight: 'regular' }], maxWidth);
         for (let j = 0; j < pWrapped.length - 1; j++) {
             isNotLastLineMap.add(totalLineIdx + j);
         }
@@ -459,9 +486,7 @@ export const generateImage = async (
         applyRunStyles: boolean = false
     ) => {
         lines.forEach((originalLine, index) => {
-            // 1. LIMPEZA TOTAL: Garante que não há espaços nas pontas
-            originalLine = originalLine.trim();
-            if (!originalLine) return; // Salta linhas vazias
+            if (!originalLine && originalLine !== "") return; // Allow empty lines to proceed if they have height
 
             const y = startY + (index * pxLineHeight);
 
@@ -479,7 +504,6 @@ export const generateImage = async (
             // (Nota: 'justify' cai aqui no default 'left', que é mais seguro)
 
             // 4. DESENHO DOS PEDAÇOS
-            let currentX = startX;
 
             // --- JUSTIFY LOGIC ---
             let extraSpace = 0;
@@ -492,6 +516,7 @@ export const generateImage = async (
             }
 
             if (linesOfRuns) {
+                let currentX = startX;
                 const lineRuns = linesOfRuns[index];
                 lineRuns.forEach(run => {
                     const wordsInRun = run.text.split(' ');
@@ -499,16 +524,16 @@ export const generateImage = async (
                         let textToDraw = word;
                         if (wIdx < wordsInRun.length - 1) textToDraw += " ";
 
-                        ctx.save();
-                        ctx.font = `${fontStyle} ${run.weight === 'extraBold' ? '900' : fontWeight} ${fontSize}px ${config.fontFamily}`;
-                        if (config.letterSpacing) (ctx as any).letterSpacing = `${config.letterSpacing * scaleFactor}px`;
+                        if (applyRunStyles) {
+                            ctx.font = `${config.isItalic ? 'italic' : 'normal'} ${run.weight === 'extraBold' ? '900' : fontWeight} ${fontSize}px ${config.fontFamily}`;
+                            if (config.letterSpacing) (ctx as any).letterSpacing = `${config.letterSpacing * scaleFactor}px`;
+                        }
+
+                        // Casing is ALREADY handled during preparation
 
                         if (applyRunStyles && run.color) {
                             ctx.fillStyle = run.color;
                             ctx.strokeStyle = run.color;
-                        }
-                        if (run.weight === 'extraBold') {
-                            textToDraw = textToDraw.toUpperCase();
                         }
 
                         drawFn(textToDraw, currentX, y, run);
@@ -516,13 +541,14 @@ export const generateImage = async (
                         const wordWidth = ctx.measureText(textToDraw).width;
                         currentX += wordWidth;
 
+                        // Add extra justify space if this word ended with a space
                         if (isJustify && textToDraw.endsWith(" ")) {
                             currentX += extraSpace;
                         }
-                        ctx.restore();
                     });
                 });
             } else {
+                let currentX = startX;
                 const parts = originalLine.split(/(<b.*?>.*?<\/b>|<u.*?>.*?<\/u>)/gi);
                 parts.forEach(part => {
                     // Remove tags para verificar se tem conteúdo
@@ -543,11 +569,13 @@ export const generateImage = async (
                         if (isBold || config.isBold) {
                             ctx.font = `${config.isItalic ? 'italic' : 'normal'} 900 ${fontSize}px ${config.fontFamily}`;
                             if (config.letterSpacing) (ctx as any).letterSpacing = `${config.letterSpacing * scaleFactor}px`;
+                            // Casing is handled by textToDraw being derived from pre-transformed text in else branch
                             textToDraw = textToDraw.toUpperCase();
                         } else {
                             // Reset font in case it was changed by bold part
                             ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${config.fontFamily}`;
                             if (config.letterSpacing) (ctx as any).letterSpacing = `${config.letterSpacing * scaleFactor}px`;
+                            // If we arrived here via raw text branch, it's already upper/lower from preparation
                         }
 
                         if (isUnderline) {

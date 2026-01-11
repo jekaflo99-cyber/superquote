@@ -9,30 +9,28 @@ import StripeService from '../services/stripeService';
 interface SubscriptionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onPurchase: (plan: 'yearly' | 'monthly' | 'weekly' | 'holidayPass') => void;
+    onPurchase: (plan: 'yearly' | 'monthly' | 'weekly') => void;
     onRestore?: (email?: string) => void;
     language: LanguageCode;
 }
 
-export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ 
-    isOpen, 
-    onClose, 
+export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
+    isOpen,
+    onClose,
     onPurchase,
     onRestore,
-    language 
+    language
 }) => {
     const t = UI_TRANSLATIONS[language];
-    const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly' | 'weekly' | 'holidayPass'>('yearly');
+    const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly' | 'weekly'>('yearly');
     const [plans, setPlans] = useState<{
         yearly: SubscriptionPlan | null;
         monthly: SubscriptionPlan | null;
         weekly: SubscriptionPlan | null;
-        holidayPass: SubscriptionPlan | null;
     }>({
         yearly: null,
         monthly: null,
-        weekly: null,
-        holidayPass: null
+        weekly: null
     });
     const [isNativeApp, setIsNativeApp] = useState(true);
     const [isLoadingStripe, setIsLoadingStripe] = useState(false);
@@ -43,7 +41,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     // Preços por moeda - Tabela Mágica de Preços
     const CURRENCY_PRICES = {
         eur: {
-            yearly: { price: '29,99€', perMonth: '2,50€' },
+            yearly: { price: '19,99€', perMonth: '1,66€' },
             monthly: { price: '4,99€' },
             weekly: { price: '1,99€' }
         },
@@ -53,7 +51,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
             weekly: { price: 'R$ 7,90' }
         },
         usd: {
-            yearly: { price: '$29.99', perMonth: '$2.50' },
+            yearly: { price: '$19.99', perMonth: '$1.66' },
             monthly: { price: '$4.99' },
             weekly: { price: '$1.99' }
         }
@@ -62,19 +60,6 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     // Preços fallback (caso o RevenueCat não carregue)
     const fallbackPricing = CURRENCY_PRICES[currency];
 
-    // Campanha de Natal: Ativa até 3 de Janeiro de 2026 (ajuste o ano conforme necessário)
-    const CAMPAIGN_END_DATE = new Date('2026-01-04T00:00:00'); 
-    const isCampaignActive = new Date() < CAMPAIGN_END_DATE;
-
-    const [isShowingCampaign, setIsShowingCampaign] = useState(isCampaignActive);
-
-    useEffect(() => {
-        if (isShowingCampaign) {
-            setSelectedPlan('holidayPass');
-        } else {
-            setSelectedPlan('yearly');
-        }
-    }, [isShowingCampaign]);
 
     useEffect(() => {
         if (isOpen) {
@@ -87,7 +72,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
             // Se não é plataforma nativa, é web (PWA)
             const isNative = await Capacitor.isNativePlatform();
             setIsNativeApp(isNative);
-            
+
             // Recuperar email do localStorage
             const savedEmail = localStorage.getItem('userEmail') || '';
             setUserEmail(savedEmail);
@@ -95,7 +80,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
             // Detetar moeda do utilizador (passando a língua selecionada na app)
             const detectedCurrency = detectCurrency(language);
             setCurrency(detectedCurrency);
-            
+
             // Apenas tenta carregar ofertas do RevenueCat se for nativo
             if (isNative) {
                 loadOfferings();
@@ -127,11 +112,11 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
 
         // 2. Fallback para o navegador
         if (typeof navigator === 'undefined') return 'eur';
-        
+
         try {
             const locale = (navigator.language || 'en-US').toLowerCase();
             console.log('Detected browser locale:', locale);
-            
+
             if (locale.includes('pt-br') || locale.includes('pt_br') || locale.includes('br')) {
                 return 'brl';
             }
@@ -175,7 +160,8 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         }
     };
 
-    const getPricing = (planType: 'yearly' | 'monthly' | 'weekly' | 'holidayPass'): { price: string; trialDays?: number; perMonth?: string } => {
+    const getPricing = (planType: 'yearly' | 'monthly' | 'weekly'): { price: string; trialDays?: number; perMonth?: string } => {
+        // @ts-ignore
         const plan = plans[planType];
         if (plan) {
             return {
@@ -184,9 +170,6 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 perMonth: plan.pricePerMonth
             };
         }
-        if (planType === 'holidayPass') {
-            return fallbackPricing['weekly'];
-        }
         // @ts-ignore
         return fallbackPricing[planType];
     };
@@ -194,7 +177,6 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     const yearlyPrice = getPricing('yearly');
     const monthlyPrice = getPricing('monthly');
     const weeklyPrice = getPricing('weekly');
-    const holidayPassPrice = getPricing('holidayPass');
 
     if (!isOpen) return null;
 
@@ -202,13 +184,13 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         <div className="absolute inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
             <div className="w-full max-w-md bg-dark-graphite sm:rounded-3xl rounded-t-3xl p-6 relative shadow-2xl border border-dark-steel/50 overflow-y-auto max-h-[90vh]">
                 {/* Close Button */}
-                <button 
-                    onClick={onClose} 
+                <button
+                    onClick={onClose}
                     className="absolute top-4 right-4 p-2 bg-dark-steel/50 hover:bg-dark-steel rounded-full transition-colors z-10"
                 >
                     <X className="w-5 h-5 text-text-secondary" />
                 </button>
-                
+
                 {/* Header */}
                 <div className="text-center mb-6">
                     <div className="inline-block p-4 rounded-full bg-neon-pulse/10 mb-4 shadow-[0_0_30px_rgba(0,255,114,0.2)]">
@@ -223,52 +205,14 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 </div>
 
                 {/* Plans */}
-                {isShowingCampaign ? (
-                    <div className="mb-6">
-                        <div className="w-full p-6 rounded-xl border-2 border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.3)] text-center relative overflow-hidden">
-                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-neon-pulse to-transparent opacity-20 rounded-full blur-xl"></div>
-                            
-                            <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">{t.campaignTitle}</h3>
-                            <p className="text-sm text-white/90 mb-4 font-medium leading-relaxed">
-                                {/* Neon pulse highlight for 'durante 1 mês' and translations */}
-                                {(() => {
-                                    // Regex for all supported languages
-                                    const highlightRegex = /(durante 1 mês|for 1 month|durante 1 mes|por 1 mes|por 1 mês|pour 1 mois|für 1 Monat)/i;
-                                    const subtitle = t.campaignSubtitle;
-                                    const match = subtitle.match(highlightRegex);
-                                    if (!match) return subtitle;
-                                    const [highlight] = match;
-                                    const parts = subtitle.split(highlightRegex);
-                                    return <>{parts[0]}<span className="text-neon-pulse animate-pulse font-black drop-shadow-[0_0_8px_rgba(0,255,114,0.8)]">{highlight}</span>{parts[2]}</>;
-                                })()}
-                            </p>
-                            
-                            <div className="bg-dark-carbon/50 rounded-lg p-3 mb-2 inline-block">
-                                <span className="text-neon-pulse font-black text-3xl">{holidayPassPrice.price}</span>
-                            </div>
-                            
-                            <p className="text-xs text-text-dim mt-2">
-                                {t.campaignNote}
-                            </p>
-                        </div>
-                        
-                        <button 
-                            onClick={() => setIsShowingCampaign(false)}
-                            className="w-full mt-4 py-3 text-sm font-bold text-text-secondary hover:text-white border border-dark-steel hover:border-white/50 rounded-lg transition-all uppercase tracking-wide"
-                        >
-                            {t.otherPlans}
-                        </button>
-                    </div>
-                ) : (
                 <div className="space-y-3 mb-6">
                     {/* Plano Anual - DESTACADO */}
                     <button
                         onClick={() => setSelectedPlan('yearly')}
-                        className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${
-                            selectedPlan === 'yearly'
-                                ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.3)]'
-                                : 'border-dark-steel bg-dark-steel/30 hover:border-dark-steel/80'
-                        }`}
+                        className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${selectedPlan === 'yearly'
+                            ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.3)]'
+                            : 'border-dark-steel bg-dark-steel/30 hover:border-dark-steel/80'
+                            }`}
                     >
                         {/* Badge */}
                         <div className="absolute -top-3 left-4 bg-gradient-to-r from-neon-pulse to-neon-mint px-3 py-1 rounded-full animate-pulse shadow-[0_0_15px_rgba(0,255,114,0.6)]">
@@ -298,11 +242,10 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                                     {t.yearlyBenefit}
                                 </p>
                             </div>
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                                selectedPlan === 'yearly' 
-                                    ? 'border-neon-pulse bg-neon-pulse' 
-                                    : 'border-dark-steel'
-                            }`}>
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedPlan === 'yearly'
+                                ? 'border-neon-pulse bg-neon-pulse'
+                                : 'border-dark-steel'
+                                }`}>
                                 {selectedPlan === 'yearly' && <Check className="w-4 h-4 text-dark-carbon" strokeWidth={3} />}
                             </div>
                         </div>
@@ -311,11 +254,10 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                     {/* Plano Mensal */}
                     <button
                         onClick={() => setSelectedPlan('monthly')}
-                        className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${
-                            selectedPlan === 'monthly'
-                                ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.3)]'
-                                : 'border-dark-steel bg-dark-steel/30 hover:border-dark-steel/80'
-                        }`}
+                        className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${selectedPlan === 'monthly'
+                            ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.3)]'
+                            : 'border-dark-steel bg-dark-steel/30 hover:border-dark-steel/80'
+                            }`}
                     >
                         <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -327,11 +269,10 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                                     {t.monthlyBenefit}
                                 </p>
                             </div>
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                                selectedPlan === 'monthly' 
-                                    ? 'border-neon-pulse bg-neon-pulse' 
-                                    : 'border-dark-steel'
-                            }`}>
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedPlan === 'monthly'
+                                ? 'border-neon-pulse bg-neon-pulse'
+                                : 'border-dark-steel'
+                                }`}>
                                 {selectedPlan === 'monthly' && <Check className="w-4 h-4 text-dark-carbon" strokeWidth={3} />}
                             </div>
                         </div>
@@ -340,11 +281,10 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                     {/* Plano Semanal */}
                     <button
                         onClick={() => setSelectedPlan('weekly')}
-                        className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${
-                            selectedPlan === 'weekly'
-                                ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.3)]'
-                                : 'border-dark-steel bg-dark-steel/30 hover:border-dark-steel/80'
-                        }`}
+                        className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${selectedPlan === 'weekly'
+                            ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.3)]'
+                            : 'border-dark-steel bg-dark-steel/30 hover:border-dark-steel/80'
+                            }`}
                     >
                         <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -356,17 +296,15 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                                     {t.weeklyBenefit}
                                 </p>
                             </div>
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                                selectedPlan === 'weekly' 
-                                    ? 'border-neon-pulse bg-neon-pulse' 
-                                    : 'border-dark-steel'
-                            }`}>
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedPlan === 'weekly'
+                                ? 'border-neon-pulse bg-neon-pulse'
+                                : 'border-dark-steel'
+                                }`}>
                                 {selectedPlan === 'weekly' && <Check className="w-4 h-4 text-dark-carbon" strokeWidth={3} />}
                             </div>
                         </div>
                     </button>
                 </div>
-                )}
 
                 {/* Email Input - PWA Only */}
                 {!isNativeApp && (
@@ -388,21 +326,21 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 {/* Continue Button - Diferente consoante plataforma */}
                 {isNativeApp ? (
                     // App Nativa - RevenueCat
-                    <button 
+                    <button
                         onClick={() => onPurchase(selectedPlan)}
                         className="w-full bg-neon-pulse hover:bg-neon-mint text-dark-carbon font-black text-xl py-4 rounded-xl shadow-[0_0_25px_rgba(0,255,114,0.4)] transition-all hover:scale-[1.02] active:scale-95 uppercase tracking-wide mb-6"
                     >
-                        {isShowingCampaign ? t.campaignButton.replace('{price}', weeklyPrice.price) : t.continueButton}
+                        {t.continueButton}
                     </button>
                 ) : (
                     // PWA - Stripe
                     <>
-                        <button 
+                        <button
                             onClick={handleStripeCheckout}
                             disabled={isLoadingStripe}
                             className="w-full bg-neon-pulse hover:bg-neon-mint disabled:bg-gray-600 text-dark-carbon font-black text-xl py-4 rounded-xl shadow-[0_0_25px_rgba(0,255,114,0.4)] transition-all hover:scale-[1.02] active:scale-95 uppercase tracking-wide mb-6"
                         >
-                            {isLoadingStripe ? 'A processar...' : (isShowingCampaign ? t.campaignButton.replace('{price}', weeklyPrice.price) : t.continueButton)}
+                            {isLoadingStripe ? 'A processar...' : t.continueButton}
                         </button>
                         {stripeError && (
                             <div className="bg-red-500 bg-opacity-20 border border-red-500 rounded p-3 mb-4 text-red-300 text-sm">
@@ -421,7 +359,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
 
                 {/* Footer Links */}
                 <div className="flex flex-col items-center gap-3 pt-4 border-t border-dark-steel/50">
-                    <button 
+                    <button
                         onClick={() => onRestore && onRestore(userEmail)}
                         className="text-sm text-text-secondary hover:text-neon-pulse transition-colors font-medium"
                     >
