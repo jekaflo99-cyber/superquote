@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { type NavigationState, type LanguageCode } from './types';
+import { type NavigationState, type LanguageCode, type TutorialStep } from './types';
 import { PHRASES_DB } from './Data/content';
 import { LanguageScreen } from './components/LanguageScreen';
 import { CategoriesScreen } from './components/CategoriesScreen';
@@ -12,13 +12,14 @@ import { AdMob } from '@capacitor-community/admob';
 import { Capacitor } from '@capacitor/core';
 import { admobService } from './services/admobService';
 import { revenueCatService } from './services/revenueCatService';
-import StripeService from './services/stripeService';
+import { StripeService } from './services/stripeService';
 import './index.css';
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isPremiumUser, setIsPremiumUser] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState<TutorialStep>('NONE');
   const [favoritePhrases, setFavoritePhrases] = useState<string[]>([]);
   const [nav, setNav] = useState<NavigationState>({
     currentScreen: 'language',
@@ -35,14 +36,20 @@ const App: React.FC = () => {
         setShowOnboarding(true);
       }
 
-      // Check secret premium
-      const hasSecretPremium = localStorage.getItem('superquote_secret_premium') === 'true';
-      if (hasSecretPremium) {
-        setIsPremiumUser(true);
+      // Check tutorial status
+      const tutSeen = localStorage.getItem('superquote_tutorial_done');
+      if (!tutSeen && hasSeen) {
+        setTutorialStep('WELCOME_SURPRISE');
       }
 
       setIsLoading(false);
     };
+
+    // Check secret premium activation
+    const secretPremium = localStorage.getItem('superquote_secret_premium');
+    if (secretPremium === 'true') {
+      setIsPremiumUser(true);
+    }
 
     const timer = setTimeout(checkOnboarding, 2500);
 
@@ -75,78 +82,54 @@ const App: React.FC = () => {
     initializeAdMob();
   }, []);
 
-  // Check Web Premium Status
-  useEffect(() => {
-    const checkWebPremium = async () => {
-      if (!Capacitor.isNativePlatform()) {
-        const email = localStorage.getItem('userEmail');
-        if (email) {
-          console.log('Checking Web Premium status for:', email);
-          const isPremium = await StripeService.checkSubscriptionStatus(email);
-          if (isPremium) {
-            console.log('Web Premium confirmed');
-            setIsPremiumUser(true);
-          }
-        }
-      }
-    };
 
-    checkWebPremium();
-  }, []);
-
-  // Handle Stripe Success Return
-  useEffect(() => {
-    const handleStripeReturn = async () => {
-      if (Capacitor.isNativePlatform()) return;
-
-      const params = new URLSearchParams(window.location.search);
-      const sessionId = params.get('session_id');
-
-      if (sessionId) {
-        console.log('Found Stripe session_id:', sessionId);
-        try {
-          const response = await fetch(`/api/verify-session?session_id=${sessionId}`);
-          const data = await response.json();
-
-          if (data.email) {
-            console.log('Verified purchase for:', data.email);
-            localStorage.setItem('userEmail', data.email);
-
-            // Force check premium immediately
-            const isPremium = await StripeService.checkSubscriptionStatus(data.email);
-            if (isPremium) {
-              setIsPremiumUser(true);
-              alert('Compra confirmada! O Premium foi ativado.');
-            }
-
-            // Clean URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        } catch (error) {
-          console.error('Error verifying session:', error);
-        }
-      }
-    };
-
-    handleStripeReturn();
-  }, []);
 
   // Initialize RevenueCat
   useEffect(() => {
     const initializeRevenueCat = async () => {
       try {
-        // Only initialize RevenueCat on native platforms
         const isNative = Capacitor.isNativePlatform();
+
+        // ============================================
+        // MODO WEB (STRIPE)
+        // ============================================
         if (!isNative) {
-          console.log('Web platform detected, skipping RevenueCat initialization');
+          console.log('Web platform detected, checking Stripe status...');
+
+          // 1. Verificar se acabou de voltar de um pagamento (session_id na URL)
+          const params = new URLSearchParams(window.location.search);
+          const sessionId = params.get('session_id');
+
+          if (sessionId) {
+            console.log('Detected session_id, verifying...');
+            const email = await StripeService.verifySession(sessionId);
+            if (email) {
+              localStorage.setItem('superquote_user_email', email);
+              // Limpar a URL para não ficar com o session_id lá
+              window.history.replaceState({}, document.title, "/");
+            }
+          }
+
+          // 2. Verificar se temos email guardado para ver status Premium
+          const email = localStorage.getItem('superquote_user_email');
+          if (email) {
+            const isPremium = await StripeService.checkSubscriptionStatus(email);
+            const secretPremium = localStorage.getItem('superquote_secret_premium');
+            setIsPremiumUser(isPremium || secretPremium === 'true');
+            console.log('Web Premium check for', email, ':', isPremium);
+          }
           return;
         }
 
+        // ============================================
+        // MODO NATIVO (REVENUECAT)
+        // ============================================
         await revenueCatService.initialize();
 
         // Verifica se já tem subscrição ativa
         const isPremium = await revenueCatService.checkSubscriptionStatus();
-        setIsPremiumUser(isPremium);
+        const secretPremium = localStorage.getItem('superquote_secret_premium');
+        setIsPremiumUser(isPremium || secretPremium === 'true');
 
         console.log('RevenueCat initialized. Premium:', isPremium);
       } catch (error) {
@@ -184,12 +167,20 @@ const App: React.FC = () => {
   const handleFinishOnboarding = () => {
     localStorage.setItem('superquote_onboarding_seen', 'true');
     setShowOnboarding(false);
+
+    // Inicia o tutorial imediatamente se não tiver sido visto
+    const tutSeen = localStorage.getItem('superquote_tutorial_done');
+    if (!tutSeen) {
+      setTutorialStep('WELCOME_SURPRISE');
+    }
   };
 
   const handleUnlockPremium = async () => {
+    // This will be called by RevenueCat upon successful purchase
+    // OR by the secret activation
     setIsPremiumUser(true);
+    localStorage.setItem('superquote_secret_premium', 'true');
 
-    // Re-verifica o status no RevenueCat para sincronizar (apenas em plataformas nativas)
     try {
       const isNative = Capacitor.isNativePlatform();
       if (isNative) {
@@ -198,13 +189,6 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Error syncing premium status:', error);
     }
-  };
-
-  const handleUnlockSecretPremium = () => {
-    setIsPremiumUser(true);
-    localStorage.setItem('superquote_secret_premium', 'true');
-    // feedback visual ou som poderia ser adicionado aqui
-    console.log('Secret Premium Unlocked!');
   };
 
   const handleLanguageSelect = (lang: LanguageCode) => {
@@ -297,7 +281,9 @@ const App: React.FC = () => {
           onOpenFavorites={handleGoToFavorites}
           language={nav.selectedLanguage}
           isPremium={isPremiumUser}
-          onUnlockPremium={handleUnlockSecretPremium}
+          onUnlockPremium={handleUnlockPremium}
+          tutorialStep={tutorialStep}
+          setTutorialStep={setTutorialStep}
         />
       );
       break;
@@ -340,6 +326,8 @@ const App: React.FC = () => {
           isPremium={isPremiumUser}
           onUnlock={handleUnlockPremium}
           language={currentLanguage}
+          tutorialStep={tutorialStep}
+          setTutorialStep={setTutorialStep}
         />
       );
       break;

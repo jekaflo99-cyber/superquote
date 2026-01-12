@@ -111,3 +111,18 @@ export interface NavigationState {
   selectedCategory: string | null;
   selectedPhrase: string | null;
 }
+
+export type TutorialStep =
+  | 'NONE'
+  | 'WELCOME_SURPRISE'
+  | 'OPEN_TEMPLATES'
+  | 'MODAL_AUTO_EXP'
+  | 'MODAL_PICK_TEMP'
+  | 'PICK_STYLE'
+  | 'OPEN_MAGIC'
+  | 'PICK_LAYOUT'
+  | 'KEYWORD_EXPLAIN'
+  | 'TOGGLE_AUTO_OFF'
+  | 'TOGGLE_AUTO_ON'
+  | 'PICK_KW_COLOR'
+  | 'PICK_MAIN_COLOR';

@@ -98,7 +98,23 @@ export const UI_TRANSLATIONS = {
     premiumBenefit4: "Sem Marca de Água",
     premiumBenefit4Desc: "Conteúdo 100% limpo, apenas a tua marca.",
     premiumBenefit5: "Experiência Sem Anúncios",
-    premiumBenefit5Desc: "Cria sem interrupções."
+    premiumBenefit5Desc: "Cria sem interrupções.",
+    // Tutorial
+    tutWelcomeTitle: "Bem-vindo(a)! 🎉",
+    tutWelcomeDesc: "Vamos criar a sua primeira imagem profissional em segundos.\n\nToque no botão abaixo para deixar a nossa APP escolher uma frase impactante!",
+    tutTouchHere: "Toca aqui!",
+    tutInstruction: "Instrução",
+    tutStepTemplates: "Excelente escolha! Agora toque em MODELOS para explorar fundos incríveis.",
+    tutStepTemplatesDesc: "Gostou? A nossa app tem centenas de fundos profissionais organizados por temas.",
+    tutStepPickTemplate: "Muitos fundos são Grátis! Toque nesta imagem para continuarmos.",
+    tutStepStyle: "Agora mude o estilo de texto com um toque no estilo Clean!",
+    tutStepMagic: "Ficou ótimo! Mas agora vem a verdadeira MAGIA. Carregue aqui.",
+    tutStepKeyword: "Aqui pode mudar o Layout ou destacar palavras! Toque em KEYWORD.",
+    tutStepKeywordDesc: "A nossa inteligência destaca as palavras certas para si. Pode mudar as cores aqui!",
+    tutStepManual: "Quer escolher as palavras sozinho? Toque para mudar para o modo MANUAL.",
+    tutStepAuto: "Perfeito! Pode sempre voltar ao modo AUTOMÁTICO tocando aqui de novo.",
+    tutStepFinish: "Para os destaques escolha uma cor vibrante!",
+    tutStepColor: "Quase lá! Toque aqui em COR para mudar a cor principal do seu texto e finalizar o guia!"
   },
   "pt-BR": {
     searchPlaceholder: "Que tipo de frase você procura *hoje*?",
@@ -198,7 +214,23 @@ export const UI_TRANSLATIONS = {
     premiumBenefit4: "Sem Marca de Água",
     premiumBenefit4Desc: "Conteúdo 100% limpo, apenas sua marca.",
     premiumBenefit5: "Experiência Sem Anúncios",
-    premiumBenefit5Desc: "Crie sem interrupções."
+    premiumBenefit5Desc: "Crie sem interrupções.",
+    // Tutorial
+    tutWelcomeTitle: "Bem-vindo(a)! 🎉",
+    tutWelcomeDesc: "Vamos criar a sua primeira imagem profissional em segundos.\n\nToque no botão abaixo para deixar a nossa APP escolher uma frase impactante!",
+    tutTouchHere: "Toca aqui!",
+    tutInstruction: "Instrução",
+    tutStepTemplates: "Excelente escolha! Agora toque em MODELOS para explorar fundos incríveis.",
+    tutStepTemplatesDesc: "Gostou? A nossa app tem centenas de fundos profissionais organizados por temas.",
+    tutStepPickTemplate: "Muitos fundos são Grátis! Toque nesta imagem para continuarmos.",
+    tutStepStyle: "Agora mude o estilo de texto com um toque no estilo Clean!",
+    tutStepMagic: "Ficou ótimo! Mas agora vem a verdadeira MAGIA. Carregue aqui.",
+    tutStepKeyword: "Aqui pode mudar o Layout ou destacar palavras! Toque em KEYWORD.",
+    tutStepKeywordDesc: "A nossa inteligência destaca as palavras certas para si. Pode mudar as cores aqui!",
+    tutStepManual: "Quer escolher as palavras sozinho? Toque para mudar para o modo MANUAL.",
+    tutStepAuto: "Perfeito! Pode sempre voltar ao modo AUTOMÁTICO tocando aqui de novo.",
+    tutStepFinish: "Para os destaques escolha uma cor vibrante!",
+    tutStepColor: "Quase lá! Toque aqui em COR para mudar a cor principal do seu texto e finalizar o guia!"
   },
   "en": {
     searchPlaceholder: "What kind of quote do you need *today*?",
@@ -298,7 +330,23 @@ export const UI_TRANSLATIONS = {
     premiumBenefit4: "No Watermark",
     premiumBenefit4Desc: "100% clean content, just your brand.",
     premiumBenefit5: "Ad-Free Experience",
-    premiumBenefit5Desc: "Create without interruptions."
+    premiumBenefit5Desc: "Create without interruptions.",
+    // Tutorial
+    tutWelcomeTitle: "Welcome! 🎉",
+    tutWelcomeDesc: "Let's create your first professional image in seconds.\n\nTap the button below to let our APP pick an impactful quote!",
+    tutTouchHere: "Tap here!",
+    tutInstruction: "Instruction",
+    tutStepTemplates: "Great choice! Now tap on TEMPLATES to explore amazing backgrounds.",
+    tutStepTemplatesDesc: "Like it? Our app has hundreds of professional backgrounds organized by themes.",
+    tutStepPickTemplate: "Many backgrounds are Free! Tap this image to continue.",
+    tutStepStyle: "Now change the text style by tapping the Clean style!",
+    tutStepMagic: "Looks great! But now comes the real MAGIC. Tap here.",
+    tutStepKeyword: "Here you can change the Layout or highlight words! Tap on KEYWORD.",
+    tutStepKeywordDesc: "Our AI highlights the right words for you. You can change the colors here!",
+    tutStepManual: "Want to pick the words yourself? Tap to switch to MANUAL mode.",
+    tutStepAuto: "Perfect! You can always go back to AUTO mode by tapping here again.",
+    tutStepFinish: "Pick a vibrant color for your highlights!",
+    tutStepColor: "Almost there! Tap here on COLOR to change the main color of your text and finish the guide!"
   },
   "es": {
     searchPlaceholder: "¿Qué tipo de frase buscas *hoy*?",
@@ -398,6 +446,22 @@ export const UI_TRANSLATIONS = {
     premiumBenefit4: "Sin Marca de Agua",
     premiumBenefit4Desc: "Contenido 100% limpio, solo tu marca.",
     premiumBenefit5: "Experiencia Sin Anuncios",
-    premiumBenefit5Desc: "Crea sin interrupciones."
+    premiumBenefit5Desc: "Crea sin interrupciones.",
+    // Tutorial
+    tutWelcomeTitle: "¡Bienvenido(a)! 🎉",
+    tutWelcomeDesc: "Vamos a crear tu primera imagen profesional en segundos.\n\n¡Toca el botón de abajo para dejar que nuestra APP elija una frase impactante!",
+    tutTouchHere: "¡Toca aquí!",
+    tutInstruction: "Instrucción",
+    tutStepTemplates: "¡Excelente elección! Ahora toca en PLANTILLAS para explorar fondos increíbles.",
+    tutStepTemplatesDesc: "¿Te gusta? Nuestra app tiene cientos de fondos profesionales organizados por temas.",
+    tutStepPickTemplate: "¡Muchos fondos son Gratis! Toca esta imagen para continuar.",
+    tutStepStyle: "¡Ahora cambia el estilo de texto tocando el estilo Clean!",
+    tutStepMagic: "¡Quedó genial! Pero ahora viene la verdadera MAGIA. Presiona aquí.",
+    tutStepKeyword: "¡Aquí puedes cambiar el Diseño o destacar palabras! Toca en KEYWORD.",
+    tutStepKeywordDesc: "Nuestra inteligencia destaca las palabras correctas por ti. ¡Puedes cambiar los colores aquí!",
+    tutStepManual: "¿Quieres elegir las palabras tú mismo? Toca para cambiar al modo MANUAL.",
+    tutStepAuto: "¡Perfecto! Siempre puedes volver al modo AUTOMÁTICO tocando aquí de nuevo.",
+    tutStepFinish: "¡Para terminar la guía, elige un color vibrante para tus destacados!",
+    tutStepColor: "¡Casi listo! Toca aquí en COLOR para cambiar el color principal de tu texto y finalizar la guía!"
   }
 };

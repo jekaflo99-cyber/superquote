@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { X, Crown, Check } from 'lucide-react';
-import { Capacitor } from '@capacitor/core';
 import { type LanguageCode } from '../types';
 import { UI_TRANSLATIONS } from '../Data/translations';
 import { revenueCatService, type SubscriptionPlan } from '../services/revenueCatService';
-import StripeService from '../services/stripeService';
+import { Capacitor } from '@capacitor/core';
 
 interface SubscriptionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onPurchase: (plan: 'yearly' | 'monthly' | 'weekly') => void;
-    onRestore?: (email?: string) => void;
+    onPurchase: (plan: 'yearly' | 'monthly' | 'weekly', email?: string) => void;
+    onRestore?: () => void;
     language: LanguageCode;
 }
 
@@ -32,10 +31,6 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         monthly: null,
         weekly: null
     });
-    const [isNativeApp, setIsNativeApp] = useState(true);
-    const [isLoadingStripe, setIsLoadingStripe] = useState(false);
-    const [stripeError, setStripeError] = useState<string | null>(null);
-    const [userEmail, setUserEmail] = useState<string>('');
     const [currency, setCurrency] = useState<'eur' | 'brl' | 'usd'>('eur');
 
     // Preços por moeda - Tabela Mágica de Preços
@@ -70,12 +65,9 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     const detectPlatform = async () => {
         try {
             // Se não é plataforma nativa, é web (PWA)
-            const isNative = await Capacitor.isNativePlatform();
-            setIsNativeApp(isNative);
+            const isNative = await (await import('@capacitor/core')).Capacitor.isNativePlatform();
 
-            // Recuperar email do localStorage
-            const savedEmail = localStorage.getItem('userEmail') || '';
-            setUserEmail(savedEmail);
+            // Recuperar email removed
 
             // Detetar moeda do utilizador (passando a língua selecionada na app)
             const detectedCurrency = detectCurrency(language);
@@ -88,7 +80,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         } catch (error) {
             console.error('Error detecting platform:', error);
             // Se der erro, assume que é web
-            setIsNativeApp(false);
+            // setIsNativeApp removed
         }
     };
 
@@ -141,24 +133,6 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         }
     };
 
-    const handleStripeCheckout = async () => {
-        if (!userEmail || !userEmail.includes('@')) {
-            setStripeError('Por favor insira um email válido');
-            return;
-        }
-
-        setIsLoadingStripe(true);
-        setStripeError(null);
-
-        try {
-            // Guardar email para futuro
-            localStorage.setItem('userEmail', userEmail);
-            await StripeService.startCheckout(selectedPlan, userEmail, currency);
-        } catch (error) {
-            setStripeError(error instanceof Error ? error.message : 'Erro ao iniciar pagamento');
-            setIsLoadingStripe(false);
-        }
-    };
 
     const getPricing = (planType: 'yearly' | 'monthly' | 'weekly'): { price: string; trialDays?: number; perMonth?: string } => {
         // @ts-ignore
@@ -192,14 +166,17 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 </button>
 
                 {/* Header */}
-                <div className="text-center mb-6">
-                    <div className="inline-block p-4 rounded-full bg-neon-pulse/10 mb-4 shadow-[0_0_30px_rgba(0,255,114,0.2)]">
-                        <Crown className="w-10 h-10 text-neon-pulse" />
+                <div className="text-center mb-8">
+                    <div className="relative inline-block mb-6">
+                        <div className="absolute inset-0 bg-neon-pulse/20 blur-2xl rounded-full animate-pulse" />
+                        <div className="relative p-5 rounded-3xl bg-gradient-to-br from-dark-steel/50 to-dark-graphite border border-neon-pulse/30 shadow-[0_0_40px_rgba(0,255,114,0.15)] mt-4">
+                            <Crown className="w-12 h-12 text-neon-pulse drop-shadow-[0_0_10px_rgba(0,255,114,0.5)]" />
+                        </div>
                     </div>
-                    <h2 className="text-2xl font-black text-white mb-2 tracking-tight">
+                    <h2 className="text-3xl font-black text-white mb-3 tracking-tight bg-gradient-to-b from-white to-text-secondary bg-clip-text text-transparent">
                         {t.premiumTitle.replace(' 🔒', '')}
                     </h2>
-                    <p className="text-text-secondary text-sm leading-relaxed font-medium">
+                    <p className="text-text-secondary text-base leading-relaxed font-medium px-4">
                         {t.premiumDesc}
                     </p>
                 </div>
@@ -207,160 +184,154 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 {/* Plans */}
                 <div className="space-y-3 mb-6">
                     {/* Plano Anual - DESTACADO */}
-                    <button
+                    <div className={`w-full p-5 rounded-2xl border-2 transition-all duration-300 text-left relative overflow-hidden group ${selectedPlan === 'yearly'
+                        ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_30px_rgba(0,255,114,0.25)]'
+                        : 'border-dark-steel/50 bg-dark-steel/20 hover:border-dark-steel hover:bg-dark-steel/30'
+                        }`}
                         onClick={() => setSelectedPlan('yearly')}
-                        className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${selectedPlan === 'yearly'
-                            ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.3)]'
-                            : 'border-dark-steel bg-dark-steel/30 hover:border-dark-steel/80'
-                            }`}
                     >
+                        {/* Animated Background Shine for Selected */}
+                        {selectedPlan === 'yearly' && (
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full animate-shine" />
+                        )}
+
                         {/* Badge */}
-                        <div className="absolute -top-3 left-4 bg-gradient-to-r from-neon-pulse to-neon-mint px-3 py-1 rounded-full animate-pulse shadow-[0_0_15px_rgba(0,255,114,0.6)]">
-                            <span className="text-xs font-black text-dark-carbon uppercase tracking-wider">
+                        <div className="absolute -top-3 right-4 bg-gradient-to-r from-neon-pulse to-neon-mint px-4 py-1.5 rounded-full shadow-[0_4px_15px_rgba(0,255,114,0.4)] z-10">
+                            <span className="text-[10px] font-black text-dark-carbon uppercase tracking-widest">
                                 {t.bestValue}
                             </span>
                         </div>
 
-                        <div className="flex items-start justify-between mt-2">
+                        <div className="flex items-center justify-between relative z-10">
                             <div className="flex-1">
-                                <h3 className="text-lg font-bold text-white mb-1">{t.yearlyPlan}</h3>
-                                <p className="text-sm text-text-secondary mb-2">
-                                    {yearlyPrice.trialDays && (
-                                        <>
-                                            <span className="text-neon-pulse font-bold">{yearlyPrice.trialDays}</span> {t.trialThen}
-                                            {' '}
-                                        </>
-                                    )}
-                                    <span className="text-white font-bold">{yearlyPrice.price}</span> {t.perYear}
-                                </p>
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <h3 className="text-xl font-black text-white">{t.yearlyPlan}</h3>
+                                    <span className="text-[10px] bg-white/10 text-white/50 px-2 py-0.5 rounded uppercase font-bold tracking-tighter">7 Dias Grátis</span>
+                                </div>
+                                <div className="flex items-baseline gap-2 mb-1">
+                                    <span className="text-2xl font-black text-white">{yearlyPrice.price}</span>
+                                    <span className="text-sm text-text-dim font-medium">{t.perYear}</span>
+                                </div>
                                 {yearlyPrice.perMonth && (
-                                    <p className="text-xs text-text-dim">
-                                        {t.equivalentTo} <span className="text-neon-pulse font-semibold">{yearlyPrice.perMonth}</span> {t.monthlyEquivalent}
+                                    <p className="text-xs text-neon-pulse/80 font-bold mb-3">
+                                        {t.equivalentTo} {yearlyPrice.perMonth} {t.monthlyEquivalent}
                                     </p>
                                 )}
-                                <p className="text-xs text-text-secondary mt-2 leading-snug">
-                                    {t.yearlyBenefit}
-                                </p>
+                                <div className="space-y-1.5">
+                                    {(t.yearlyBenefit || '').split(',').map((benefit: string, i: number) => (
+                                        <div key={i} className="flex items-center gap-2 text-xs text-text-secondary">
+                                            <div className="w-1 h-1 rounded-full bg-neon-pulse" />
+                                            {benefit.trim()}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedPlan === 'yearly'
-                                ? 'border-neon-pulse bg-neon-pulse'
-                                : 'border-dark-steel'
+                            <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${selectedPlan === 'yearly'
+                                ? 'border-neon-pulse bg-neon-pulse scale-110'
+                                : 'border-dark-steel bg-dark-carbon/50'
                                 }`}>
-                                {selectedPlan === 'yearly' && <Check className="w-4 h-4 text-dark-carbon" strokeWidth={3} />}
+                                {selectedPlan === 'yearly' && <Check className="w-4 h-4 text-dark-carbon" strokeWidth={4} />}
                             </div>
                         </div>
-                    </button>
+                    </div>
 
                     {/* Plano Mensal */}
-                    <button
+                    <div
                         onClick={() => setSelectedPlan('monthly')}
-                        className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${selectedPlan === 'monthly'
-                            ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.3)]'
-                            : 'border-dark-steel bg-dark-steel/30 hover:border-dark-steel/80'
+                        className={`w-full p-4 rounded-xl border-2 transition-all duration-300 text-left relative cursor-pointer ${selectedPlan === 'monthly'
+                            ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.15)]'
+                            : 'border-dark-steel/50 bg-dark-steel/20 hover:border-dark-steel/80'
                             }`}
                     >
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-center justify-between">
                             <div className="flex-1">
-                                <h3 className="text-lg font-bold text-white mb-1">{t.monthlyPlan}</h3>
-                                <p className="text-sm text-text-secondary mb-2">
-                                    <span className="text-white font-bold">{monthlyPrice.price}</span> {t.perMonth}
-                                </p>
-                                <p className="text-xs text-text-secondary mt-2 leading-snug">
-                                    {t.monthlyBenefit}
-                                </p>
+                                <h3 className="text-base font-bold text-white mb-0.5">{t.monthlyPlan}</h3>
+                                <div className="flex items-baseline gap-1.5">
+                                    <span className="text-xl font-black text-white">{monthlyPrice.price}</span>
+                                    <span className="text-xs text-text-dim font-medium">{t.perMonth}</span>
+                                </div>
                             </div>
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedPlan === 'monthly'
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${selectedPlan === 'monthly'
                                 ? 'border-neon-pulse bg-neon-pulse'
-                                : 'border-dark-steel'
+                                : 'border-dark-steel bg-dark-carbon/50'
                                 }`}>
-                                {selectedPlan === 'monthly' && <Check className="w-4 h-4 text-dark-carbon" strokeWidth={3} />}
+                                {selectedPlan === 'monthly' && <Check className="w-3.5 h-3.5 text-dark-carbon" strokeWidth={4} />}
                             </div>
                         </div>
-                    </button>
+                    </div>
 
                     {/* Plano Semanal */}
-                    <button
+                    <div
                         onClick={() => setSelectedPlan('weekly')}
-                        className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${selectedPlan === 'weekly'
-                            ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.3)]'
-                            : 'border-dark-steel bg-dark-steel/30 hover:border-dark-steel/80'
+                        className={`w-full p-4 rounded-xl border-2 transition-all duration-300 text-left relative cursor-pointer ${selectedPlan === 'weekly'
+                            ? 'border-neon-pulse bg-neon-pulse/10 shadow-[0_0_20px_rgba(0,255,114,0.15)]'
+                            : 'border-dark-steel/50 bg-dark-steel/20 hover:border-dark-steel/80'
                             }`}
                     >
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-center justify-between">
                             <div className="flex-1">
-                                <h3 className="text-lg font-bold text-white mb-1">{t.weeklyPlan}</h3>
-                                <p className="text-sm text-text-secondary mb-2">
-                                    <span className="text-white font-bold">{weeklyPrice.price}</span> {t.perWeek}
-                                </p>
-                                <p className="text-xs text-text-secondary mt-2 leading-snug">
-                                    {t.weeklyBenefit}
-                                </p>
+                                <h3 className="text-base font-bold text-white mb-0.5">{t.weeklyPlan}</h3>
+                                <div className="flex items-baseline gap-1.5">
+                                    <span className="text-xl font-black text-white">{weeklyPrice.price}</span>
+                                    <span className="text-xs text-text-dim font-medium">{t.perWeek}</span>
+                                </div>
                             </div>
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedPlan === 'weekly'
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${selectedPlan === 'weekly'
                                 ? 'border-neon-pulse bg-neon-pulse'
-                                : 'border-dark-steel'
+                                : 'border-dark-steel bg-dark-carbon/50'
                                 }`}>
-                                {selectedPlan === 'weekly' && <Check className="w-4 h-4 text-dark-carbon" strokeWidth={3} />}
+                                {selectedPlan === 'weekly' && <Check className="w-3.5 h-3.5 text-dark-carbon" strokeWidth={4} />}
                             </div>
                         </div>
-                    </button>
+                    </div>
                 </div>
 
-                {/* Email Input - PWA Only */}
-                {!isNativeApp && (
-                    <div className="mb-6">
-                        <label className="text-sm text-text-secondary mb-2 block">Email para pagamento</label>
+                {/* Web Email Input (Stripe) */}
+                {!Capacitor.isNativePlatform() && (
+                    <div className="mb-6 animate-in slide-in-from-top-2 duration-400">
+                        <label className="block text-xs font-bold text-neon-pulse uppercase tracking-wider mb-2 ml-1">
+                            Email para ativação
+                        </label>
                         <input
                             type="email"
-                            value={userEmail}
-                            onChange={(e) => setUserEmail(e.target.value)}
-                            placeholder="seu@email.com"
-                            className="w-full bg-dark-steel/50 border border-dark-steel rounded-lg px-4 py-3 text-white placeholder-text-dim focus:outline-none focus:border-neon-pulse transition"
+                            placeholder="teu@email.com"
+                            id="stripe-email"
+                            className="w-full bg-dark-carbon/50 border-2 border-dark-steel/50 rounded-xl px-4 py-3 text-white placeholder-text-dim focus:outline-none focus:border-neon-pulse/50 transition-all font-medium"
                         />
-                        <p className="text-xs text-text-dim mt-2">
-                            Use este email para recuperar o acesso em outros dispositivos.
+                        <p className="text-[10px] text-text-dim mt-2 ml-1">
+                            Usaremos este email para sincronizar o teu Premium entre dispositivos.
                         </p>
                     </div>
                 )}
 
-                {/* Continue Button - Diferente consoante plataforma */}
-                {isNativeApp ? (
-                    // App Nativa - RevenueCat
+                {/* Continue Button */}
+                <div className="mt-8 mb-6">
                     <button
-                        onClick={() => onPurchase(selectedPlan)}
-                        className="w-full bg-neon-pulse hover:bg-neon-mint text-dark-carbon font-black text-xl py-4 rounded-xl shadow-[0_0_25px_rgba(0,255,114,0.4)] transition-all hover:scale-[1.02] active:scale-95 uppercase tracking-wide mb-6"
+                        onClick={() => {
+                            const email = (document.getElementById('stripe-email') as HTMLInputElement)?.value;
+                            onPurchase(selectedPlan, email);
+                        }}
+                        className="w-full relative group"
                     >
-                        {t.continueButton}
+                        <div className="absolute inset-0 bg-neon-pulse blur-xl opacity-40 group-hover:opacity-60 transition-opacity" />
+                        <div className="relative bg-neon-pulse hover:bg-neon-mint text-dark-carbon font-black text-xl py-4 rounded-2xl shadow-xl transition-all duration-300 transform group-hover:scale-[1.02] group-active:scale-[0.98] uppercase tracking-[2px] flex items-center justify-center gap-3">
+                            {t.continueButton}
+                            <Crown className="w-6 h-6" />
+                        </div>
                     </button>
-                ) : (
-                    // PWA - Stripe
-                    <>
-                        <button
-                            onClick={handleStripeCheckout}
-                            disabled={isLoadingStripe}
-                            className="w-full bg-neon-pulse hover:bg-neon-mint disabled:bg-gray-600 text-dark-carbon font-black text-xl py-4 rounded-xl shadow-[0_0_25px_rgba(0,255,114,0.4)] transition-all hover:scale-[1.02] active:scale-95 uppercase tracking-wide mb-6"
-                        >
-                            {isLoadingStripe ? 'A processar...' : t.continueButton}
-                        </button>
-                        {stripeError && (
-                            <div className="bg-red-500 bg-opacity-20 border border-red-500 rounded p-3 mb-4 text-red-300 text-sm">
-                                {stripeError}
-                            </div>
-                        )}
-                    </>
-                )}
+                </div>
 
                 {/* Legal Text */}
                 <div className="space-y-2 mb-4">
-                    <p className="text-xs text-text-dim leading-relaxed text-center">{t.legalText1}</p>
-                    <p className="text-xs text-text-dim leading-relaxed text-center">{t.legalText2}</p>
-                    <p className="text-xs text-text-dim leading-relaxed text-center">{t.legalText3}</p>
+                    <p className="text-[10px] text-text-dim leading-relaxed text-center opacity-80">{t.legalText1}</p>
+                    <p className="text-[10px] text-text-dim leading-relaxed text-center opacity-80">{t.legalText2}</p>
+                    <p className="text-[10px] text-text-dim leading-relaxed text-center opacity-80">{t.legalText3}</p>
                 </div>
 
                 {/* Footer Links */}
                 <div className="flex flex-col items-center gap-3 pt-4 border-t border-dark-steel/50">
                     <button
-                        onClick={() => onRestore && onRestore(userEmail)}
+                        onClick={() => onRestore && onRestore()}
                         className="text-sm text-text-secondary hover:text-neon-pulse transition-colors font-medium"
                     >
                         {t.restorePurchases}

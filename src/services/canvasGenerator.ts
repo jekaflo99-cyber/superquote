@@ -519,6 +519,7 @@ export const generateImage = async (
                 let currentX = startX;
                 const lineRuns = linesOfRuns[index];
                 lineRuns.forEach(run => {
+                    ctx.save();
                     const wordsInRun = run.text.split(' ');
                     wordsInRun.forEach((word, wIdx) => {
                         let textToDraw = word;
@@ -546,6 +547,7 @@ export const generateImage = async (
                             currentX += extraSpace;
                         }
                     });
+                    ctx.restore();
                 });
             } else {
                 let currentX = startX;

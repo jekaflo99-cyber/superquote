@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, Search, Sparkles, Dices, Tag, Heart } from 'lucide-react';
-import { type LanguageCode } from '../types';
+import { ArrowLeft, Search, Sparkles, Dices, Tag, Heart, MousePointer2 } from 'lucide-react';
+import { type LanguageCode, type TutorialStep } from '../types';
 import { UI_TRANSLATIONS } from '../Data/translations.ts';
 import { admobService } from '../services/admobService';
 
@@ -14,6 +14,8 @@ interface Props {
   language: LanguageCode;
   isPremium: boolean;
   onUnlockPremium: () => void;
+  tutorialStep: TutorialStep;
+  setTutorialStep: (step: TutorialStep) => void;
 }
 
 // Helper function to map category keywords to emojis
@@ -108,9 +110,12 @@ const getCategoryColor = (category: string, index: number): string => {
   return colors[index % colors.length];
 };
 
-export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelectCategory, onSurprise, onOpenFavorites, language, isPremium, onUnlockPremium }) => {
+export const CategoriesScreen: React.FC<Props> = ({
+  categories, onBack, onSelectCategory, onSurprise, onOpenFavorites,
+  language, isPremium, tutorialStep, setTutorialStep, onUnlockPremium
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [clickCount, setClickCount] = useState(0);
+  const [secretCounter, setSecretCounter] = useState(0);
   const t = UI_TRANSLATIONS[language];
 
   // Mostra banner quando entra na tela (apenas se não for premium)
@@ -132,6 +137,7 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
     // Find the priority categories from the list, matching by keywords
     const found = {
       cat2026: null as string | null,
+      natal: null as string | null,
       newYear: null as string | null,
       reflection: null as string | null,
     };
@@ -144,7 +150,12 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
         found.cat2026 = cat;
       }
 
-      // Match New Year variants (Ano Novo, Passagem de Ano, New Year, Año Nuevo)
+      // Match Natal
+      if (!found.natal && (lower.includes('natal') || lower.includes('christmas') || lower.includes('navidad'))) {
+        found.natal = cat;
+      }
+
+      // Match New Year variants
       if (!found.newYear && (lower.includes('ano novo') || lower.includes('passagem de ano') ||
         lower.includes('new year') || lower.includes('año nuevo'))) {
         found.newYear = cat;
@@ -157,8 +168,8 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
       }
     });
 
-    // Return the priority categories in order: 2026, Ano Novo, Reflexão
-    return [found.cat2026, found.newYear, found.reflection].filter(cat => cat !== null) as string[];
+    // Return the priority categories in order: 2026, Natal, Ano Novo, Reflexão
+    return [found.cat2026, found.natal, found.newYear, found.reflection].filter(cat => cat !== null) as string[];
   }, [categories]);
 
   const filteredCategories = categories.filter(c =>
@@ -218,18 +229,7 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
           </div>
         </div>
 
-        <h1
-          className="text-2xl font-bold text-white mb-6 leading-tight cursor-default"
-          onClick={() => {
-            setClickCount(prev => prev + 1);
-            if (clickCount + 1 >= 3) {
-              onUnlockPremium();
-              setClickCount(0);
-            }
-            // Reset count if no click for 2 seconds
-            setTimeout(() => setClickCount(0), 2000);
-          }}
-        >
+        <h1 className="text-2xl font-bold text-white mb-6 leading-tight cursor-default">
           {renderHighlightedText(t.searchPlaceholder)}
         </h1>
 
@@ -252,9 +252,23 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
 
         {!isSearching && (
           <div className="mb-8">
-            <div className="flex items-center gap-2 mb-4 px-1">
-              <Sparkles className="w-5 h-5 text-neon-pulse fill-neon-pulse animate-pulse" />
-              <h2 className="font-bold text-text-primary text-lg tracking-tight">{t.suggestions}</h2>
+            <div
+              className="flex items-center gap-2 mb-4 px-1 cursor-default select-none"
+              onClick={() => {
+                if (isPremium) return;
+                const newCount = secretCounter + 1;
+                if (newCount >= 15) {
+                  onUnlockPremium();
+                  setSecretCounter(0);
+                  alert("Premium Ativado! 🎉");
+                } else {
+                  setSecretCounter(newCount);
+                  // Optional: console.log(newCount) for debugging if needed
+                }
+              }}
+            >
+              <Sparkles className="w-5 h-5 text-neon-pulse fill-neon-pulse animate-pulse pointer-events-none" />
+              <h2 className="font-bold text-text-primary text-lg tracking-tight pointer-events-none">{t.suggestions}</h2>
             </div>
             <div className="flex gap-4 overflow-x-auto pb-4 pt-2 -mx-5 px-5 snap-x snap-mandatory no-scrollbar">
               {suggestions.map((cat, i) => {
@@ -329,10 +343,48 @@ export const CategoriesScreen: React.FC<Props> = ({ categories, onBack, onSelect
 
       </main>
 
-      <div className="absolute bottom-8 left-0 right-0 px-6 flex justify-center z-30 pointer-events-none">
+      {/* Tutorial Overlay and Messages */}
+      {tutorialStep === 'WELCOME_SURPRISE' && (
+        <>
+          <div className="tutorial-overlay" />
+          <div className="tutorial-message-container">
+            <div className="flex justify-center mb-2">
+              <div className="bg-neon-pulse p-3 rounded-full shadow-[0_0_20px_rgba(0,255,114,0.5)]">
+                <Sparkles className="w-6 h-6 text-dark-carbon animate-pulse" />
+              </div>
+            </div>
+            <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t.tutWelcomeTitle}</h3>
+            <p className="text-text-dim text-sm font-medium leading-relaxed">
+              {t.tutWelcomeDesc.split('\n\n').map((para, i) => (
+                <React.Fragment key={i}>
+                  {para}
+                  {i === 0 && <><br /><br /></>}
+                </React.Fragment>
+              ))}
+            </p>
+          </div>
+        </>
+      )}
+
+      <div className={`absolute bottom-8 left-0 right-0 px-6 flex justify-center ${tutorialStep === 'WELCOME_SURPRISE' ? 'z-[100]' : 'z-30'} pointer-events-none`}>
+        {tutorialStep === 'WELCOME_SURPRISE' && (
+          <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center animate-[tutorial-tap_1s_infinite]">
+            <span className="bg-neon-pulse text-dark-carbon text-[10px] font-black px-2 py-0.5 rounded-full mb-1 uppercase tracking-wider shadow-lg">{t.tutTouchHere}</span>
+            <MousePointer2 className="w-8 h-8 text-neon-pulse fill-neon-pulse drop-shadow-[0_0_10px_rgba(0,255,114,0.8)] rotate-[-20deg]" />
+          </div>
+        )}
         <button
-          onClick={onSurprise}
-          className="pointer-events-auto flex items-center gap-3 bg-neon-pulse text-dark-carbon pl-6 pr-8 py-3.5 rounded-full shadow-[0_0_25px_rgba(0,255,114,0.4)] hover:bg-neon-mint hover:scale-105 active:scale-95 transition-all font-bold text-lg tracking-wide border border-neon-mint"
+          id="tutorial-surprise-btn"
+          onClick={() => {
+            if (tutorialStep === 'WELCOME_SURPRISE') {
+              setTutorialStep('OPEN_TEMPLATES');
+            }
+            onSurprise();
+          }}
+          className={`pointer-events-auto flex items-center gap-3 ${tutorialStep === 'WELCOME_SURPRISE'
+            ? 'pulse-neon bg-neon-pulse text-dark-carbon tutorial-highlight-area'
+            : 'bg-neon-pulse text-dark-carbon border-neon-mint shadow-[0_0_25px_rgba(0,255,114,0.4)] hover:shadow-[0_0_35px_rgba(0,255,114,0.6)]'
+            } pl-6 pr-8 py-3.5 rounded-full hover:scale-105 active:scale-95 transition-all font-bold text-lg tracking-wide border relative overflow-hidden group`}
         >
           <Dices className="w-6 h-6 animate-spin-slow" />
           <span>{t.surpriseMe}</span>

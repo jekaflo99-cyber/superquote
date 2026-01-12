@@ -1,14 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Download, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Box, Layers, PenTool, Lightbulb, Sparkles, Minus, Plus, Layout, Share2, X, Instagram, Facebook, Music, ArrowUpToLine, ArrowDownToLine, MoveVertical, Crown, Check, Edit2, Zap, Upload, Maximize2, Minimize2, Aperture } from 'lucide-react';
-import { type EditorConfig, type Template, type LanguageCode } from '../types';
+import { ArrowLeft, Download, Type, Palette, AlignLeft, AlignCenter, AlignRight, AlignJustify, Box, Layers, PenTool, Lightbulb, Sparkles, Minus, Plus, Layout, Share2, X, Instagram, Facebook, Music, ArrowUpToLine, ArrowDownToLine, MoveVertical, Crown, Check, Edit2, Zap, Upload, Maximize2, Minimize2, Aperture, MousePointer2 } from 'lucide-react';
+import { type EditorConfig, type Template, type LanguageCode, type TutorialStep } from '../types';
 import { UI_TRANSLATIONS } from '../Data/translations';
 import { generateImage } from '../services/canvasGenerator';
 import { useAutoTemplates } from '../Data/templates';
 import { admobService } from '../services/admobService';
 import { dailyUnlockService } from '../services/dailyUnlockService';
 import { revenueCatService } from '../services/revenueCatService';
-import StripeService from '../services/stripeService';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Media } from '@capacitor-community/media';
@@ -20,6 +19,7 @@ import { buildTextPlan } from '../services/textPlan';
 import { splitRunsIntoLines } from '../services/emphasisPlan';
 import { extractPaletteFromImage, chooseSmartColor } from '../services/colorService';
 import TEMPLATES_SMART_DATA from '../Data/templates_smart_data.json';
+import { StripeService } from '../services/stripeService';
 
 
 interface Props {
@@ -28,6 +28,8 @@ interface Props {
     isPremium: boolean;
     onUnlock: () => void;
     language: LanguageCode;
+    tutorialStep: TutorialStep;
+    setTutorialStep: (step: TutorialStep) => void;
 }
 
 // --- CATEGORY TRANSLATIONS ---
@@ -121,7 +123,7 @@ interface PresetConfig extends Partial<EditorConfig> {
 const PRESET_STYLES: PresetConfig[] = [
     // FREE STYLES (10 selected)
     { id: 'p1', name: 'Clean', isPremium: false, fontFamily: 'Inter', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textShadowOpacity: 0, textOutlineWidth: 0, textBackgroundColor: '#ffffff', textBackgroundOpacity: 0 },
-    { id: 'p2', name: 'Romantic', isPremium: false, fontFamily: 'Great Vibes', fontSize: 16, textAlign: 'justify', textColor: '#b03030', textShadowOpacity: 0, textOutlineWidth: 0 },
+    { id: 'p2', name: 'Romantic', isPremium: false, fontFamily: 'Great Vibes', fontSize: 16, textAlign: 'justify', textColor: '#b03030', textShadowOpacity: 0, textOutlineWidth: 0, disableSmartHighlights: true, highlights: [] },
     { id: 'p3', name: 'Impact', isPremium: false, fontFamily: 'Oswald', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textShadowOpacity: 1, textShadowBlur: 5, textShadowColor: '#000000' },
     { id: 'p8', name: 'Neon', isPremium: false, fontFamily: 'Righteous', fontSize: 16, textAlign: 'justify', textColor: '#00ff99', textShadowOpacity: 1, textShadowColor: '#00ff99', textShadowBlur: 10, textBackgroundColor: '#000000', textBackgroundOpacity: 0.7, textBoxStyle: 'block' },
     { id: 'p9', name: 'Note', isPremium: false, fontFamily: 'Indie Flower', fontSize: 16, textAlign: 'justify', textColor: '#000000', textBackgroundColor: '#fef3c7', textBackgroundOpacity: 1, textBoxStyle: 'block' },
@@ -149,7 +151,7 @@ const PRESET_STYLES: PresetConfig[] = [
     },
     { id: 'p88', name: 'Ginger', isPremium: false, fontFamily: 'Fredoka', fontSize: 16, textAlign: 'justify', textColor: '#8B4513', textGradientColors: ["#cd853f", "#8b4513"], textOutlineColor: "#ffffff", textOutlineWidth: 3, textShadowColor: "#5e300d", textShadowBlur: 5, textSuperStrokeColor: "#3e1f08", textSuperStrokeWidth: 2 },
     // PREMIUM STYLES
-    { id: 'p4', name: 'Signature', isPremium: true, fontFamily: 'WindSong', fontSize: 16, textAlign: 'justify', textColor: '#e2c792' },
+    { id: 'p4', name: 'Signature', isPremium: true, fontFamily: 'WindSong', fontSize: 16, textAlign: 'justify', textColor: '#e2c792', disableSmartHighlights: true, highlights: [] },
     { id: 'p5', name: 'Classic', isPremium: true, fontFamily: 'Merriweather', fontSize: 16, textAlign: 'justify', textColor: '#1a1a1a' },
     { id: 'p6', name: 'Pastel', isPremium: true, fontFamily: 'Quicksand', fontSize: 16, textAlign: 'justify', textColor: '#4a4a4a', textBackgroundColor: '#fce7f3', textBackgroundOpacity: 0.7, textBoxStyle: 'block' },
     { id: 'p7', name: 'Boss', isPremium: true, fontFamily: 'Montserrat', fontSize: 16, textAlign: 'justify', textColor: '#ffffff', textBackgroundColor: '#0f172a', textBackgroundOpacity: 0.9, textBoxStyle: 'block' },
@@ -501,8 +503,85 @@ const PremiumModal: React.FC<{
         </div>
     );
 };
+const TutorialGuided: React.FC<{
+    step: TutorialStep;
+    targetId?: string;
+    message: string;
+    position: 'top' | 'bottom' | 'left' | 'right';
+    messagePosition?: 'top' | 'bottom';
+    language: LanguageCode;
+}> = ({ step, targetId, message, position, messagePosition = 'top', language }) => {
+    const [coords, setCoords] = useState({ top: 0, left: 0 });
+    const t = UI_TRANSLATIONS[language];
 
-export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium, onUnlock, language }) => {
+    useEffect(() => {
+        const updatePos = () => {
+            if (!targetId) return;
+            const el = document.getElementById(targetId) || document.querySelector(`[data-tutorial="${targetId}"]`);
+            if (el) {
+                const rect = el.getBoundingClientRect();
+                let tValue = 0, lValue = 0;
+                if (position === 'top') {
+                    tValue = rect.top - 50;
+                    lValue = rect.left + rect.width / 2;
+                } else if (position === 'bottom') {
+                    tValue = rect.bottom + 20;
+                    lValue = rect.left + rect.width / 2;
+                } else if (position === 'left') {
+                    tValue = rect.top + rect.height / 2;
+                    lValue = rect.left - 120;
+                } else if (position === 'right') {
+                    tValue = rect.top + rect.height / 2;
+                    lValue = rect.right + 20;
+                }
+                setCoords({ top: tValue, left: lValue });
+            }
+        };
+        updatePos();
+        window.addEventListener('resize', updatePos);
+        return () => window.removeEventListener('resize', updatePos);
+    }, [targetId, position, step]);
+
+    return (
+        <>
+            <div className="tutorial-overlay" />
+
+            <div
+                className="tutorial-message-container"
+                style={{
+                    top: messagePosition === 'bottom' ? 'auto' : '15%',
+                    bottom: messagePosition === 'bottom' ? '10%' : 'auto',
+                    animation: messagePosition === 'bottom' ? 'slideUpFade 0.4s ease-out forwards' : 'fadeUp 0.3s ease-out forwards'
+                }}
+            >
+                <div className="flex justify-center mb-1">
+                    <Sparkles className="w-6 h-6 text-neon-pulse animate-pulse" />
+                </div>
+                <p className="text-white font-black uppercase text-sm tracking-tighter mb-2">{t.tutInstruction}</p>
+                <p className="text-gray-300 font-medium text-xs leading-relaxed">{message}</p>
+            </div>
+
+            {targetId && (
+                <div
+                    className={`tutorial-tooltip tooltip-${position} flex items-center gap-2`}
+                    style={{
+                        top: coords.top,
+                        left: coords.left,
+                        transform: position === 'top' || position === 'bottom' ? 'translateX(-50%)' : 'translateY(-50%)',
+                        zIndex: 160
+                    }}
+                >
+                    <div className="animate-[tutorial-tap_1s_infinite]">
+                        <MousePointer2 className="w-5 h-5 text-dark-carbon fill-dark-carbon rotate-[-20deg]" />
+                    </div>
+                    <span>{t.tutTouchHere}</span>
+                </div>
+            )}
+        </>
+    );
+};
+
+export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium, onUnlock, language, tutorialStep, setTutorialStep }) => {
     // ... (State and other functions remain unchanged)
     const allTemplates = useAutoTemplates();
     // Combine os templates fixos (DB) com os das pastas
@@ -539,6 +618,8 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         textureType: 'none',
         textureOpacity: 0.5,
         breakMode: 'balanced',
+        textRuns: [],
+        highlights: [],
     });
     const [previewRatio, setPreviewRatio] = useState(1);
     const [activeTool, setActiveTool] = useState<string>('templates'); // Default to templates tab
@@ -587,10 +668,32 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
     const [exportQuality, setExportQuality] = useState<'standard' | 'hd'>('standard');
     const [showSaveSuccess, setShowSaveSuccess] = useState(false);
     const [previewFitMode, setPreviewFitMode] = useState<'cover' | 'contain'>('cover');
-
     const t = UI_TRANSLATIONS[language];
 
-    // Set default template
+    // Initialize plan on mount
+    useEffect(() => {
+        handleRebuildPlan();
+    }, []);
+
+    // Modal Auto Exp Logic
+    useEffect(() => {
+        if (tutorialStep === 'MODAL_AUTO_EXP' && showTemplateModal) {
+            const sequence = [
+                { cat: 'Paisagens-Natureza', delay: 1000 },
+                { cat: 'Amor-relacionamento', delay: 2500 },
+                { cat: 'Diversos', delay: 4000 }
+            ];
+
+            sequence.forEach(({ cat, delay }) => {
+                setTimeout(() => {
+                    setTemplateCategory(cat);
+                    if (cat === 'Diversos') {
+                        setTutorialStep('MODAL_PICK_TEMP');
+                    }
+                }, delay);
+            });
+        }
+    }, [tutorialStep, showTemplateModal]);
     const getCurrentTemplate = () => {
         if (config.templateId === 'custom' && customImage) {
             return {
@@ -875,18 +978,35 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             noise: 0
         };
 
+        setConfig(prev => {
+            const nextBase = {
+                ...prev,
+                ...defaultStyleState,
+                ...preset,
+                textAlign: 'center' as const, // Always center aligned as requested
+                textGradientColors: preset.textGradientColors || undefined,
+                boxGradientColors: preset.boxGradientColors || undefined,
+                verticalAlign: (preset.verticalAlign || prev.verticalAlign) as any, // Keep previous if not in preset
+                brightness: preset.brightness ?? prev.brightness ?? 100,
+                noise: preset.noise ?? prev.noise ?? 0
+            } as EditorConfig;
 
-        setConfig(prev => ({
-            ...prev,
-            ...defaultStyleState,
-            ...preset,
-            textAlign: 'center', // Always center aligned as requested
-            textGradientColors: preset.textGradientColors || undefined,
-            boxGradientColors: preset.boxGradientColors || undefined,
-            verticalAlign: preset.verticalAlign || prev.verticalAlign, // Keep previous if not in preset
-            brightness: preset.brightness ?? prev.brightness ?? 100,
-            noise: preset.noise ?? prev.noise ?? 0
-        }));
+            // Recalculate plan with new disableSmartHighlights setting
+            const plan = buildTextPlan({
+                text: nextBase.text.replace(/\n/g, ' '),
+                lang: language,
+                breakMode: nextBase.breakMode || 'balanced',
+                forcedHighlights: nextBase.disableSmartHighlights ? nextBase.highlights : undefined,
+                secondaryColor: nextBase.textRuns?.find(r => r.weight === 'extraBold')?.color // Preserve color if possible
+            });
+
+            return {
+                ...nextBase,
+                text: plan.textBroken,
+                textRuns: plan.runs,
+                highlights: plan.highlights
+            } as EditorConfig;
+        });
     };
 
 
@@ -896,10 +1016,20 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             return;
         }
 
-        const lockedTools = ['stroke', 'box', 'glow', '3d', 'textures', 'magic'];
+        const lockedTools = ['stroke', 'box', 'glow', '3d', 'textures'];
         if (lockedTools.includes(toolId) && !isPremium) {
             setShowPremiumModal(true);
         } else {
+            if (toolId === 'magic' && tutorialStep === 'OPEN_MAGIC') {
+                setTutorialStep('PICK_LAYOUT');
+            }
+            if (toolId === 'magic' && tutorialStep === 'KEYWORD_EXPLAIN') {
+                setTutorialStep('TOGGLE_AUTO_OFF');
+            }
+            if (toolId === 'color' && tutorialStep === 'PICK_MAIN_COLOR') {
+                setTutorialStep('NONE');
+                localStorage.setItem('superquote_tutorial_done', 'true');
+            }
             setActiveTool(toolId);
         }
     };
@@ -922,7 +1052,7 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             text: textToProcess,
             lang: language,
             breakMode: targetMode,
-            forcedHighlights: config.disableSmartHighlights ? [] : config.highlights,
+            forcedHighlights: config.disableSmartHighlights ? config.highlights : undefined,
             secondaryColor: finalSecondaryColor
         });
 
@@ -931,7 +1061,8 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             text: plan.textBroken,
             textRuns: plan.runs,
             highlights: plan.highlights,
-            breakMode: plan.breakMode
+            breakMode: plan.breakMode,
+            disableSmartHighlights: config.disableSmartHighlights
         }));
     };
 
@@ -968,12 +1099,12 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
             secondaryColor: finalSecondaryColor
         });
 
-        setConfig({
-            ...config,
+        setConfig(prev => ({
+            ...prev,
             highlights: plan.highlights,
             textRuns: plan.runs,
             disableSmartHighlights: true
-        });
+        }));
     }
 
     const changeExtraBoldColor = (color: string) => {
@@ -1020,22 +1151,30 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         setShowPremiumModal(false);
     };
 
-    const handlePurchase = async (plan: 'yearly' | 'monthly' | 'weekly') => {
+    const handlePurchase = async (plan: 'yearly' | 'monthly' | 'weekly', email?: string) => {
         try {
-            console.log('Purchasing plan:', plan);
+            const isNative = Capacitor.isNativePlatform();
 
+            if (!isNative) {
+                // MODO WEB (STRIPE)
+                if (!email || !email.includes('@')) {
+                    alert('Por favor insere um email válido para ativar o Premium.');
+                    return;
+                }
+
+                console.log('Starting Stripe checkout for web...', plan);
+                await StripeService.startCheckout(plan, email);
+                return;
+            }
+
+            // MODO NATIVO (REVENUECAT)
+            console.log('Purchasing plan on Native:', plan);
             const success = await revenueCatService.purchasePackage(plan);
 
             if (success) {
-                // Compra bem sucedida
                 setShowSubscriptionModal(false);
                 onUnlock();
-
-                // Mostra mensagem de sucesso (opcional)
                 alert(t.unlockSuccess.replace('Meia-Noite', 'Sempre'));
-            } else {
-                // Usuário cancelou ou erro
-                console.log('Purchase cancelled or failed');
             }
         } catch (error) {
             console.error('Error during purchase:', error);
@@ -1043,26 +1182,12 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
         }
     };
 
-    const handleRestorePurchases = async (email?: string) => {
+    const handleRestorePurchases = async () => {
         try {
             console.log('Restoring purchases...');
 
             if (!Capacitor.isNativePlatform()) {
-                // Web Restore Logic
-                if (!email || !email.includes('@')) {
-                    alert('Por favor insira um email válido para restaurar.');
-                    return;
-                }
-
-                const isPremium = await StripeService.checkSubscriptionStatus(email);
-                if (isPremium) {
-                    setShowSubscriptionModal(false);
-                    onUnlock();
-                    localStorage.setItem('userEmail', email); // Save for future
-                    alert('Acesso Premium restaurado com sucesso!');
-                } else {
-                    alert('Nenhuma subscrição ativa encontrada para este email.');
-                }
+                alert('O restauro de compras está apenas disponível na App.');
                 return;
             }
 
@@ -1447,9 +1572,12 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                             <span
                                 key={ri}
                                 className={run.weight === 'extraBold' ? 'extra-bold' : ''}
-                                style={run.color ? { color: isTextGradient ? 'transparent' : run.color, WebkitTextStrokeColor: config.textOutlineWidth > 0 ? run.color : undefined } : undefined}
+                                style={{
+                                    fontWeight: run.weight === 'extraBold' ? 900 : 'normal',
+                                    ...(run.color ? { color: isTextGradient ? 'transparent' : run.color, WebkitTextStrokeColor: config.textOutlineWidth > 0 ? run.color : undefined } : {})
+                                }}
                             >
-                                {run.text}
+                                {run.weight === 'extraBold' ? run.text.toUpperCase() : run.text}
                             </span>
                         ))
                     ) : (
@@ -1503,10 +1631,10 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                     <div style={{ ...bgStyle }}>
                         {config.textSuperStrokeWidth > 0 && (
                             <div style={superStrokeStyle}>
-                                {renderInnerContent(lines, null)}
+                                {renderInnerContent(lines, linesOfRuns)}
                             </div>
                         )}
-                        {renderInnerContent(lines, null)}
+                        {renderInnerContent(lines, linesOfRuns)}
                     </div>
                 ) : (
                     lines.map((line, idx) => {
@@ -1529,1027 +1657,1110 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
     };
 
     return (
-        <div className="flex flex-col h-full bg-dark-carbon text-text-primary relative animate-fade-up">
-            {/* ... (Header) */}
-            <header className="flex items-center justify-between p-4 bg-dark-graphite border-b border-dark-steel z-20">
-                <button onClick={onBack} className="p-2 text-text-secondary hover:text-white transition-colors">
-                    <ArrowLeft className="w-6 h-6" />
-                </button>
-                <button
-                    onClick={handleDownload}
-                    disabled={isGenerating}
-                    className="bg-neon-pulse hover:bg-neon-mint text-dark-carbon px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 transition-all disabled:opacity-50 shadow-[0_0_12px_rgba(0,255,114,0.3)]"
-                >
-                    {isGenerating ? <Sparkles className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
-                    {t.export}
-                </button>
-            </header>
-
-            {/* ... (Main Content, Tools, Modals - Unchanged logic, just re-rendering) */}
-            <div className="flex-1 bg-dark-carbon flex items-center justify-center relative overflow-hidden">
-                <div className="relative shadow-2xl overflow-hidden"
-                    style={{
-                        width: '90%',
-                        aspectRatio: `${previewRatio}`, // ✅ Agora a caixa adapta-se ao formato!
-
-                        maxWidth: '400px',
-                        maskRepeat: 'no-repeat',
-                        WebkitMaskRepeat: 'no-repeat'
-                    }}>
-
-                    <div className="absolute inset-0 z-0">
-                        {getCurrentTemplate().backgroundType === 'image' ? (
-                            <img
-                                src={previewUrl || getCurrentTemplate().value}
-                                className="w-full h-full object-cover transition-all duration-500"
-                                style={{
-                                    filter: config.brightness ? `brightness(${config.brightness / 128})` : 'none'
-                                }}
-                                alt="bg"
-                            />
-                        ) : getCurrentTemplate().backgroundType === 'gradient' ? (
-                            <div className="w-full h-full" style={{ background: getCurrentTemplate().value }}>
-                                {previewUrl && <img src={previewUrl} className="w-full h-full object-cover absolute inset-0" style={{ filter: config.brightness ? `brightness(${config.brightness / 128})` : 'none' }} alt="preview" />}
-                            </div>
-                        ) : (
-                            <div className="w-full h-full" style={{ backgroundColor: getCurrentTemplate().value }}>
-                                {previewUrl && <img src={previewUrl} className="w-full h-full object-cover absolute inset-0" style={{ filter: config.brightness ? `brightness(${config.brightness / 128})` : 'none' }} alt="preview" />}
-                            </div>
-                        )}
-                        {!previewUrl && getCurrentTemplate().backgroundType === 'image' && <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${getCurrentTemplate().overlayOpacity || 0})` }}></div>}
-
-                        {/* Noise Overlay from Smart Data */}
-                        {config.noise && config.noise > 0 && (
-                            <div className="absolute inset-0 z-[4] pointer-events-none opacity-40 mix-blend-overlay"
-                                style={{
-                                    opacity: config.noise / 255,
-                                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
-                                }}
-                            />
-                        )}
-
-                        {renderTextureOverlay()}
-                    </div>
-
-
-                    {previewUrl ? (
-                        <img src={previewUrl} className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none" alt="preview" />
-                    ) : (
-                        <div className="absolute inset-0 z-0"></div>
-                    )}
-
-                    <div
-                        className="absolute inset-0 z-10 flex p-8 cursor-text group hover:bg-black/5 transition-colors"
-                        onClick={() => setIsEditingText(true)}
-                        style={{
-                            alignItems: config.verticalAlign === 'top' ? 'flex-start' : config.verticalAlign === 'bottom' ? 'flex-end' : 'center',
-                            justifyContent: 'center'
-                        }}
+        <div className="flex flex-col h-full bg-dark-carbon text-text-primary relative overflow-hidden">
+            <div className="flex flex-col h-full relative animate-fade-up">
+                {/* ... (Header) */}
+                <header className="flex items-center justify-between p-4 bg-dark-graphite border-b border-dark-steel z-20">
+                    <button onClick={onBack} className="p-2 text-text-secondary hover:text-white transition-colors">
+                        <ArrowLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                        onClick={handleDownload}
+                        disabled={isGenerating}
+                        className="bg-neon-pulse hover:bg-neon-mint text-dark-carbon px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 transition-all disabled:opacity-50 shadow-[0_0_12px_rgba(0,255,114,0.3)]"
                     >
-                        <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all pointer-events-none transform translate-y-2 group-hover:translate-y-0">
-                            <Edit2 className="w-4 h-4" />
-                        </div>
-                        {renderTextWithBackground()}
-                    </div>
+                        {isGenerating ? <Sparkles className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                        {t.export}
+                    </button>
+                </header>
 
-                    {!isPremium && (
-                        <div className="absolute bottom-3 right-3 pointer-events-none z-20 opacity-30">
-                            <span className="text-white font-black text-xs tracking-wider shadow-black drop-shadow-md" style={{ fontFamily: 'Inter, sans-serif' }}>
-                                SuperQuote
-                            </span>
-                        </div>
-                    )}
-                </div>
-            </div>
+                {/* ... (Main Content, Tools, Modals - Unchanged logic, just re-rendering) */}
+                <div className="flex-1 bg-dark-carbon flex items-center justify-center relative overflow-hidden">
+                    <div className="relative shadow-2xl overflow-hidden"
+                        style={{
+                            width: '90%',
+                            aspectRatio: `${previewRatio}`, // ✅ Agora a caixa adapta-se ao formato!
 
-            <div className="bg-dark-graphite border-t border-dark-steel flex flex-col z-20">
-                {/* Tools Area */}
-                <div className="h-32 p-3 overflow-hidden border-b border-dark-steel flex flex-col justify-center">
-                    {activeTool === 'font' && (
-                        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar h-full items-center">
-                            {FONTS_LIST.map((font) => (
-                                <button
-                                    key={font.name}
-                                    onClick={() => {
-                                        if (font.type === 'Pro' && !isPremium) {
-                                            setShowPremiumModal(true);
-                                        } else {
-                                            setConfig({ ...config, fontFamily: font.font });
-                                        }
+                            maxWidth: '400px',
+                            maskRepeat: 'no-repeat',
+                            WebkitMaskRepeat: 'no-repeat'
+                        }}>
+
+                        <div className="absolute inset-0 z-0">
+                            {getCurrentTemplate().backgroundType === 'image' ? (
+                                <img
+                                    src={previewUrl || getCurrentTemplate().value}
+                                    className="w-full h-full object-cover transition-all duration-500"
+                                    style={{
+                                        filter: config.brightness ? `brightness(${config.brightness / 128})` : 'none'
                                     }}
-                                    className={`px-3 py-1.5 rounded-lg whitespace-nowrap flex flex-col items-center gap-0.5 border transition-all ${config.fontFamily === font.font ? 'bg-neon-pulse border-neon-pulse text-dark-carbon' : 'bg-dark-steel border-dark-steel text-text-secondary hover:bg-dark-steel/80'}`}
-                                >
-                                    <span style={{ fontFamily: font.font }} className="text-base">{font.name.split(' ')[0]}</span>
-                                    <span className="text-[9px] uppercase opacity-60 tracking-wider flex items-center gap-1">
-                                        {font.type === 'Pro' && <Crown className="w-2.5 h-2.5 text-neon-pulse fill-neon-pulse" />}
-                                        {font.type}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {activeTool === 'size' && (
-                        <div className="flex items-center gap-3 px-2 h-full">
-                            <button onClick={() => setConfig(prev => ({ ...prev, fontSize: Math.max(10, prev.fontSize - 2) }))} className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80"><Minus className="w-4 h-4" /></button>
-                            <input
-                                type="range" min="10" max="100"
-                                value={config.fontSize}
-                                onChange={(e) => setConfig({ ...config, fontSize: Number(e.target.value) })}
-                                className="flex-1 accent-neon-pulse h-2 bg-dark-steel rounded-lg appearance-none cursor-pointer"
-                            />
-                            <button onClick={() => setConfig(prev => ({ ...prev, fontSize: Math.min(100, prev.fontSize + 2) }))} className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80"><Plus className="w-4 h-4" /></button>
-                            <span className="text-lg font-bold w-10 text-center text-text-primary">{config.fontSize}</span>
-                        </div>
-                    )}
-
-                    {activeTool === 'color' && (
-                        <div className="space-y-2 h-full flex flex-col justify-center">
-                            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                                <input
-                                    type="color"
-                                    value={config.textColor}
-                                    onChange={(e) => setConfig({ ...config, textColor: e.target.value, textGradientColors: undefined })}
-                                    className="w-9 h-9 rounded-full border-0 p-0 overflow-hidden cursor-pointer flex-shrink-0"
+                                    alt="bg"
                                 />
-                                {COLORS.map(color => (
-                                    <button
-                                        key={color}
-                                        onClick={() => setConfig({ ...config, textColor: color, textGradientColors: undefined })}
-                                        className={`w-9 h-9 rounded-full flex-shrink-0 border-2 ${config.textColor === color ? 'border-white' : 'border-transparent'}`}
-                                        style={{ backgroundColor: color }}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                            ) : getCurrentTemplate().backgroundType === 'gradient' ? (
+                                <div className="w-full h-full" style={{ background: getCurrentTemplate().value }}>
+                                    {previewUrl && <img src={previewUrl} className="w-full h-full object-cover absolute inset-0" style={{ filter: config.brightness ? `brightness(${config.brightness / 128})` : 'none' }} alt="preview" />}
+                                </div>
+                            ) : (
+                                <div className="w-full h-full" style={{ backgroundColor: getCurrentTemplate().value }}>
+                                    {previewUrl && <img src={previewUrl} className="w-full h-full object-cover absolute inset-0" style={{ filter: config.brightness ? `brightness(${config.brightness / 128})` : 'none' }} alt="preview" />}
+                                </div>
+                            )}
+                            {!previewUrl && getCurrentTemplate().backgroundType === 'image' && <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${getCurrentTemplate().overlayOpacity || 0})` }}></div>}
 
-                    {activeTool === 'styles' && (
-                        <div className="flex flex-col gap-1 h-full justify-center">
-                            <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar px-1 items-center">
-                                {/* Smart Cycle Button */}
-                                <button
-                                    onClick={() => {
-                                        const template = getCurrentTemplate();
-                                        const nextIndex = (smartPresetIndex + 1) % 3;
-                                        setSmartPresetIndex(nextIndex);
-                                        applySmartSuggestion(template, nextIndex);
+                            {/* Noise Overlay from Smart Data */}
+                            {config.noise && config.noise > 0 && (
+                                <div className="absolute inset-0 z-[4] pointer-events-none opacity-40 mix-blend-overlay"
+                                    style={{
+                                        opacity: config.noise / 255,
+                                        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
                                     }}
-                                    className="flex flex-col items-center gap-1 group flex-shrink-0 mr-2"
-                                >
-                                    <div className="w-14 h-14 bg-gradient-to-br from-neon-pulse to-neon-mint rounded-lg flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                                        <Sparkles className="w-8 h-8 text-dark-carbon" />
-                                    </div>
-                                    <span className="text-[9px] text-neon-pulse font-black uppercase tracking-tighter">{(t as any).smartSuggestion} {smartPresetIndex + 1}</span>
-                                </button>
+                                />
+                            )}
 
-                                <div className="w-[1px] h-10 bg-dark-steel mr-1" />
+                            {renderTextureOverlay()}
+                        </div>
 
-                                {PRESET_STYLES.map(preset => (
+
+                        {previewUrl ? (
+                            <img src={previewUrl} className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none" alt="preview" />
+                        ) : (
+                            <div className="absolute inset-0 z-0"></div>
+                        )}
+
+                        <div
+                            className="absolute inset-0 z-10 flex p-8 cursor-text group hover:bg-black/5 transition-colors"
+                            onClick={() => setIsEditingText(true)}
+                            style={{
+                                alignItems: config.verticalAlign === 'top' ? 'flex-start' : config.verticalAlign === 'bottom' ? 'flex-end' : 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all pointer-events-none transform translate-y-2 group-hover:translate-y-0">
+                                <Edit2 className="w-4 h-4" />
+                            </div>
+                            {renderTextWithBackground()}
+                        </div>
+
+                        {!isPremium && (
+                            <div className="absolute bottom-3 right-3 pointer-events-none z-20 opacity-30">
+                                <span className="text-white font-black text-xs tracking-wider shadow-black drop-shadow-md" style={{ fontFamily: 'Inter, sans-serif' }}>
+                                    SuperQuote
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="bg-dark-graphite border-t border-dark-steel flex flex-col z-20">
+                    {/* Tools Area */}
+                    <div className="h-32 p-3 overflow-hidden border-b border-dark-steel flex flex-col justify-center">
+                        {activeTool === 'font' && (
+                            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar h-full items-center">
+                                {FONTS_LIST.map((font) => (
                                     <button
-                                        key={preset.id}
-                                        onClick={() => applyPreset(preset)}
-                                        className="flex flex-col items-center gap-1 group flex-shrink-0"
+                                        key={font.name}
+                                        onClick={() => {
+                                            if (font.type === 'Pro' && !isPremium) {
+                                                setShowPremiumModal(true);
+                                            } else {
+                                                setConfig({ ...config, fontFamily: font.font });
+                                            }
+                                        }}
+                                        className={`px-3 py-1.5 rounded-lg whitespace-nowrap flex flex-col items-center gap-0.5 border transition-all ${config.fontFamily === font.font ? 'bg-neon-pulse border-neon-pulse text-dark-carbon' : 'bg-dark-steel border-dark-steel text-text-secondary hover:bg-dark-steel/80'}`}
                                     >
-                                        <StyleThumbnail preset={preset} />
-                                        <span className="text-[9px] text-text-dim group-hover:text-white font-medium">{preset.name}</span>
+                                        <span style={{ fontFamily: font.font }} className="text-base">{font.name.split(' ')[0]}</span>
+                                        <span className="text-[9px] uppercase opacity-60 tracking-wider flex items-center gap-1">
+                                            {font.type === 'Pro' && <Crown className="w-2.5 h-2.5 text-neon-pulse fill-neon-pulse" />}
+                                            {font.type}
+                                        </span>
                                     </button>
                                 ))}
                             </div>
-                        </div>
-                    )}
+                        )}
 
-
-                    {activeTool === 'effects' && (
-                        <div className="grid grid-cols-2 gap-4 h-full relative items-center px-1">
-                            <div className="relative">
-                                <div className={`space-y-1 ${!isPremium ? 'opacity-40 pointer-events-none filter blur-[1px]' : ''}`}>
-                                    <div className="flex justify-between text-[10px] text-text-dim">
-                                        <span>Outline</span>
-                                        <span>{config.textOutlineWidth}</span>
-                                    </div>
-                                    <input
-                                        type="range" min="0" max="10" step="0.5"
-                                        value={config.textOutlineWidth}
-                                        onChange={(e) => setConfig({ ...config, textOutlineWidth: Number(e.target.value) })}
-                                        className="w-full accent-neon-pulse bg-dark-steel h-1 rounded-lg cursor-pointer"
-                                    />
-                                    <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar">
-                                        <input
-                                            type="color"
-                                            value={config.textOutlineColor}
-                                            onChange={(e) => setConfig({ ...config, textOutlineColor: e.target.value })}
-                                            className="w-5 h-5 rounded-full border-0 p-0 overflow-hidden cursor-pointer flex-shrink-0"
-                                        />
-                                        <div className="w-5 h-5 rounded-full border-0 bg-white flex-shrink-0" />
-
-                                        {COLORS.slice(0, 3).map(c => (
-                                            <button key={c} onClick={() => setConfig({ ...config, textOutlineColor: c })} className="w-5 h-5 flex-shrink-0 rounded-full border-2" style={{ backgroundColor: c }} />
-                                        ))}
-                                    </div>
-                                </div>
-                                {!isPremium && (
-                                    <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={() => setShowPremiumModal(true)}>
-                                        <div className="bg-dark-graphite/90 p-1.5 rounded-full border border-neon-pulse/50 shadow-lg group hover:scale-110 transition-transform">
-                                            <Crown className="w-4 h-4 text-neon-pulse fill-neon-pulse" />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="space-y-1">
-                                <div className="flex justify-between text-[10px] text-text-dim">
-                                    <span>Shadow</span>
-                                    <span>{Math.round(config.textShadowOpacity * 100)}%</span>
-                                </div>
+                        {activeTool === 'size' && (
+                            <div className="flex items-center gap-3 px-2 h-full">
+                                <button onClick={() => setConfig(prev => ({ ...prev, fontSize: Math.max(10, prev.fontSize - 2) }))} className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80"><Minus className="w-4 h-4" /></button>
                                 <input
-                                    type="range" min="0" max="1" step="0.1"
-                                    value={config.textShadowOpacity}
-                                    onChange={(e) => setConfig({ ...config, textShadowOpacity: Number(e.target.value) })}
-                                    className="w-full accent-neon-pulse bg-dark-steel h-1 rounded-lg cursor-pointer"
+                                    type="range" min="10" max="100"
+                                    value={config.fontSize}
+                                    onChange={(e) => setConfig({ ...config, fontSize: Number(e.target.value) })}
+                                    className="flex-1 accent-neon-pulse h-2 bg-dark-steel rounded-lg appearance-none cursor-pointer"
                                 />
-                                <div className="flex gap-1 mt-1">
-                                    {['#000', '#555', '#330000', '#003300', '#000033'].map(c => (
-                                        <button key={c} onClick={() => setConfig({ ...config, textShadowColor: c })} className="w-5 h-5 rounded-full" style={{ backgroundColor: c, borderWidth: config.textShadowColor === c ? 2 : 0, borderColor: 'white' }} />
+                                <button onClick={() => setConfig(prev => ({ ...prev, fontSize: Math.min(100, prev.fontSize + 2) }))} className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80"><Plus className="w-4 h-4" /></button>
+                                <span className="text-lg font-bold w-10 text-center text-text-primary">{config.fontSize}</span>
+                            </div>
+                        )}
+
+                        {activeTool === 'color' && (
+                            <div className="space-y-2 h-full flex flex-col justify-center">
+                                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                                    <input
+                                        type="color"
+                                        value={config.textColor}
+                                        onChange={(e) => setConfig({ ...config, textColor: e.target.value, textGradientColors: undefined })}
+                                        className="w-9 h-9 rounded-full border-0 p-0 overflow-hidden cursor-pointer flex-shrink-0"
+                                    />
+                                    {COLORS.map(color => (
+                                        <button
+                                            key={color}
+                                            onClick={() => setConfig({ ...config, textColor: color, textGradientColors: undefined })}
+                                            className={`w-9 h-9 rounded-full flex-shrink-0 border-2 ${config.textColor === color ? 'border-white' : 'border-transparent'}`}
+                                            style={{ backgroundColor: color }}
+                                        />
                                     ))}
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {activeTool === 'stroke' && (
-                        <div className="space-y-2 h-full flex flex-col justify-center px-2">
-                            <div className="flex justify-between items-center">
-                                <span className="text-[10px] font-bold text-text-dim">Super Stroke Width</span>
-                                <span className="text-[10px] text-text-dim">{config.textSuperStrokeWidth}</span>
-                            </div>
-                            <input
-                                type="range" min="0" max="40" step="1"
-                                value={config.textSuperStrokeWidth}
-                                onChange={(e) => setConfig({ ...config, textSuperStrokeWidth: Number(e.target.value) })}
-                                className="w-full accent-neon-pulse bg-dark-steel h-1.5 rounded-lg"
-                            />
-                            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-                                <input type="color" value={config.textSuperStrokeColor} onChange={(e) => setConfig({ ...config, textSuperStrokeColor: e.target.value })} className="w-7 h-7 rounded-full border-0 p-0 overflow-hidden cursor-pointer flex-shrink-0" />
-                                {COLORS.map(c => (
-                                    <button key={c} onClick={() => setConfig({ ...config, textSuperStrokeColor: c })} className={`w-7 h-7 rounded-full flex-shrink-0 border-2 ${config.textSuperStrokeColor === c ? 'border-white' : 'border-transparent'}`} style={{ backgroundColor: c }} />
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                        {activeTool === 'styles' && (
+                            <div className="flex flex-col gap-1 h-full justify-center">
+                                <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar px-1 items-center">
+                                    {/* Smart Cycle Button */}
+                                    <button
+                                        onClick={() => {
+                                            if (!isPremium) {
+                                                setShowPremiumModal(true);
+                                                return;
+                                            }
+                                            const template = getCurrentTemplate();
+                                            const nextIndex = (smartPresetIndex + 1) % 3;
+                                            setSmartPresetIndex(nextIndex);
+                                            applySmartSuggestion(template, nextIndex);
+                                        }}
+                                        className="flex flex-col items-center gap-1 group flex-shrink-0 mr-2 relative"
+                                    >
+                                        <div className={`w-14 h-14 rounded-lg flex items-center justify-center shadow-lg hover:scale-105 transition-transform ${isPremium ? 'bg-gradient-to-br from-neon-pulse to-neon-mint' : 'bg-dark-steel'}`}>
+                                            <Sparkles className={`w-8 h-8 ${isPremium ? 'text-dark-carbon' : 'text-text-dim'}`} />
+                                        </div>
+                                        <span className={`text-[9px] font-black uppercase tracking-tighter ${isPremium ? 'text-neon-pulse' : 'text-text-dim'}`}>{(t as any).smartSuggestion} {smartPresetIndex + 1}</span>
 
-                    {activeTool === 'glow' && (
-                        <div className="space-y-2 h-full flex flex-col justify-center px-2">
-                            <div className="flex justify-between items-center">
-                                <span className="text-[10px] font-bold text-text-dim">Glow Intensity</span>
-                                <span className="text-[10px] text-text-dim">{config.textGlowWidth}</span>
-                            </div>
-                            <input
-                                type="range" min="0" max="50" step="1"
-                                value={config.textGlowWidth}
-                                onChange={(e) => setConfig({ ...config, textGlowWidth: Number(e.target.value) })}
-                                className="w-full accent-yellow-400 bg-dark-steel h-1.5 rounded-lg"
-                            />
-                            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-                                <input type="color" value={config.textGlowColor} onChange={(e) => setConfig({ ...config, textGlowColor: e.target.value })} className="w-7 h-7 rounded-full border-0 p-0 overflow-hidden cursor-pointer flex-shrink-0" />
-                                {['#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ffffff'].map(c => (
-                                    <button key={c} onClick={() => setConfig({ ...config, textGlowColor: c })} className={`w-7 h-7 rounded-full border-2 ${config.textGlowColor === c ? 'border-white' : 'border-transparent'}`} style={{ backgroundColor: c }} />
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                                        {!isPremium && (
+                                            <div className="absolute -top-1 -right-1 bg-neon-pulse rounded-full p-1 shadow-md border border-dark-carbon">
+                                                <Crown className="w-3 h-3 text-dark-carbon fill-dark-carbon" />
+                                            </div>
+                                        )}
+                                    </button>
 
-                    {activeTool === '3d' && (
-                        <div className="space-y-3 h-full flex flex-col justify-center px-2">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-[10px] text-text-dim block mb-1">Offset X</label>
-                                    <input type="range" min="-20" max="20" value={config.text3DOffsetX} onChange={(e) => setConfig({ ...config, text3DOffsetX: Number(e.target.value) })} className="w-full accent-neon-pulse h-1 bg-dark-steel" />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] text-text-dim block mb-1">Offset Y</label>
-                                    <input type="range" min="-20" max="20" value={config.text3DOffsetY} onChange={(e) => setConfig({ ...config, text3DOffsetY: Number(e.target.value) })} className="w-full accent-neon-pulse h-1 bg-dark-steel" />
-                                </div>
-                            </div>
-                            <div className="flex gap-2 items-center">
-                                <span className="text-[10px] text-text-dim">Color:</span>
-                                <input type="color" value={config.text3DColor} onChange={(e) => setConfig({ ...config, text3DColor: e.target.value })} className="w-6 h-6 rounded border-0 p-0" />
-                            </div>
-                        </div>
-                    )}
+                                    <div className="w-[1px] h-10 bg-dark-steel mr-1" />
 
-                    {activeTool === 'align' && (
-                        <div className="flex flex-col gap-3 h-full px-2 justify-center">
-                            <div className="space-y-1">
-                                <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider block mb-0.5">Horizontal</span>
-                                <div className="flex bg-dark-steel rounded-lg p-0.5">
-                                    {['left', 'center', 'right', 'justify'].map((align) => (
-                                        <button key={align} onClick={() => setConfig({ ...config, textAlign: align as any })} className={`flex-1 p-1.5 rounded-md flex justify-center ${config.textAlign === align ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim hover:text-white'}`}>
-                                            {align === 'left' && <AlignLeft className="w-4 h-4" />}
-                                            {align === 'center' && <AlignCenter className="w-4 h-4" />}
-                                            {align === 'right' && <AlignRight className="w-4 h-4" />}
-                                            {align === 'justify' && <AlignJustify className="w-4 h-4" />}
+                                    {PRESET_STYLES.map((preset, pIdx) => (
+                                        <button
+                                            key={preset.id}
+                                            id={pIdx === 0 ? 'tutorial-style-free' : undefined}
+                                            onClick={() => {
+                                                if (tutorialStep === 'PICK_STYLE' && pIdx === 0) {
+                                                    setTutorialStep('OPEN_MAGIC');
+                                                }
+                                                applyPreset(preset);
+                                            }}
+                                            className={`flex flex-col items-center gap-1 group flex-shrink-0 ${tutorialStep === 'PICK_STYLE' && pIdx === 0 ? 'pulse-neon tutorial-highlight-area' : ''}`}
+                                        >
+                                            <StyleThumbnail preset={preset} />
+                                            <span className="text-[9px] text-text-dim group-hover:text-white font-medium">{preset.name}</span>
                                         </button>
                                     ))}
                                 </div>
                             </div>
+                        )}
 
-                            <div className="space-y-1">
-                                <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider block mb-0.5">Vertical</span>
-                                <div className="flex bg-dark-steel rounded-lg p-0.5">
-                                    <button onClick={() => setConfig({ ...config, verticalAlign: 'top' })} className={`flex-1 p-1.5 rounded-md flex justify-center ${config.verticalAlign === 'top' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim hover:text-white'}`}>
-                                        <ArrowUpToLine className="w-4 h-4" />
-                                    </button>
-                                    <button onClick={() => setConfig({ ...config, verticalAlign: 'center' })} className={`flex-1 p-1.5 rounded-md flex justify-center ${config.verticalAlign === 'center' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim hover:text-white'}`}>
-                                        <MoveVertical className="w-4 h-4" />
-                                    </button>
-                                    <button onClick={() => setConfig({ ...config, verticalAlign: 'bottom' })} className={`flex-1 p-1.5 rounded-md flex justify-center ${config.verticalAlign === 'bottom' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim hover:text-white'}`}>
-                                        <ArrowDownToLine className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
-                    {activeTool === 'box' && (
-                        <div className="space-y-2 h-full flex flex-col justify-center px-2">
-                            <div className="flex gap-4">
-                                <button onClick={() => setConfig({ ...config, textBoxStyle: 'block' })} className={`flex-1 py-0.5 text-[10px] rounded border ${config.textBoxStyle === 'block' ? 'bg-neon-pulse border-neon-pulse text-dark-carbon' : 'bg-dark-steel border-dark-steel text-text-secondary'}`}>Box</button>
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] text-text-dim flex justify-between"><span>Opacity</span> <span>{Math.round(config.textBackgroundOpacity * 100)}%</span></label>
-                                <input type="range" min="0" max="1" step="0.05" value={config.textBackgroundOpacity} onChange={(e) => setConfig({ ...config, textBackgroundOpacity: Number(e.target.value) })} className="w-full accent-neon-pulse h-1 bg-dark-steel rounded-lg h-3" />
-                            </div>
-                            <div className="flex gap-1.5 overflow-x-auto pb-8 no-scrollbar">
-                                <input type="color" value={config.textBackgroundColor} onChange={(e) => setConfig({ ...config, textBackgroundColor: e.target.value })} className="w-7 h-7 rounded-full border-0 p-0 overflow-hidden cursor-pointer flex-shrink-0" />
-                                {['#ffffff', '#000000', '#f1f5f9', '#1e293b'].map(c => (
-                                    <button key={c} onClick={() => setConfig({ ...config, textBackgroundColor: c })} className={`w-7 h-7 rounded-full border-2 ${config.textBackgroundColor === c ? 'border-white' : 'border-transparent'}`} style={{ backgroundColor: c }} />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTool === 'format' && (
-                        <div className="grid grid-cols-2 gap-4 h-full relative items-center px-1">
-                            <div className="space-y-1 relative">
-                                <div className={`${!isPremium ? 'opacity-40 pointer-events-none filter blur-[1px]' : ''}`}>
-                                    <span className="text-[10px] text-text-dim">Line Height</span>
-                                    <input type="range" min="0.8" max="2.5" step="0.1" value={config.lineHeight} onChange={(e) => setConfig({ ...config, lineHeight: Number(e.target.value) })} className="w-full accent-neon-pulse h-1 bg-dark-steel cursor-pointer" />
-                                </div>
-                                {!isPremium && (
-                                    <div className="absolute inset-0 flex items-center justify-center cursor-pointer z-10" onClick={() => setShowPremiumModal(true)}>
-                                        <div className="bg-dark-graphite/90 p-1.5 rounded-full border border-neon-pulse/50 shadow-lg">
-                                            <Crown className="w-3 h-3 text-neon-pulse fill-neon-pulse" />
+                        {activeTool === 'effects' && (
+                            <div className="grid grid-cols-2 gap-4 h-full relative items-center px-1">
+                                <div className="relative">
+                                    <div className={`space-y-1 ${!isPremium ? 'opacity-40 pointer-events-none filter blur-[1px]' : ''}`}>
+                                        <div className="flex justify-between text-[10px] text-text-dim">
+                                            <span>Outline</span>
+                                            <span>{config.textOutlineWidth}</span>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
+                                        <input
+                                            type="range" min="0" max="10" step="0.5"
+                                            value={config.textOutlineWidth}
+                                            onChange={(e) => setConfig({ ...config, textOutlineWidth: Number(e.target.value) })}
+                                            className="w-full accent-neon-pulse bg-dark-steel h-1 rounded-lg cursor-pointer"
+                                        />
+                                        <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar">
+                                            <input
+                                                type="color"
+                                                value={config.textOutlineColor}
+                                                onChange={(e) => setConfig({ ...config, textOutlineColor: e.target.value })}
+                                                className="w-5 h-5 rounded-full border-0 p-0 overflow-hidden cursor-pointer flex-shrink-0"
+                                            />
+                                            <div className="w-5 h-5 rounded-full border-0 bg-white flex-shrink-0" />
 
-                            <div className="space-y-1">
-                                <span className="text-[10px] text-text-dim">Spacing</span>
-                                <input type="range" min="-2" max="10" step="0.5" value={config.letterSpacing} onChange={(e) => setConfig({ ...config, letterSpacing: Number(e.target.value) })} className="w-full accent-neon-pulse h-1 bg-dark-steel cursor-pointer" />
-                            </div>
-
-                            <div className="col-span-2 relative">
-                                <div className={`flex justify-between bg-dark-steel p-0.5 rounded-lg ${!isPremium ? 'opacity-40 pointer-events-none filter blur-[1px]' : ''}`}>
-                                    <button onClick={() => setConfig({ ...config, textTransform: 'none' })} className={`flex-1 py-1 text-[10px] rounded ${config.textTransform === 'none' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim'}`}>Normal</button>
-                                    <button onClick={() => setConfig({ ...config, textTransform: 'uppercase' })} className={`flex-1 py-1 text-[10px] rounded ${config.textTransform === 'uppercase' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim'}`}>AA</button>
-                                    <button onClick={() => setConfig({ ...config, textTransform: 'lowercase' })} className={`flex-1 py-1 text-[10px] rounded ${config.textTransform === 'lowercase' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim'}`}>aa</button>
-                                </div>
-                                {!isPremium && (
-                                    <div className="absolute inset-0 flex items-center justify-center cursor-pointer z-10" onClick={() => setShowPremiumModal(true)}>
-                                        <div className="bg-dark-graphite/90 p-1.5 rounded-full border border-neon-pulse/50 shadow-lg">
-                                            <Crown className="w-3 h-3 text-neon-pulse fill-neon-pulse" />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTool === 'textures' && (
-                        <div className="space-y-2 h-full flex flex-col justify-center px-1">
-                            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar items-center">
-                                {[
-                                    { id: 'none', label: 'None', icon: <X className="w-4 h-4" /> },
-                                    { id: 'grain', label: 'Grain', icon: <Sparkles className="w-4 h-4" /> },
-                                    { id: 'paper', label: 'Paper', icon: <Box className="w-4 h-4" /> },
-                                    { id: 'leak', label: 'Leak', icon: <Zap className="w-4 h-4" /> },
-                                    { id: 'dust', label: 'Dust', icon: <Layout className="w-4 h-4" /> }
-                                ].map((tex) => (
-                                    <button
-                                        key={tex.id}
-                                        onClick={() => setConfig({ ...config, textureType: tex.id as any })}
-                                        className={`px-3 py-1.5 rounded-lg whitespace-nowrap flex flex-col items-center gap-1 border transition-all ${config.textureType === tex.id ? 'bg-neon-pulse border-neon-pulse text-dark-carbon' : 'bg-dark-steel border-dark-steel text-text-secondary hover:bg-dark-steel/80'}`}
-                                    >
-                                        {tex.icon}
-                                        <span className="text-[10px] font-bold">{tex.label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="flex items-center gap-3 px-2">
-                                <span className="text-[9px] text-text-dim w-10">Opacity</span>
-                                <input
-                                    type="range" min="0" max="1" step="0.05"
-                                    value={config.textureOpacity || 0.5}
-                                    onChange={(e) => setConfig({ ...config, textureOpacity: Number(e.target.value) })}
-                                    className="flex-1 accent-neon-pulse h-1 bg-dark-steel rounded-lg appearance-none cursor-pointer"
-                                />
-                                <span className="text-[10px] font-bold text-text-primary">{Math.round((config.textureOpacity || 0.5) * 100)}%</span>
-                            </div>
-                        </div>
-                    )}
-                    {activeTool === 'magic' && (
-                        <div className="flex h-full w-full items-center overflow-hidden">
-                            {/* Sub-Nav */}
-                            <div className="flex flex-col border-r border-white/5 py-1 px-1.5 gap-1.5 justify-center h-full min-w-[75px] bg-dark-carbon/20">
-                                <button
-                                    onClick={() => setMagicSubTab('layout')}
-                                    className={`flex flex-col items-center py-1.5 rounded-lg text-[8px] font-bold uppercase transition-all ${magicSubTab === 'layout' ? 'bg-neon-pulse text-dark-carbon' : 'text-text-dim hover:text-white'}`}
-                                >
-                                    <Layout className="w-3.5 h-3.5 mb-1" />
-                                    Layout
-                                </button>
-                                <button onClick={() => setMagicSubTab('highlights')} className={`py-1.5 rounded-lg text-[8px] font-bold uppercase transition-all flex flex-col items-center gap-1 ${magicSubTab === 'highlights' ? 'bg-white/10 text-white shadow-[0_0_10px_rgba(255,255,255,0.05)]' : 'text-text-dim hover:text-white/60'}`}>
-                                    <Zap className="w-3.5 h-3.5" />
-                                    Keyword
-                                </button>
-                            </div>
-
-                            <div className="flex-1 h-full flex flex-col justify-center px-3 py-1">
-                                {magicSubTab === 'layout' ? (
-                                    <div className="flex flex-col gap-2">
-                                        <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider opacity-60">{(t as any).lineDirection}</span>
-                                        <div className="flex gap-2">
-                                            {(['balanced', 'compact', 'impact'] as const).map(mode => (
-                                                <button
-                                                    key={mode}
-                                                    onClick={() => handleRebuildPlan(undefined, mode)}
-                                                    className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all flex-1 ${config.breakMode === mode ? 'bg-neon-pulse border-neon-pulse text-dark-carbon' : 'bg-dark-steel border-dark-steel text-text-secondary'}`}
-                                                >
-                                                    {(t as any)[`layout${mode.charAt(0).toUpperCase() + mode.slice(1)}`]}
-                                                </button>
+                                            {COLORS.slice(0, 3).map(c => (
+                                                <button key={c} onClick={() => setConfig({ ...config, textOutlineColor: c })} className="w-5 h-5 flex-shrink-0 rounded-full border-2" style={{ backgroundColor: c }} />
                                             ))}
                                         </div>
                                     </div>
-                                ) : (
-                                    <div className="flex flex-col gap-1.5 h-full justify-center">
-                                        <div className="flex items-center justify-between gap-1">
-                                            <div className="flex items-center gap-1.5 bg-dark-steel/30 px-2 py-1.5 rounded-lg border border-white/5 flex-grow overflow-hidden">
-                                                <input type="color" value={config.textRuns?.find(r => r.weight === 'extraBold')?.color || config.textColor} onChange={(e) => changeExtraBoldColor(e.target.value)} className="w-5 h-5 rounded-full border-0 p-0 overflow-hidden cursor-pointer" />
-                                                <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                                                    {palette.slice(0, 3).map(c => (
-                                                        <button key={c} onClick={() => changeExtraBoldColor(c)} className="w-4 h-4 rounded-full border border-white/10 flex-shrink-0" style={{ backgroundColor: c }} />
-                                                    ))}
-                                                </div>
+                                    {!isPremium && (
+                                        <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={() => setShowPremiumModal(true)}>
+                                            <div className="bg-dark-graphite/90 p-1.5 rounded-full border border-neon-pulse/50 shadow-lg group hover:scale-110 transition-transform">
+                                                <Crown className="w-4 h-4 text-neon-pulse fill-neon-pulse" />
                                             </div>
-                                            <button onClick={clearExtraBold} className={`px-3 py-2 rounded-lg text-[9px] font-bold border transition-all ${config.disableSmartHighlights ? 'bg-neon-pulse/20 border-neon-pulse/50 text-neon-pulse' : 'bg-dark-steel border-dark-steel text-text-dim'}`}>
-                                                {config.disableSmartHighlights ? (t as any).manual : (t as any).auto}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-1">
+                                    <div className="flex justify-between text-[10px] text-text-dim">
+                                        <span>Shadow</span>
+                                        <span>{Math.round(config.textShadowOpacity * 100)}%</span>
+                                    </div>
+                                    <input
+                                        type="range" min="0" max="1" step="0.1"
+                                        value={config.textShadowOpacity}
+                                        onChange={(e) => setConfig({ ...config, textShadowOpacity: Number(e.target.value) })}
+                                        className="w-full accent-neon-pulse bg-dark-steel h-1 rounded-lg cursor-pointer"
+                                    />
+                                    <div className="flex gap-1 mt-1">
+                                        {['#000', '#555', '#330000', '#003300', '#000033'].map(c => (
+                                            <button key={c} onClick={() => setConfig({ ...config, textShadowColor: c })} className="w-5 h-5 rounded-full" style={{ backgroundColor: c, borderWidth: config.textShadowColor === c ? 2 : 0, borderColor: 'white' }} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTool === 'stroke' && (
+                            <div className="space-y-2 h-full flex flex-col justify-center px-2">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-text-dim">Super Stroke Width</span>
+                                    <span className="text-[10px] text-text-dim">{config.textSuperStrokeWidth}</span>
+                                </div>
+                                <input
+                                    type="range" min="0" max="40" step="1"
+                                    value={config.textSuperStrokeWidth}
+                                    onChange={(e) => setConfig({ ...config, textSuperStrokeWidth: Number(e.target.value) })}
+                                    className="w-full accent-neon-pulse bg-dark-steel h-1.5 rounded-lg"
+                                />
+                                <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                                    <input type="color" value={config.textSuperStrokeColor} onChange={(e) => setConfig({ ...config, textSuperStrokeColor: e.target.value })} className="w-7 h-7 rounded-full border-0 p-0 overflow-hidden cursor-pointer flex-shrink-0" />
+                                    {COLORS.map(c => (
+                                        <button key={c} onClick={() => setConfig({ ...config, textSuperStrokeColor: c })} className={`w-7 h-7 rounded-full flex-shrink-0 border-2 ${config.textSuperStrokeColor === c ? 'border-white' : 'border-transparent'}`} style={{ backgroundColor: c }} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTool === 'glow' && (
+                            <div className="space-y-2 h-full flex flex-col justify-center px-2">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-text-dim">Glow Intensity</span>
+                                    <span className="text-[10px] text-text-dim">{config.textGlowWidth}</span>
+                                </div>
+                                <input
+                                    type="range" min="0" max="50" step="1"
+                                    value={config.textGlowWidth}
+                                    onChange={(e) => setConfig({ ...config, textGlowWidth: Number(e.target.value) })}
+                                    className="w-full accent-yellow-400 bg-dark-steel h-1.5 rounded-lg"
+                                />
+                                <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                                    <input type="color" value={config.textGlowColor} onChange={(e) => setConfig({ ...config, textGlowColor: e.target.value })} className="w-7 h-7 rounded-full border-0 p-0 overflow-hidden cursor-pointer flex-shrink-0" />
+                                    {['#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ffffff'].map(c => (
+                                        <button key={c} onClick={() => setConfig({ ...config, textGlowColor: c })} className={`w-7 h-7 rounded-full border-2 ${config.textGlowColor === c ? 'border-white' : 'border-transparent'}`} style={{ backgroundColor: c }} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTool === '3d' && (
+                            <div className="space-y-3 h-full flex flex-col justify-center px-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] text-text-dim block mb-1">Offset X</label>
+                                        <input type="range" min="-20" max="20" value={config.text3DOffsetX} onChange={(e) => setConfig({ ...config, text3DOffsetX: Number(e.target.value) })} className="w-full accent-neon-pulse h-1 bg-dark-steel" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] text-text-dim block mb-1">Offset Y</label>
+                                        <input type="range" min="-20" max="20" value={config.text3DOffsetY} onChange={(e) => setConfig({ ...config, text3DOffsetY: Number(e.target.value) })} className="w-full accent-neon-pulse h-1 bg-dark-steel" />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                    <span className="text-[10px] text-text-dim">Color:</span>
+                                    <input type="color" value={config.text3DColor} onChange={(e) => setConfig({ ...config, text3DColor: e.target.value })} className="w-6 h-6 rounded border-0 p-0" />
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTool === 'align' && (
+                            <div className="flex flex-col gap-3 h-full px-2 justify-center">
+                                <div className="space-y-1">
+                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider block mb-0.5">Horizontal</span>
+                                    <div className="flex bg-dark-steel rounded-lg p-0.5">
+                                        {['left', 'center', 'right', 'justify'].map((align) => (
+                                            <button key={align} onClick={() => setConfig({ ...config, textAlign: align as any })} className={`flex-1 p-1.5 rounded-md flex justify-center ${config.textAlign === align ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim hover:text-white'}`}>
+                                                {align === 'left' && <AlignLeft className="w-4 h-4" />}
+                                                {align === 'center' && <AlignCenter className="w-4 h-4" />}
+                                                {align === 'right' && <AlignRight className="w-4 h-4" />}
+                                                {align === 'justify' && <AlignJustify className="w-4 h-4" />}
                                             </button>
-                                        </div>
-                                        <div className="flex flex-wrap gap-1 overflow-y-auto no-scrollbar max-h-[38px] pb-1">
-                                            {(() => {
-                                                const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, '');
-                                                const currentHighlights = config.highlights || [];
-                                                const activeColor = config.textRuns?.find(r => r.weight === 'extraBold')?.color || '#f700ff';
+                                        ))}
+                                    </div>
+                                </div>
 
-                                                const isDark = (color: string) => {
-                                                    const c = color.startsWith('#') ? color.substring(1) : color;
-                                                    if (c.length !== 6) return true;
-                                                    const rgb = parseInt(c, 16);
-                                                    const r = (rgb >> 16) & 0xff;
-                                                    const g = (rgb >> 8) & 0xff;
-                                                    const b = (rgb >> 0) & 0xff;
-                                                    const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-                                                    return luma < 128;
-                                                };
+                                <div className="space-y-1">
+                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider block mb-0.5">Vertical</span>
+                                    <div className="flex bg-dark-steel rounded-lg p-0.5">
+                                        <button onClick={() => setConfig({ ...config, verticalAlign: 'top' })} className={`flex-1 p-1.5 rounded-md flex justify-center ${config.verticalAlign === 'top' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim hover:text-white'}`}>
+                                            <ArrowUpToLine className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => setConfig({ ...config, verticalAlign: 'center' })} className={`flex-1 p-1.5 rounded-md flex justify-center ${config.verticalAlign === 'center' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim hover:text-white'}`}>
+                                            <MoveVertical className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => setConfig({ ...config, verticalAlign: 'bottom' })} className={`flex-1 p-1.5 rounded-md flex justify-center ${config.verticalAlign === 'bottom' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim hover:text-white'}`}>
+                                            <ArrowDownToLine className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
-                                                return config.text.replace(/\n/g, ' ').split(/\s+/).filter(w => w.length >= 2).map((word, i) => {
-                                                    const isHighlighted = currentHighlights.some(h => norm(h) === norm(word));
-                                                    return (
-                                                        <button
-                                                            key={`${word}-${i}`}
-                                                            onClick={() => toggleHighlight(word)}
-                                                            className={`px-2 py-0.5 rounded text-[9px] transition-all border ${isHighlighted
-                                                                ? 'border-transparent font-bold'
-                                                                : 'bg-dark-steel/40 border-dark-steel/50 text-text-dim'
-                                                                }`}
-                                                            style={isHighlighted ? {
-                                                                backgroundColor: activeColor,
-                                                                color: isDark(activeColor) ? '#ffffff' : '#000000'
-                                                            } : {}}
-                                                        >
-                                                            {word.replace(/[^\p{L}\p{N}]+$/gu, '')}
-                                                        </button>
-                                                    );
-                                                });
-                                            })()}
+                        {activeTool === 'box' && (
+                            <div className="space-y-2 h-full flex flex-col justify-center px-2">
+                                <div className="flex gap-4">
+                                    <button onClick={() => setConfig({ ...config, textBoxStyle: 'block' })} className={`flex-1 py-0.5 text-[10px] rounded border ${config.textBoxStyle === 'block' ? 'bg-neon-pulse border-neon-pulse text-dark-carbon' : 'bg-dark-steel border-dark-steel text-text-secondary'}`}>Box</button>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] text-text-dim flex justify-between"><span>Opacity</span> <span>{Math.round(config.textBackgroundOpacity * 100)}%</span></label>
+                                    <input type="range" min="0" max="1" step="0.05" value={config.textBackgroundOpacity} onChange={(e) => setConfig({ ...config, textBackgroundOpacity: Number(e.target.value) })} className="w-full accent-neon-pulse h-1 bg-dark-steel rounded-lg h-3" />
+                                </div>
+                                <div className="flex gap-1.5 overflow-x-auto pb-8 no-scrollbar">
+                                    <input type="color" value={config.textBackgroundColor} onChange={(e) => setConfig({ ...config, textBackgroundColor: e.target.value })} className="w-7 h-7 rounded-full border-0 p-0 overflow-hidden cursor-pointer flex-shrink-0" />
+                                    {['#ffffff', '#000000', '#f1f5f9', '#1e293b'].map(c => (
+                                        <button key={c} onClick={() => setConfig({ ...config, textBackgroundColor: c })} className={`w-7 h-7 rounded-full border-2 ${config.textBackgroundColor === c ? 'border-white' : 'border-transparent'}`} style={{ backgroundColor: c }} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTool === 'format' && (
+                            <div className="grid grid-cols-2 gap-4 h-full relative items-center px-1">
+                                <div className="space-y-1 relative">
+                                    <div className={`${!isPremium ? 'opacity-40 pointer-events-none filter blur-[1px]' : ''}`}>
+                                        <span className="text-[10px] text-text-dim">Line Height</span>
+                                        <input type="range" min="0.8" max="2.5" step="0.1" value={config.lineHeight} onChange={(e) => setConfig({ ...config, lineHeight: Number(e.target.value) })} className="w-full accent-neon-pulse h-1 bg-dark-steel cursor-pointer" />
+                                    </div>
+                                    {!isPremium && (
+                                        <div className="absolute inset-0 flex items-center justify-center cursor-pointer z-10" onClick={() => setShowPremiumModal(true)}>
+                                            <div className="bg-dark-graphite/90 p-1.5 rounded-full border border-neon-pulse/50 shadow-lg">
+                                                <Crown className="w-3 h-3 text-neon-pulse fill-neon-pulse" />
+                                            </div>
                                         </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-1">
+                                    <span className="text-[10px] text-text-dim">Spacing</span>
+                                    <input type="range" min="-2" max="10" step="0.5" value={config.letterSpacing} onChange={(e) => setConfig({ ...config, letterSpacing: Number(e.target.value) })} className="w-full accent-neon-pulse h-1 bg-dark-steel cursor-pointer" />
+                                </div>
+
+                                <div className="col-span-2 relative">
+                                    <div className={`flex justify-between bg-dark-steel p-0.5 rounded-lg ${!isPremium ? 'opacity-40 pointer-events-none filter blur-[1px]' : ''}`}>
+                                        <button onClick={() => setConfig({ ...config, textTransform: 'none' })} className={`flex-1 py-1 text-[10px] rounded ${config.textTransform === 'none' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim'}`}>Normal</button>
+                                        <button onClick={() => setConfig({ ...config, textTransform: 'uppercase' })} className={`flex-1 py-1 text-[10px] rounded ${config.textTransform === 'uppercase' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim'}`}>AA</button>
+                                        <button onClick={() => setConfig({ ...config, textTransform: 'lowercase' })} className={`flex-1 py-1 text-[10px] rounded ${config.textTransform === 'lowercase' ? 'bg-dark-carbon text-neon-pulse' : 'text-text-dim'}`}>aa</button>
+                                    </div>
+                                    {!isPremium && (
+                                        <div className="absolute inset-0 flex items-center justify-center cursor-pointer z-10" onClick={() => setShowPremiumModal(true)}>
+                                            <div className="bg-dark-graphite/90 p-1.5 rounded-full border border-neon-pulse/50 shadow-lg">
+                                                <Crown className="w-3 h-3 text-neon-pulse fill-neon-pulse" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTool === 'textures' && (
+                            <div className="space-y-2 h-full flex flex-col justify-center px-1">
+                                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar items-center">
+                                    {[
+                                        { id: 'none', label: 'None', icon: <X className="w-4 h-4" /> },
+                                        { id: 'grain', label: 'Grain', icon: <Sparkles className="w-4 h-4" /> },
+                                        { id: 'paper', label: 'Paper', icon: <Box className="w-4 h-4" /> },
+                                        { id: 'leak', label: 'Leak', icon: <Zap className="w-4 h-4" /> },
+                                        { id: 'dust', label: 'Dust', icon: <Layout className="w-4 h-4" /> }
+                                    ].map((tex) => (
+                                        <button
+                                            key={tex.id}
+                                            onClick={() => setConfig({ ...config, textureType: tex.id as any })}
+                                            className={`px-3 py-1.5 rounded-lg whitespace-nowrap flex flex-col items-center gap-1 border transition-all ${config.textureType === tex.id ? 'bg-neon-pulse border-neon-pulse text-dark-carbon' : 'bg-dark-steel border-dark-steel text-text-secondary hover:bg-dark-steel/80'}`}
+                                        >
+                                            {tex.icon}
+                                            <span className="text-[10px] font-bold">{tex.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-3 px-2">
+                                    <span className="text-[9px] text-text-dim w-10">Opacity</span>
+                                    <input
+                                        type="range" min="0" max="1" step="0.05"
+                                        value={config.textureOpacity || 0.5}
+                                        onChange={(e) => setConfig({ ...config, textureOpacity: Number(e.target.value) })}
+                                        className="flex-1 accent-neon-pulse h-1 bg-dark-steel rounded-lg appearance-none cursor-pointer"
+                                    />
+                                    <span className="text-[10px] font-bold text-text-primary">{Math.round((config.textureOpacity || 0.5) * 100)}%</span>
+                                </div>
+                            </div>
+                        )}
+                        {activeTool === 'magic' && (
+                            <div className="flex h-full w-full items-center overflow-hidden">
+                                {/* Sub-Nav */}
+                                <div className="flex flex-col border-r border-white/5 py-1 px-1.5 gap-1.5 justify-center h-full min-w-[75px] bg-dark-carbon/20">
+                                    <button
+                                        onClick={() => setMagicSubTab('layout')}
+                                        className={`flex flex-col items-center py-1.5 rounded-lg text-[8px] font-bold uppercase transition-all ${magicSubTab === 'layout' ? 'bg-neon-pulse text-dark-carbon' : 'text-text-dim hover:text-white'}`}
+                                    >
+                                        <Layout className="w-3.5 h-3.5 mb-1" />
+                                        Layout
+                                    </button>
+                                    <button
+                                        id="tutorial-tab-highlights"
+                                        onClick={() => {
+                                            if (tutorialStep === 'PICK_LAYOUT') {
+                                                setTutorialStep('TOGGLE_AUTO_OFF');
+                                            }
+                                            setMagicSubTab('highlights');
+                                        }}
+                                        className={`py-1.5 rounded-lg text-[8px] font-bold uppercase transition-all flex flex-col items-center gap-1 ${magicSubTab === 'highlights' ? 'bg-white/10 text-white shadow-[0_0_10px_rgba(255,255,255,0.05)]' : 'text-text-dim hover:text-white/60'} ${tutorialStep === 'PICK_LAYOUT' ? 'pulse-neon tutorial-highlight-area' : ''}`}
+                                    >
+                                        <Zap className="w-3.5 h-3.5" />
+                                        Keyword
+                                    </button>
+                                </div>
+
+                                <div className="flex-1 h-full flex flex-col justify-center px-3 py-1">
+                                    {magicSubTab === 'layout' ? (
+                                        <div className="flex flex-col gap-2">
+                                            <span className="text-[8px] font-bold text-text-dim uppercase tracking-wider opacity-60">{(t as any).lineDirection}</span>
+                                            <div className="flex gap-2">
+                                                {(['balanced', 'compact', 'impact'] as const).map(mode => (
+                                                    <button
+                                                        key={mode}
+                                                        onClick={() => handleRebuildPlan(undefined, mode)}
+                                                        className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all flex-1 ${config.breakMode === mode ? 'bg-neon-pulse border-neon-pulse text-dark-carbon' : 'bg-dark-steel border-dark-steel text-text-secondary'}`}
+                                                    >
+                                                        {(t as any)[`layout${mode.charAt(0).toUpperCase() + mode.slice(1)}`]}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-1.5 h-full justify-center">
+                                            <div className="flex items-center justify-between gap-1">
+                                                <div id="tutorial-kw-color-picker" className={`flex items-center gap-1.5 bg-dark-steel/30 px-2 py-1.5 rounded-lg border border-white/5 flex-grow overflow-hidden ${tutorialStep === 'PICK_KW_COLOR' ? 'tutorial-highlight-area pulse-neon' : ''}`}>
+                                                    <input type="color" value={config.textRuns?.find(r => r.weight === 'extraBold')?.color || config.textColor} onChange={(e) => {
+                                                        if (tutorialStep === 'PICK_KW_COLOR') {
+                                                            setTutorialStep('PICK_MAIN_COLOR');
+                                                        }
+                                                        changeExtraBoldColor(e.target.value);
+                                                    }} className="w-5 h-5 rounded-full border-0 p-0 overflow-hidden cursor-pointer" />
+                                                    <div className="flex gap-1 overflow-x-auto no-scrollbar">
+                                                        {palette.slice(0, 3).map(c => (
+                                                            <button key={c} onClick={() => {
+                                                                if (tutorialStep === 'PICK_KW_COLOR') {
+                                                                    setTutorialStep('PICK_MAIN_COLOR');
+                                                                }
+                                                                changeExtraBoldColor(c);
+                                                            }} className="w-4 h-4 rounded-full border border-white/10 flex-shrink-0" style={{ backgroundColor: c }} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    id="tutorial-toggle-auto"
+                                                    onClick={() => {
+                                                        if (tutorialStep === 'TOGGLE_AUTO_OFF') setTutorialStep('TOGGLE_AUTO_ON');
+                                                        else if (tutorialStep === 'TOGGLE_AUTO_ON') setTutorialStep('PICK_KW_COLOR');
+                                                        clearExtraBold();
+                                                    }}
+                                                    className={`px-3 py-2 rounded-lg text-[9px] font-bold border transition-all ${config.disableSmartHighlights ? 'bg-neon-pulse/20 border-neon-pulse/50 text-neon-pulse' : 'bg-dark-steel border-dark-steel text-text-dim'} ${(tutorialStep === 'TOGGLE_AUTO_OFF' || tutorialStep === 'TOGGLE_AUTO_ON') ? 'pulse-neon tutorial-highlight-area' : ''}`}
+                                                >
+                                                    {config.disableSmartHighlights ? (t as any).manual : (t as any).auto}
+                                                </button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1 overflow-y-auto no-scrollbar max-h-[38px] pb-1">
+                                                {(() => {
+                                                    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, '');
+                                                    const currentHighlights = config.highlights || [];
+                                                    const activeColor = config.textRuns?.find(r => r.weight === 'extraBold')?.color || '#f700ff';
+
+                                                    const isDark = (color: string) => {
+                                                        const c = color.startsWith('#') ? color.substring(1) : color;
+                                                        if (c.length !== 6) return true;
+                                                        const rgb = parseInt(c, 16);
+                                                        const r = (rgb >> 16) & 0xff;
+                                                        const g = (rgb >> 8) & 0xff;
+                                                        const b = (rgb >> 0) & 0xff;
+                                                        const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                                                        return luma < 128;
+                                                    };
+
+                                                    return config.text.replace(/\n/g, ' ').split(/\s+/).filter(w => w.length >= 2).map((word, i) => {
+                                                        const isHighlighted = currentHighlights.some(h => norm(h) === norm(word));
+                                                        return (
+                                                            <button
+                                                                key={`${word}-${i}`}
+                                                                onClick={() => toggleHighlight(word)}
+                                                                className={`px-2 py-0.5 rounded text-[9px] transition-all border ${isHighlighted
+                                                                    ? 'border-transparent font-bold'
+                                                                    : 'bg-dark-steel/40 border-dark-steel/50 text-text-dim'
+                                                                    }`}
+                                                                style={isHighlighted ? {
+                                                                    backgroundColor: activeColor,
+                                                                    color: isDark(activeColor) ? '#ffffff' : '#000000'
+                                                                } : {}}
+                                                            >
+                                                                {word.replace(/[^\p{L}\p{N}]+$/gu, '')}
+                                                            </button>
+                                                        );
+                                                    });
+                                                })()}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex overflow-x-auto no-scrollbar py-3 px-2 gap-1 bg-dark-carbon">
+                        {[
+                            { id: 'templates', icon: Layout, label: t.toolTemplates },
+                            { id: 'styles', icon: Sparkles, label: t.toolStyles },
+                            { id: 'magic', icon: Zap, label: (t as any).toolMagic },
+                            { id: 'color', icon: Palette, label: t.toolColor },
+                            { id: 'font', icon: Type, label: t.toolFont },
+                            { id: 'size', icon: Plus, label: t.toolSize },
+                            { id: 'stroke', icon: PenTool, label: t.toolStroke, isLocked: true },
+                            { id: 'align', icon: AlignLeft, label: t.toolAlign },
+                            { id: 'box', icon: Box, label: t.toolBox, isLocked: true },
+                            { id: 'glow', icon: Lightbulb, label: t.toolGlow, isLocked: true },
+                            { id: 'effects', icon: Layers, label: t.toolEffects },
+                            { id: '3d', icon: Box, label: t.tool3D, isLocked: true },
+                            { id: 'textures', icon: Aperture, label: t.toolTextures, isLocked: true },
+                            { id: 'format', icon: AlignJustify, label: t.toolFormat },
+                        ].map((tool) => (
+                            <button
+                                key={tool.id}
+                                id={`tool-${tool.id}`}
+                                onClick={() => {
+                                    if (tool.id === 'templates' && tutorialStep === 'OPEN_TEMPLATES') {
+                                        setTutorialStep('MODAL_AUTO_EXP');
+                                        setShowTemplateModal(true);
+                                        return;
+                                    }
+                                    handleToolClick(tool.id);
+                                }}
+                                className={`flex flex-col items-center justify-center min-w-[64px] h-14 rounded-lg transition-colors relative 
+                                ${activeTool === tool.id ? 'text-neon-pulse bg-dark-steel' : 'text-text-dim hover:text-white'}
+                                ${tool.id === 'templates' && tutorialStep === 'OPEN_TEMPLATES' ? 'pulse-neon bg-neon-pulse/20 text-neon-pulse border border-neon-pulse/50 tutorial-highlight-area' : ''}
+                                ${tool.id === 'magic' && tutorialStep === 'OPEN_MAGIC' ? 'pulse-neon bg-neon-pulse/20 text-neon-pulse border border-neon-pulse/50 tutorial-highlight-area' : ''}
+                                ${tool.id === 'color' && tutorialStep === 'PICK_MAIN_COLOR' ? 'pulse-neon bg-neon-pulse/20 text-neon-pulse border border-neon-pulse/50 tutorial-highlight-area' : ''}
+                            `}
+                            >
+                                <tool.icon className="w-5 h-5 mb-1" />
+                                <span className="text-[10px] font-medium">{tool.label}</span>
+                                {tool.isLocked && !isPremium && (
+                                    <div className="absolute top-1 right-1 bg-neon-pulse rounded-full p-[2px] shadow-sm">
+                                        <Crown className="w-2 h-2 text-dark-carbon fill-dark-carbon" />
                                     </div>
                                 )}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* ... (Export, Template, Preview Modals - Unchanged) */}
+                {
+                    showExportMenu && (
+                        <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                            <div className="w-full bg-dark-graphite rounded-t-3xl p-6 text-white pb-10 shadow-2xl border-t border-dark-steel">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-xl font-bold">{t.export}</h2>
+                                    <button onClick={() => setShowExportMenu(false)} className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80">
+                                        <X className="w-5 h-5 text-text-secondary" />
+                                    </button>
+                                </div>
+
+                                <div className="mb-6 flex gap-2 p-1 bg-dark-steel/50 rounded-xl">
+                                    <button
+                                        onClick={() => setExportQuality('standard')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${exportQuality === 'standard' ? 'bg-dark-carbon text-white shadow-md' : 'text-text-dim hover:text-white'}`}
+                                    >
+                                        <Zap className="w-4 h-4" /> {t.exportStandard}
+                                    </button>
+                                    <button
+                                        onClick={toggleQuality}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${exportQuality === 'hd' ? 'bg-neon-pulse text-dark-carbon shadow-md' : 'text-text-dim hover:text-white'}`}
+                                    >
+                                        <Crown className={`w-4 h-4 ${exportQuality === 'hd' ? 'fill-dark-carbon' : 'text-neon-pulse'}`} /> {t.exportHD}
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <p className="text-xs font-bold text-text-secondary uppercase tracking-wider px-1">{t.saveGallery}</p>
+
+                                        <button
+                                            onClick={() => handleSaveFile('square')}
+                                            className="w-full flex items-center justify-between p-4 bg-dark-steel hover:bg-dark-steel/80 rounded-xl transition-colors group border border-transparent hover:border-neon-mint/30"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-neon-pulse/20 p-2 rounded-full text-neon-pulse shadow-sm">
+                                                    <Download className="w-6 h-6" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <p className="font-bold text-white">Square (1:1)</p>
+                                                    <p className="text-xs text-text-secondary">
+                                                        {exportQuality === 'hd' ? '2048 x 2048 px' : '1080 x 1080 px'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span className="text-neon-pulse">⬇️</span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleSaveFile('story')}
+                                            className="w-full flex items-center justify-between p-4 bg-dark-steel hover:bg-dark-steel/80 rounded-xl transition-colors group border border-transparent hover:border-neon-mint/30"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-neon-pulse/20 p-2 rounded-full text-neon-pulse shadow-sm">
+                                                    <Download className="w-6 h-6" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <p className="font-bold text-white">Story (9:16)</p>
+                                                    <p className="text-xs text-text-secondary">
+                                                        {exportQuality === 'hd' ? '2160 x 3840 px' : '1080 x 1920 px'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span className="text-neon-pulse">⬇️</span>
+                                        </button>
+                                    </div>
+
+                                    <div className="relative flex py-2 items-center">
+                                        <div className="flex-grow border-t border-dark-steel"></div>
+                                        <span className="flex-shrink-0 mx-4 text-text-dim text-xs font-bold uppercase">{t.shareTo}</span>
+                                        <div className="flex-grow border-t border-dark-steel"></div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            onClick={() => handleSocialPreview('story')}
+                                            className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-purple-900/20 to-pink-900/20 rounded-xl border border-pink-500/20 hover:border-pink-500/50 transition-all active:scale-95"
+                                        >
+                                            <div className="w-10 h-10 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
+                                                <Instagram className="w-6 h-6" />
+                                            </div>
+                                            <span className="font-bold text-sm text-gray-200">Instagram</span>
+                                            <span className="text-[10px] text-gray-400">
+                                                {exportQuality === 'hd' ? '2160x3840 px' : '1080x1920 px'}
+                                            </span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleSocialPreview('story')}
+                                            className="flex flex-col items-center justify-center p-4 bg-dark-steel/50 hover:bg-dark-steel rounded-xl border border-dark-steel hover:border-gray-500 transition-all active:scale-95"
+                                        >
+                                            <div className="w-10 h-10 bg-black rounded-lg text-white flex items-center justify-center mb-2 shadow-sm border border-gray-700">
+                                                <Music className="w-6 h-6" />
+                                            </div>
+                                            <span className="font-bold text-sm text-gray-200">TikTok</span>
+                                            <span className="text-[10px] text-gray-400">
+                                                {exportQuality === 'hd' ? '2160x3840 px' : '1080x1920 px'}
+                                            </span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleSocialPreview('square')}
+                                            className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-green-900/20 to-emerald-900/20 rounded-xl border border-emerald-500/20 hover:border-emerald-500/50 transition-all active:scale-95"
+                                        >
+                                            <div className="w-10 h-10 bg-green-500 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
+                                                <Share2 className="w-6 h-6" />
+                                            </div>
+                                            <span className="font-bold text-sm text-gray-200">WhatsApp</span>
+                                            <span className="text-[10px] text-gray-400">
+                                                {exportQuality === 'hd' ? '2048x2048 px' : '1080x1080 px'}
+                                            </span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleSocialPreview('square')}
+                                            className="flex flex-col items-center justify-center p-4 bg-blue-900/20 hover:bg-blue-900/30 rounded-xl border border-blue-500/20 hover:border-blue-500/50 transition-all active:scale-95"
+                                        >
+                                            <div className="w-10 h-10 bg-blue-600 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
+                                                <Facebook className="w-6 h-6" />
+                                            </div>
+                                            <span className="font-bold text-sm text-gray-200">Facebook</span>
+                                            <span className="text-[10px] text-gray-400">
+                                                {exportQuality === 'hd' ? '2048x2048 px' : '1080x1080 px'}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    )}
-                </div>
+                    )
+                }
 
-                <div className="flex overflow-x-auto no-scrollbar py-3 px-2 gap-1 bg-dark-carbon">
-                    {[
-                        { id: 'templates', icon: Layout, label: t.toolTemplates },
-                        { id: 'styles', icon: Sparkles, label: t.toolStyles },
-                        { id: 'magic', icon: Zap, label: (t as any).toolMagic, isLocked: true },
-                        { id: 'font', icon: Type, label: t.toolFont },
-                        { id: 'size', icon: Plus, label: t.toolSize },
-                        { id: 'stroke', icon: PenTool, label: t.toolStroke, isLocked: true },
-                        { id: 'align', icon: AlignLeft, label: t.toolAlign },
-                        { id: 'color', icon: Palette, label: t.toolColor },
-                        { id: 'box', icon: Box, label: t.toolBox, isLocked: true },
-                        { id: 'glow', icon: Lightbulb, label: t.toolGlow, isLocked: true },
-                        { id: 'effects', icon: Layers, label: t.toolEffects },
-                        { id: '3d', icon: Box, label: t.tool3D, isLocked: true },
-                        { id: 'textures', icon: Aperture, label: t.toolTextures, isLocked: true },
-                        { id: 'format', icon: AlignJustify, label: t.toolFormat },
-                    ].map((tool) => (
-                        <button
-                            key={tool.id}
-                            onClick={() => handleToolClick(tool.id)}
-                            className={`flex flex-col items-center justify-center min-w-[64px] h-14 rounded-lg transition-colors relative ${activeTool === tool.id ? 'text-neon-pulse bg-dark-steel' : 'text-text-dim hover:text-white'}`}
-                        >
-                            <tool.icon className="w-5 h-5 mb-1" />
-                            <span className="text-[10px] font-medium">{tool.label}</span>
-                            {tool.isLocked && !isPremium && (
-                                <div className="absolute top-1 right-1 bg-neon-pulse rounded-full p-[2px] shadow-sm">
-                                    <Crown className="w-2 h-2 text-dark-carbon fill-dark-carbon" />
-                                </div>
-                            )}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* ... (Export, Template, Preview Modals - Unchanged) */}
-            {
-                showExportMenu && (
-                    <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="w-full bg-dark-graphite rounded-t-3xl p-6 text-white pb-10 shadow-2xl border-t border-dark-steel">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold">{t.export}</h2>
-                                <button onClick={() => setShowExportMenu(false)} className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80">
+                {
+                    showTemplateModal && (
+                        <div className="absolute inset-0 z-50 bg-dark-carbon flex flex-col animate-fade-up">
+                            <div className="flex items-center justify-between p-4 border-b border-dark-steel bg-dark-graphite">
+                                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <Layout className="w-5 h-5 text-neon-pulse" />
+                                    {t.chooseTemplate}
+                                </h2>
+                                <button
+                                    onClick={() => setShowTemplateModal(false)}
+                                    className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80 transition-colors"
+                                >
                                     <X className="w-5 h-5 text-text-secondary" />
                                 </button>
                             </div>
 
-                            <div className="mb-6 flex gap-2 p-1 bg-dark-steel/50 rounded-xl">
-                                <button
-                                    onClick={() => setExportQuality('standard')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${exportQuality === 'standard' ? 'bg-dark-carbon text-white shadow-md' : 'text-text-dim hover:text-white'}`}
-                                >
-                                    <Zap className="w-4 h-4" /> {t.exportStandard}
-                                </button>
-                                <button
-                                    onClick={toggleQuality}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${exportQuality === 'hd' ? 'bg-neon-pulse text-dark-carbon shadow-md' : 'text-text-dim hover:text-white'}`}
-                                >
-                                    <Crown className={`w-4 h-4 ${exportQuality === 'hd' ? 'fill-dark-carbon' : 'text-neon-pulse'}`} /> {t.exportHD}
-                                </button>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider px-1">{t.saveGallery}</p>
-
-                                    <button
-                                        onClick={() => handleSaveFile('square')}
-                                        className="w-full flex items-center justify-between p-4 bg-dark-steel hover:bg-dark-steel/80 rounded-xl transition-colors group border border-transparent hover:border-neon-mint/30"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-neon-pulse/20 p-2 rounded-full text-neon-pulse shadow-sm">
-                                                <Download className="w-6 h-6" />
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="font-bold text-white">Square (1:1)</p>
-                                                <p className="text-xs text-text-secondary">
-                                                    {exportQuality === 'hd' ? '2048 x 2048 px' : '1080 x 1080 px'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <span className="text-neon-pulse">⬇️</span>
-                                    </button>
-
-                                    <button
-                                        onClick={() => handleSaveFile('story')}
-                                        className="w-full flex items-center justify-between p-4 bg-dark-steel hover:bg-dark-steel/80 rounded-xl transition-colors group border border-transparent hover:border-neon-mint/30"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-neon-pulse/20 p-2 rounded-full text-neon-pulse shadow-sm">
-                                                <Download className="w-6 h-6" />
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="font-bold text-white">Story (9:16)</p>
-                                                <p className="text-xs text-text-secondary">
-                                                    {exportQuality === 'hd' ? '2160 x 3840 px' : '1080 x 1920 px'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <span className="text-neon-pulse">⬇️</span>
-                                    </button>
+                            {activeTool === 'magic' && magicSubTab === 'layout' && (
+                                <div className="flex-1 h-full flex flex-col justify-center px-3 py-1">
+                                    <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
+                                        {[1, 2, 3].map(i => (
+                                            <button
+                                                key={i}
+                                                id={i === 1 ? 'tutorial-layout-1' : undefined}
+                                                onClick={() => {
+                                                    if (tutorialStep === 'PICK_LAYOUT') {
+                                                        // stay here or next
+                                                    }
+                                                }}
+                                                className="w-12 h-12 bg-dark-steel rounded-lg flex-shrink-0"
+                                            >
+                                                <Layout className="w-5 h-5 text-text-dim m-auto" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="flex-1 overflow-hidden flex flex-col">
+                                <div className="p-4 border-b border-dark-steel bg-dark-carbon/50 backdrop-blur-sm">
+                                    <div ref={categoryScrollRef} className="flex gap-3 overflow-x-auto no-scrollbar pb-3">
+                                        {categories.map(cat => (
+                                            <button
+                                                key={cat}
+                                                data-category={cat}
+                                                onClick={() => setTemplateCategory(cat)}
+                                                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${templateCategory === cat ? 'bg-neon-pulse text-dark-carbon' : 'bg-dark-steel text-text-dim hover:text-neon-pulse'}`}
+                                            >
+                                                {translateCategory(cat, language)}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
-                                <div className="relative flex py-2 items-center">
-                                    <div className="flex-grow border-t border-dark-steel"></div>
-                                    <span className="flex-shrink-0 mx-4 text-text-dim text-xs font-bold uppercase">{t.shareTo}</span>
-                                    <div className="flex-grow border-t border-dark-steel"></div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button
-                                        onClick={() => handleSocialPreview('story')}
-                                        className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-purple-900/20 to-pink-900/20 rounded-xl border border-pink-500/20 hover:border-pink-500/50 transition-all active:scale-95"
-                                    >
-                                        <div className="w-10 h-10 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
-                                            <Instagram className="w-6 h-6" />
-                                        </div>
-                                        <span className="font-bold text-sm text-gray-200">Instagram</span>
-                                        <span className="text-[10px] text-gray-400">
-                                            {exportQuality === 'hd' ? '2160x3840 px' : '1080x1920 px'}
-                                        </span>
-                                    </button>
-
-                                    <button
-                                        onClick={() => handleSocialPreview('story')}
-                                        className="flex flex-col items-center justify-center p-4 bg-dark-steel/50 hover:bg-dark-steel rounded-xl border border-dark-steel hover:border-gray-500 transition-all active:scale-95"
-                                    >
-                                        <div className="w-10 h-10 bg-black rounded-lg text-white flex items-center justify-center mb-2 shadow-sm border border-gray-700">
-                                            <Music className="w-6 h-6" />
-                                        </div>
-                                        <span className="font-bold text-sm text-gray-200">TikTok</span>
-                                        <span className="text-[10px] text-gray-400">
-                                            {exportQuality === 'hd' ? '2160x3840 px' : '1080x1920 px'}
-                                        </span>
-                                    </button>
-
-                                    <button
-                                        onClick={() => handleSocialPreview('square')}
-                                        className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-green-900/20 to-emerald-900/20 rounded-xl border border-emerald-500/20 hover:border-emerald-500/50 transition-all active:scale-95"
-                                    >
-                                        <div className="w-10 h-10 bg-green-500 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
-                                            <Share2 className="w-6 h-6" />
-                                        </div>
-                                        <span className="font-bold text-sm text-gray-200">WhatsApp</span>
-                                        <span className="text-[10px] text-gray-400">
-                                            {exportQuality === 'hd' ? '2048x2048 px' : '1080x1080 px'}
-                                        </span>
-                                    </button>
-
-                                    <button
-                                        onClick={() => handleSocialPreview('square')}
-                                        className="flex flex-col items-center justify-center p-4 bg-blue-900/20 hover:bg-blue-900/30 rounded-xl border border-blue-500/20 hover:border-blue-500/50 transition-all active:scale-95"
-                                    >
-                                        <div className="w-10 h-10 bg-blue-600 rounded-lg text-white flex items-center justify-center mb-2 shadow-sm">
-                                            <Facebook className="w-6 h-6" />
-                                        </div>
-                                        <span className="font-bold text-sm text-gray-200">Facebook</span>
-                                        <span className="text-[10px] text-gray-400">
-                                            {exportQuality === 'hd' ? '2048x2048 px' : '1080x1080 px'}
-                                        </span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
-            {
-                showTemplateModal && (
-                    <div className="absolute inset-0 z-50 bg-dark-carbon flex flex-col animate-fade-up">
-                        <div className="flex items-center justify-between p-4 border-b border-dark-steel bg-dark-graphite">
-                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                                <Layout className="w-5 h-5 text-neon-pulse" />
-                                {t.chooseTemplate}
-                            </h2>
-                            <button
-                                onClick={() => setShowTemplateModal(false)}
-                                className="p-2 bg-dark-steel rounded-full hover:bg-dark-steel/80 transition-colors"
-                            >
-                                <X className="w-5 h-5 text-text-secondary" />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-hidden flex flex-col">
-                            <div className="p-4 border-b border-dark-steel bg-dark-carbon/50 backdrop-blur-sm">
-                                <div ref={categoryScrollRef} className="flex gap-3 overflow-x-auto no-scrollbar pb-3">
-                                    {categories.map(cat => (
-                                        <button
-                                            key={cat}
-                                            data-category={cat}
-                                            onClick={() => setTemplateCategory(cat)}
-                                            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${templateCategory === cat ? 'bg-neon-pulse text-dark-carbon' : 'bg-dark-steel text-text-dim hover:text-neon-pulse'}`}
-                                        >
-                                            {translateCategory(cat, language)}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto p-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    {templateCategory === 'All' && (
-                                        <button
-                                            onClick={handleUploadClick}
-                                            className="relative w-full h-40 sm:h-44 md:h-48 rounded-xl bg-dark-steel/50 flex flex-col items-center justify-center border-2 border-dashed border-text-dim hover:border-neon-pulse transition-all gap-2 group"
-                                        >
-                                            <div className="bg-dark-steel p-3 rounded-full group-hover:bg-neon-pulse/20 transition-colors">
-                                                <Upload className="w-6 h-6 text-text-dim group-hover:text-neon-pulse" />
-                                            </div>
-                                            <span className="text-xs text-text-dim group-hover:text-white uppercase font-bold tracking-wide">
-                                                {t.uploadImage}
-                                            </span>
-                                            {!isPremium && (
-                                                <div className="absolute top-2 right-2 bg-neon-pulse rounded-full p-1 shadow-sm">
-                                                    <Crown className="w-3 h-3 text-dark-carbon fill-dark-carbon" />
+                                <div className="flex-1 overflow-y-auto p-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {templateCategory === 'All' && (
+                                            <button
+                                                onClick={handleUploadClick}
+                                                className="relative w-full h-40 sm:h-44 md:h-48 rounded-xl bg-dark-steel/50 flex flex-col items-center justify-center border-2 border-dashed border-text-dim hover:border-neon-pulse transition-all gap-2 group"
+                                            >
+                                                <div className="bg-dark-steel p-3 rounded-full group-hover:bg-neon-pulse/20 transition-colors">
+                                                    <Upload className="w-6 h-6 text-text-dim group-hover:text-neon-pulse" />
                                                 </div>
-                                            )}
-                                            <input
-                                                type="file"
-                                                ref={fileInputRef}
-                                                onChange={handleFileChange}
-                                                className="hidden"
-                                                accept="image/*"
-                                            />
-                                        </button>
-                                    )}
+                                                <span className="text-xs text-text-dim group-hover:text-white uppercase font-bold tracking-wide">
+                                                    {t.uploadImage}
+                                                </span>
+                                                {!isPremium && (
+                                                    <div className="absolute top-2 right-2 bg-neon-pulse rounded-full p-1 shadow-sm">
+                                                        <Crown className="w-3 h-3 text-dark-carbon fill-dark-carbon" />
+                                                    </div>
+                                                )}
+                                                <input
+                                                    type="file"
+                                                    ref={fileInputRef}
+                                                    onChange={handleFileChange}
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                />
+                                            </button>
+                                        )}
 
-                                    {filteredTemplates.map(template => (
-                                        <button
-                                            key={template.id}
-                                            onClick={async () => {
-                                                if ((template as any).isPremium === true && !isPremium) {
-                                                    // Verifica se já está desbloqueado hoje
-                                                    if (dailyUnlockService.isTemplateUnlocked(template.id)) {
+                                        {filteredTemplates.map((template, idx) => (
+                                            <button
+                                                key={template.id}
+                                                data-tutorial={templateCategory === 'Diversos' && idx === 2 ? 'tutorial-temp-3' : undefined}
+                                                onClick={async () => {
+                                                    if (tutorialStep === 'MODAL_PICK_TEMP' && templateCategory === 'Diversos' && idx === 2) {
+                                                        setTutorialStep('PICK_STYLE');
                                                         handleTemplateSelect(template);
+                                                        setShowTemplateModal(false);
+                                                        setActiveTool('styles');
                                                         return;
                                                     }
+                                                    // ... (Rest of the onClick remains unchanged)
+                                                }}
+                                                className={`relative w-full h-40 sm:h-44 md:h-48 rounded-xl overflow-hidden border-2 transition-all group ${config.templateId === template.id
+                                                    ? 'border-neon-pulse shadow-[0_0_15px_rgba(0,255,114,0.3)]'
+                                                    : 'border-transparent hover:border-neon-pulse/50'
+                                                    } ${templateCategory === 'Diversos' && idx === 2 && tutorialStep === 'MODAL_PICK_TEMP' ? 'pulse-neon tutorial-highlight-area' : ''}`}
+                                            >
+                                                {template.backgroundType === 'image' ? (
+                                                    <img
+                                                        src={template.value}
+                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                        alt={template.name}
+                                                    />
+                                                ) : (
+                                                    <div
+                                                        className="w-full h-full"
+                                                        style={{ background: template.value }}
+                                                    />
+                                                )}
 
-                                                    // Mostra modal premium (com botão de rewarded ad se disponível)
-                                                    setRewardedModalType('template');
-                                                    setRewardedTargetId(template.id);
-                                                    setShowPremiumModal(true);
-                                                    return;
-                                                }
+                                                {(template as any).isPremium === true && (
+                                                    <div className="absolute top-2 left-2 bg-neon-pulse text-dark-carbon text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md">
+                                                        <Crown className="w-3 h-3 fill-dark-carbon" />
+                                                        PRO
+                                                    </div>
+                                                )}
 
-                                                handleTemplateSelect(template);
-                                            }}
-                                            className={`relative w-full h-40 sm:h-44 md:h-48 rounded-xl overflow-hidden border-2 transition-all group ${config.templateId === template.id
-                                                ? 'border-neon-pulse shadow-[0_0_15px_rgba(0,255,114,0.3)]'
-                                                : 'border-transparent hover:border-neon-pulse/50'
-                                                }`}
-                                        >
-                                            {template.backgroundType === 'image' ? (
-                                                <img
-                                                    src={template.value}
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                    alt={template.name}
-                                                />
-                                            ) : (
-                                                <div
-                                                    className="w-full h-full"
-                                                    style={{ background: template.value }}
-                                                />
-                                            )}
+                                                {/* Check de selecionado */}
 
-                                            {(template as any).isPremium === true && (
-                                                <div className="absolute top-2 left-2 bg-neon-pulse text-dark-carbon text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md">
-                                                    <Crown className="w-3 h-3 fill-dark-carbon" />
-                                                    PRO
-                                                </div>
-                                            )}
-
-                                            {/* Check de selecionado */}
-
-                                            {config.templateId === template.id && (
-                                                <div className="absolute top-2 right-2 bg-neon-pulse rounded-full p-1">
-                                                    <Check className="w-3 h-3 text-dark-carbon" />
-                                                </div>
-                                            )}
-                                        </button>
-                                    ))}
+                                                {config.templateId === template.id && (
+                                                    <div className="absolute top-2 right-2 bg-neon-pulse rounded-full p-1">
+                                                        <Check className="w-3 h-3 text-dark-carbon" />
+                                                    </div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )
-            }
+                    )
+                }
 
-            {
-                showPreviewDialog && exportPreviewUrl && (
-                    <div className="absolute inset-0 z-[60] bg-dark-carbon flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200">
-                        <div className="w-full flex justify-between items-center p-6 absolute top-0 left-0 bg-gradient-to-b from-black/80 to-transparent z-10">
-                            <button onClick={() => setShowPreviewDialog(false)} className="text-white/80 hover:text-white flex items-center gap-1">
-                                <ArrowLeft className="w-5 h-5" /> Edit
-                            </button>
-                            <span className="font-bold text-white tracking-widest text-sm uppercase opacity-90">{t.preview}</span>
-                            <button
-                                onClick={() => setPreviewFitMode(prev => prev === 'cover' ? 'contain' : 'cover')}
-                                className="text-white/80 hover:text-white flex items-center gap-1 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10"
-                            >
-                                {previewFitMode === 'cover' ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                                <span className="text-xs font-medium">{previewFitMode === 'cover' ? 'Fit' : 'Fill'}</span>
-                            </button>
-                        </div>
-
-                        <div className="relative w-full h-full flex items-center justify-center p-8">
-                            <div className={`relative bg-gray-800 rounded-[2rem] border-4 border-gray-700 shadow-2xl overflow-hidden ${selectedShareFormat === 'story' ? 'aspect-[9/16] h-[75%]' : 'aspect-square w-[90%]'}`}>
-                                {/* Container com position relative */}
-                                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-
-                                    {/* CAMADA 1: FUNDO (Imagem com Zoom/Pan) */}
-                                    <TransformWrapper
-                                        initialScale={1}
-                                        minScale={0.5}
-                                        maxScale={5}
-                                        centerOnInit={true}
-                                        limitToBounds={false}
-                                        panning={{ disabled: false }}
-                                        pinch={{ disabled: false }}
-                                        doubleClick={{ disabled: false }}
-                                    >
-                                        <TransformComponent
-                                            wrapperStyle={{
-                                                width: '100%',
-                                                height: '100%'
-                                            }}
-                                            contentStyle={{
-                                                width: '100%',
-                                                height: '100%',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}
-                                        >
-                                            {getCurrentTemplate().backgroundType === 'image' || customImage ? (
-                                                <img
-                                                    src={customImage || getCurrentTemplate().value}
-                                                    alt="Preview"
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: previewFitMode,
-                                                    }}
-                                                />
-                                            ) : (
-                                                <div
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        backgroundColor: getCurrentTemplate().value
-                                                    }}
-                                                />
-                                            )}
-                                        </TransformComponent>
-                                    </TransformWrapper>
-
-                                    {/* CAMADA 2: OVERLAY (Tint) */}
-                                    <div
-                                        className="absolute inset-0 bg-black pointer-events-none"
-                                        style={{ opacity: getCurrentTemplate().overlayOpacity || 0 }}
-                                    />
-
-                                    {/* CAMADA 3: TEXTO (Fixo) */}
-                                    <div
-                                        className="absolute inset-0 flex justify-center pointer-events-none z-10 p-8"
-                                        style={{
-                                            alignItems: config.verticalAlign === 'top' ? 'flex-start' :
-                                                config.verticalAlign === 'bottom' ? 'flex-end' : 'center'
-                                        }}
-                                    >
-                                        {renderTextWithBackground()}
-                                    </div>
-
-                                    {/* CAMADA 4: UI DECORATIVA (Notch/Label) */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        pointerEvents: 'none',
-                                        zIndex: 20
-                                    }}>
-                                        {/* Notch do telemóvel */}
-                                        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-1 bg-black/50 rounded-full"></div>
-
-                                        {/* Label "Your Story" para formato story */}
-                                        {selectedShareFormat === 'story' && (
-                                            <div className="absolute top-6 left-4 text-[10px] text-white/70 font-mono">Your Story</div>
-                                        )}
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="w-full p-6 bg-dark-graphite border-t border-dark-steel">
-                            <button
-                                onClick={executeShare}
-                                className="w-full bg-neon-pulse text-dark-carbon font-bold py-4 rounded-full text-lg shadow-[0_0_20px_rgba(0,255,114,0.4)] hover:bg-neon-mint transition-colors flex items-center justify-center gap-2"
-                            >
-                                <Share2 className="w-5 h-5" /> {t.shareNow}
-                            </button>
-                        </div>
-                    </div>
-                )
-            }
-
-            {
-                isEditingText && (
-                    <div className="absolute inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
-                        <div className="w-full max-w-md bg-dark-graphite rounded-2xl p-6 shadow-2xl border border-dark-steel">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-white font-bold text-lg">{t.editText}</h3>
-                                <button onClick={() => setIsEditingText(false)} className="p-1 bg-dark-steel rounded-full">
-                                    <X className="w-4 h-4 text-text-dim" />
+                {
+                    showPreviewDialog && exportPreviewUrl && (
+                        <div className="absolute inset-0 z-[60] bg-dark-carbon flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200">
+                            <div className="w-full flex justify-between items-center p-6 absolute top-0 left-0 bg-gradient-to-b from-black/80 to-transparent z-10">
+                                <button onClick={() => setShowPreviewDialog(false)} className="text-white/80 hover:text-white flex items-center gap-1">
+                                    <ArrowLeft className="w-5 h-5" /> Edit
+                                </button>
+                                <span className="font-bold text-white tracking-widest text-sm uppercase opacity-90">{t.preview}</span>
+                                <button
+                                    onClick={() => setPreviewFitMode(prev => prev === 'cover' ? 'contain' : 'cover')}
+                                    className="text-white/80 hover:text-white flex items-center gap-1 bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10"
+                                >
+                                    {previewFitMode === 'cover' ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                                    <span className="text-xs font-medium">{previewFitMode === 'cover' ? 'Fit' : 'Fill'}</span>
                                 </button>
                             </div>
-                            <textarea
-                                autoFocus
-                                value={config.text}
-                                onChange={(e) => setConfig({ ...config, text: e.target.value })}
-                                className="w-full bg-dark-carbon text-white p-4 rounded-xl border border-dark-steel focus:border-neon-pulse focus:ring-1 focus:ring-neon-pulse outline-none min-h-[150px] text-lg resize-none mb-4"
-                                placeholder={t.writePhrase}
-                            />
-                            <button
-                                onClick={() => {
-                                    handleRebuildPlan();
-                                    setIsEditingText(false);
-                                }}
-                                className="w-full bg-neon-pulse text-dark-carbon font-bold py-3 rounded-xl hover:bg-neon-mint transition-colors shadow-lg shadow-neon-pulse/20"
-                            >
-                                {t.done}
-                            </button>
-                        </div>
-                    </div>
-                )
-            }
 
-            {
-                showSaveSuccess && (
-                    <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-                        <div className="bg-dark-graphite border-2 border-dark-steel rounded-2xl shadow-2xl px-8 py-6 max-w-sm mx-4 animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-                            <div className="flex items-center gap-4 mb-3">
-                                <div className="w-12 h-12 rounded-full bg-neon-pulse/20 flex items-center justify-center">
-                                    <Check className="w-7 h-7 text-neon-pulse" strokeWidth={3} />
+                            <div className="relative w-full h-full flex items-center justify-center p-8">
+                                <div className={`relative bg-gray-800 rounded-[2rem] border-4 border-gray-700 shadow-2xl overflow-hidden ${selectedShareFormat === 'story' ? 'aspect-[9/16] h-[75%]' : 'aspect-square w-[90%]'}`}>
+                                    {/* Container com position relative */}
+                                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+
+                                        {/* CAMADA 1: FUNDO (Imagem com Zoom/Pan) */}
+                                        <TransformWrapper
+                                            initialScale={1}
+                                            minScale={0.5}
+                                            maxScale={5}
+                                            centerOnInit={true}
+                                            limitToBounds={false}
+                                            panning={{ disabled: false }}
+                                            pinch={{ disabled: false }}
+                                            doubleClick={{ disabled: false }}
+                                        >
+                                            <TransformComponent
+                                                wrapperStyle={{
+                                                    width: '100%',
+                                                    height: '100%'
+                                                }}
+                                                contentStyle={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                {getCurrentTemplate().backgroundType === 'image' || customImage ? (
+                                                    <img
+                                                        src={customImage || getCurrentTemplate().value}
+                                                        alt="Preview"
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: previewFitMode,
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            backgroundColor: getCurrentTemplate().value
+                                                        }}
+                                                    />
+                                                )}
+                                            </TransformComponent>
+                                        </TransformWrapper>
+
+                                        {/* CAMADA 2: OVERLAY (Tint) */}
+                                        <div
+                                            className="absolute inset-0 bg-black pointer-events-none"
+                                            style={{ opacity: getCurrentTemplate().overlayOpacity || 0 }}
+                                        />
+
+                                        {/* CAMADA 3: TEXTO (Fixo) */}
+                                        <div
+                                            className="absolute inset-0 flex justify-center pointer-events-none z-10 p-8"
+                                            style={{
+                                                alignItems: config.verticalAlign === 'top' ? 'flex-start' :
+                                                    config.verticalAlign === 'bottom' ? 'flex-end' : 'center'
+                                            }}
+                                        >
+                                            {renderTextWithBackground()}
+                                        </div>
+
+                                        {/* CAMADA 4: UI DECORATIVA (Notch/Label) */}
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            pointerEvents: 'none',
+                                            zIndex: 20
+                                        }}>
+                                            {/* Notch do telemóvel */}
+                                            <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-1 bg-black/50 rounded-full"></div>
+
+                                            {/* Label "Your Story" para formato story */}
+                                            {selectedShareFormat === 'story' && (
+                                                <div className="absolute top-6 left-4 text-[10px] text-white/70 font-mono">Your Story</div>
+                                            )}
+                                        </div>
+
+                                    </div>
                                 </div>
-                                <h3 className="text-2xl font-bold text-neon-pulse drop-shadow-[0_0_10px_rgba(0,255,114,0.5)]">
-                                    {t.savedSuccess}
-                                </h3>
                             </div>
-                            <p className="text-text-secondary text-sm pl-16">
-                                {t.savedDescription}
-                            </p>
+
+                            <div className="w-full p-6 bg-dark-graphite border-t border-dark-steel">
+                                <button
+                                    onClick={executeShare}
+                                    className="w-full bg-neon-pulse text-dark-carbon font-bold py-4 rounded-full text-lg shadow-[0_0_20px_rgba(0,255,114,0.4)] hover:bg-neon-mint transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Share2 className="w-5 h-5" /> {t.shareNow}
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                )
-            }
+                    )
+                }
 
-            {
-                showPremiumModal && (
-                    <PremiumModal
-                        onClose={() => setShowPremiumModal(false)}
-                        onUnlock={handleUnlock}
-                        language={language}
-                        showRewardedButton={
-                            rewardedModalType === 'template'
-                                ? dailyUnlockService.canUnlockTemplate()
-                                : dailyUnlockService.canUnlockPreset()
-                        }
-                        onWatchAd={handleOpenRewardedModal}
-                    />
-                )
-            }
+                {
+                    isEditingText && (
+                        <div className="absolute inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
+                            <div className="w-full max-w-md bg-dark-graphite rounded-2xl p-6 shadow-2xl border border-dark-steel">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-white font-bold text-lg">{t.editText}</h3>
+                                    <button onClick={() => setIsEditingText(false)} className="p-1 bg-dark-steel rounded-full">
+                                        <X className="w-4 h-4 text-text-dim" />
+                                    </button>
+                                </div>
+                                <textarea
+                                    autoFocus
+                                    value={config.text}
+                                    onChange={(e) => setConfig({ ...config, text: e.target.value })}
+                                    className="w-full bg-dark-carbon text-white p-4 rounded-xl border border-dark-steel focus:border-neon-pulse focus:ring-1 focus:ring-neon-pulse outline-none min-h-[150px] text-lg resize-none mb-4"
+                                    placeholder={t.writePhrase}
+                                />
+                                <button
+                                    onClick={() => {
+                                        handleRebuildPlan();
+                                        setIsEditingText(false);
+                                    }}
+                                    className="w-full bg-neon-pulse text-dark-carbon font-bold py-3 rounded-xl hover:bg-neon-mint transition-colors shadow-lg shadow-neon-pulse/20"
+                                >
+                                    {t.done}
+                                </button>
+                            </div>
+                        </div>
+                    )
+                }
 
-            {
-                showRewardedModal && (
-                    <RewardedAdModal
-                        isOpen={showRewardedModal}
-                        onClose={() => setShowRewardedModal(false)}
-                        onWatchAd={handleWatchRewardedAd}
-                        type={rewardedModalType}
-                        language={language}
-                    />
-                )
-            }
+                {
+                    showSaveSuccess && (
+                        <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                            <div className="bg-dark-graphite border-2 border-dark-steel rounded-2xl shadow-2xl px-8 py-6 max-w-sm mx-4 animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+                                <div className="flex items-center gap-4 mb-3">
+                                    <div className="w-12 h-12 rounded-full bg-neon-pulse/20 flex items-center justify-center">
+                                        <Check className="w-7 h-7 text-neon-pulse" strokeWidth={3} />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-neon-pulse drop-shadow-[0_0_10px_rgba(0,255,114,0.5)]">
+                                        {t.savedSuccess}
+                                    </h3>
+                                </div>
+                                <p className="text-text-secondary text-sm pl-16">
+                                    {t.savedDescription}
+                                </p>
+                            </div>
+                        </div>
+                    )
+                }
 
-            {
-                showSubscriptionModal && (
-                    <SubscriptionModal
-                        isOpen={showSubscriptionModal}
-                        onClose={() => setShowSubscriptionModal(false)}
-                        onPurchase={handlePurchase}
-                        onRestore={handleRestorePurchases}
-                        language={language}
-                    />
-                )
-            }
+                {
+                    showPremiumModal && (
+                        <PremiumModal
+                            onClose={() => setShowPremiumModal(false)}
+                            onUnlock={handleUnlock}
+                            language={language}
+                            showRewardedButton={
+                                rewardedModalType === 'template'
+                                    ? dailyUnlockService.canUnlockTemplate()
+                                    : dailyUnlockService.canUnlockPreset()
+                            }
+                            onWatchAd={handleOpenRewardedModal}
+                        />
+                    )
+                }
+
+                {
+                    showRewardedModal && (
+                        <RewardedAdModal
+                            isOpen={showRewardedModal}
+                            onClose={() => setShowRewardedModal(false)}
+                            onWatchAd={handleWatchRewardedAd}
+                            type={rewardedModalType}
+                            language={language}
+                        />
+                    )
+                }
+
+                {
+                    showSubscriptionModal && (
+                        <SubscriptionModal
+                            isOpen={showSubscriptionModal}
+                            onClose={() => setShowSubscriptionModal(false)}
+                            onPurchase={handlePurchase}
+                            onRestore={handleRestorePurchases}
+                            language={language}
+                        />
+                    )
+                }
+            </div>
+            {tutorialStep === 'OPEN_TEMPLATES' && <TutorialGuided step={tutorialStep} targetId="tool-templates" message={t.tutStepTemplates} position="top" language={language} />}
+            {tutorialStep === 'MODAL_AUTO_EXP' && <TutorialGuided step={tutorialStep} message={t.tutStepTemplatesDesc} position="bottom" messagePosition="bottom" language={language} />}
+            {tutorialStep === 'MODAL_PICK_TEMP' && <TutorialGuided step={tutorialStep} targetId="tutorial-temp-3" message={t.tutStepPickTemplate} position="top" messagePosition="bottom" language={language} />}
+            {tutorialStep === 'PICK_STYLE' && <TutorialGuided step={tutorialStep} targetId="tutorial-style-free" message={t.tutStepStyle} position="top" language={language} />}
+            {tutorialStep === 'OPEN_MAGIC' && <TutorialGuided step={tutorialStep} targetId="tool-magic" message={t.tutStepMagic} position="top" language={language} />}
+            {tutorialStep === 'PICK_LAYOUT' && <TutorialGuided step={tutorialStep} targetId="tutorial-tab-highlights" message={t.tutStepKeyword} position="right" language={language} />}
+            {tutorialStep === 'KEYWORD_EXPLAIN' && <TutorialGuided step={tutorialStep} targetId="tutorial-kw-color-picker" message={t.tutStepKeywordDesc} position="top" language={language} />}
+            {tutorialStep === 'TOGGLE_AUTO_OFF' && <TutorialGuided step={tutorialStep} targetId="tutorial-toggle-auto" message={t.tutStepManual} position="top" language={language} />}
+            {tutorialStep === 'TOGGLE_AUTO_ON' && <TutorialGuided step={tutorialStep} targetId="tutorial-toggle-auto" message={t.tutStepAuto} position="top" language={language} />}
+            {tutorialStep === 'PICK_KW_COLOR' && <TutorialGuided step={tutorialStep} targetId="tutorial-kw-color-picker" message={t.tutStepFinish} position="top" language={language} />}
+            {tutorialStep === 'PICK_MAIN_COLOR' && <TutorialGuided step={tutorialStep} targetId="tool-color" message={(t as any).tutStepColor} position="top" language={language} />}
         </div>
     );
 };

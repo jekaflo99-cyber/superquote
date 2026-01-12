@@ -15,33 +15,13 @@ class RevenueCatService {
     private isInitialized = false;
     private isPremium = false;
     private offerings: PurchasesOfferings | null = null;
-    private webUserEmail: string | null = null; // Guardar email na Web
-
-    // Setter para guardar o email na Web
-    setWebUserEmail(email: string) {
-        this.webUserEmail = email;
-        if (!Capacitor.isNativePlatform()) {
-            localStorage.setItem('userEmail', email);
-        }
-    }
-
-    // Getter para obter o email na Web
-    getWebUserEmail(): string | null {
-        if (!Capacitor.isNativePlatform()) {
-            return localStorage.getItem('userEmail') || this.webUserEmail;
-        }
-        return this.webUserEmail;
-    }
 
     async initialize(): Promise<void> {
         // ============================================
         // MODO WEB (PWA) - Não usa SDK, usa API Backend
         // ============================================
         if (!Capacitor.isNativePlatform()) {
-            this.webUserEmail = localStorage.getItem('userEmail');
             this.isInitialized = true;
-            console.log('RevenueCat: Web mode initialized with email:', this.webUserEmail);
-            await this.checkSubscriptionStatus();
             return;
         }
 
@@ -73,24 +53,7 @@ class RevenueCatService {
             // MODO WEB (PWA) - Usa a Backend API
             // ============================================
             if (!Capacitor.isNativePlatform()) {
-                const email = this.getWebUserEmail();
-                if (!email) {
-                    console.log('Web: No email set, cannot check subscription');
-                    this.isPremium = false;
-                    return false;
-                }
-
-                try {
-                    const res = await fetch(`/api/subscription-status?email=${encodeURIComponent(email)}`);
-                    const data = await res.json();
-
-                    this.isPremium = data.isPremium === true;
-                    console.log('Web Premium Status for', email, ':', this.isPremium);
-                    return this.isPremium;
-                } catch (e) {
-                    console.error("Error checking web subscription status:", e);
-                    return false;
-                }
+                return false;
             }
 
             // ============================================
@@ -208,11 +171,8 @@ class RevenueCatService {
     async purchasePackage(planType: 'yearly' | 'monthly' | 'weekly'): Promise<boolean> {
         try {
             if (!Capacitor.isNativePlatform()) {
-                const email = this.getWebUserEmail();
-                if (!email) return false;
-                const { default: StripeService } = await import('./stripeService');
-                await StripeService.startCheckout(planType, email);
-                return true;
+                console.warn('In-app purchases are only supported on native platforms.');
+                return false;
             }
 
             if (!this.isInitialized) await this.initialize();
@@ -247,10 +207,9 @@ class RevenueCatService {
         }
     }
 
-    async restorePurchases(email?: string): Promise<boolean> {
+    async restorePurchases(): Promise<boolean> {
         if (!Capacitor.isNativePlatform()) {
-            if (email) this.setWebUserEmail(email);
-            return this.checkSubscriptionStatus();
+            return false;
         }
 
         try {
@@ -269,10 +228,7 @@ class RevenueCatService {
     }
 
     async setUserId(userId: string): Promise<void> {
-        if (!Capacitor.isNativePlatform()) {
-            this.setWebUserEmail(userId);
-            return;
-        }
+        if (!Capacitor.isNativePlatform()) return;
         try {
             if (!this.isInitialized) await this.initialize();
             await Purchases.logIn({ appUserID: userId });
@@ -281,8 +237,6 @@ class RevenueCatService {
 
     async logout(): Promise<void> {
         if (!Capacitor.isNativePlatform()) {
-            localStorage.removeItem('userEmail');
-            this.webUserEmail = null;
             this.isPremium = false;
             return;
         }

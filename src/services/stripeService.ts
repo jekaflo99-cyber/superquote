@@ -183,6 +183,21 @@ export class StripeService {
       return false;
     }
   }
+
+  /**
+   * Verifica uma sessão de checkout e retorna o email
+   */
+  static async verifySession(sessionId: string): Promise<string | null> {
+    try {
+      const response = await fetch(`${API_BASE}/api/verify-session?session_id=${sessionId}`);
+      if (!response.ok) return null;
+      const { email } = await response.json();
+      return email;
+    } catch (error) {
+      console.error('Error verifying session:', error);
+      return null;
+    }
+  }
 }
 
 export default StripeService;
