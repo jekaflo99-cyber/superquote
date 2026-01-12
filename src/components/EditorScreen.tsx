@@ -18,8 +18,9 @@ import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { buildTextPlan } from '../services/textPlan';
 import { splitRunsIntoLines } from '../services/emphasisPlan';
 import { extractPaletteFromImage, chooseSmartColor } from '../services/colorService';
-import TEMPLATES_SMART_DATA from '../Data/templates_smart_data.json';
 import { StripeService } from '../services/stripeService';
+import TEMPLATES_SMART_DATA from '../Data/templates_smart_data.json';
+
 
 
 interface Props {
@@ -2496,7 +2497,18 @@ export const EditorScreen: React.FC<Props> = ({ initialPhrase, onBack, isPremium
                                                         setActiveTool('styles');
                                                         return;
                                                     }
-                                                    // ... (Rest of the onClick remains unchanged)
+
+                                                    if ((template as any).isPremium && !isPremium) {
+                                                        if (dailyUnlockService.isTemplateUnlocked(template.id)) {
+                                                            handleTemplateSelect(template);
+                                                        } else {
+                                                            setRewardedModalType('template');
+                                                            setRewardedTargetId(template.id);
+                                                            setShowRewardedModal(true);
+                                                        }
+                                                        return;
+                                                    }
+                                                    handleTemplateSelect(template);
                                                 }}
                                                 className={`relative w-full h-40 sm:h-44 md:h-48 rounded-xl overflow-hidden border-2 transition-all group ${config.templateId === template.id
                                                     ? 'border-neon-pulse shadow-[0_0_15px_rgba(0,255,114,0.3)]'

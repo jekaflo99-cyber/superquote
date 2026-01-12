@@ -13,6 +13,7 @@ import { Capacitor } from '@capacitor/core';
 import { admobService } from './services/admobService';
 import { revenueCatService } from './services/revenueCatService';
 import { StripeService } from './services/stripeService';
+
 import './index.css';
 
 const App: React.FC = () => {

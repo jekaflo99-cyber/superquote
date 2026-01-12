@@ -5,6 +5,7 @@ import { UI_TRANSLATIONS } from '../Data/translations';
 import { revenueCatService, type SubscriptionPlan } from '../services/revenueCatService';
 import { Capacitor } from '@capacitor/core';
 
+
 interface SubscriptionModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -285,6 +286,8 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                         </div>
                     </div>
                 </div>
+
+
 
                 {/* Web Email Input (Stripe) */}
                 {!Capacitor.isNativePlatform() && (
